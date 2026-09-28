@@ -1,0 +1,10 @@
+{
+  "description": "This web application helps healthcare professionals manage patient data, track health habits, and monitor cardiovascular risk, enhancing patient care and outcomes.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-vinho: #5B2333;
+  --color-vinho-dark: #3E1623;
+  --color-vinho-light: #7A3047;
+  --color-bege: #F4EFE7;
+  --color-bege-dark: #E8E0D0;
+  --color-dourado: #C6A15B;
+  --color-dourado-light: #D4B578;
+  --color-oliva: #66724A;
+  --color-oliva-light: #7A8A58;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Montserrat', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #F4EFE7;
+  color: #1A1008;
+  margin: 0;
+  padding: 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(91, 35, 51, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(91, 35, 51, 0.5);
+}
