@@ -192,7 +192,7 @@ function NovaEvolucaoModal({ onSave, onClose }: { onSave: (e: Evolucao) => void;
             <h3 className="text-lg font-semibold" style={{ fontFamily: "var(--font-serif)", color: "#3E1623" }}>
               Nova Evolução
             </h3>
-            <p className="text-xs mt-0.5" style={{ color: "#9B8B7A" }}>Registro clínico permanente</p>
+            <p className="text-xs mt-0.5" style={{ color: "#9B8B7A" }}>Registro de demonstração local</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-70" style={{ background: "#E8E0D0", color: "#5B2333" }}>
             ✕
@@ -314,15 +314,35 @@ function NovaEvolucaoModal({ onSave, onClose }: { onSave: (e: Evolucao) => void;
 }
 
 export default function TimelineTab({ patientId }: { patientId: number }) {
-  const [evolucoes, setEvolucoes] = useState<Evolucao[]>(
-    () => [...(initialEvolucoes[patientId] ?? [])].sort((a, b) => b.id - a.id)
-  );
+  const demoEvolucoes = [...(initialEvolucoes[patientId] ?? [])].sort((a, b) => b.id - a.id);
+  const [loadedState] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(`lapidar-demo-timeline-${patientId}`);
+      if (!saved) return { evolucoes: demoEvolucoes, error: null as string | null };
+      const parsed: unknown = JSON.parse(saved);
+      if (!Array.isArray(parsed) || !parsed.every((event) => event && typeof event.id === "number" && typeof event.data === "string" && typeof event.tipo === "string")) {
+        return { evolucoes: demoEvolucoes, error: "Os registros locais da timeline estão inválidos. Um novo registro poderá substituir os dados da demonstração." };
+      }
+      return { evolucoes: parsed as Evolucao[], error: null as string | null };
+    } catch {
+      return { evolucoes: demoEvolucoes, error: "Não foi possível carregar a timeline local deste navegador." };
+    }
+  });
+  const [evolucoes, setEvolucoes] = useState<Evolucao[]>(loadedState.evolucoes);
+  const [storageError, setStorageError] = useState<string | null>(loadedState.error);
   const [showModal, setShowModal] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const handleSave = (e: Evolucao) => {
-    setEvolucoes((prev) => [e, ...prev]);
-    setExpanded(e.id);
+    const next = [e, ...evolucoes];
+    try {
+      window.localStorage.setItem(`lapidar-demo-timeline-${patientId}`, JSON.stringify(next));
+      setEvolucoes(next);
+      setExpanded(e.id);
+      setStorageError(null);
+    } catch {
+      setStorageError("Não foi possível salvar esta evolução localmente.");
+    }
   };
 
   return (
@@ -344,6 +364,9 @@ export default function TimelineTab({ patientId }: { patientId: number }) {
           Nova Evolução
         </button>
       </div>
+
+      <p className="text-xs" style={{ color: "#9B8B7A" }}>Timeline de demonstração. Registros ficam neste navegador e não são enviados a um prontuário.</p>
+      {storageError && <p role="alert" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{storageError}</p>}
 
       {evolucoes.length === 0 && (
         <div className="rounded-2xl p-12 text-center" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>

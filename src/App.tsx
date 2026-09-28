@@ -6,8 +6,10 @@ import Agenda from "./pages/Agenda";
 import Financial from "./pages/Financial";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import PatientPortal from "./pages/PatientPortal";
 
 export type Page = "dashboard" | "patients" | "agenda" | "financial" | "reports" | "settings";
+type DemoRole = "doctor" | "secretary" | "patient";
 
 const notifications = [
   { id: 1, text: "Carla Mendes — LDL acima da meta", time: "há 5 min", unread: true },
@@ -21,10 +23,14 @@ function Topbar({
   onMenuToggle,
   onNavigate,
   onLogout,
+  role,
+  onRoleChange,
 }: {
   onMenuToggle: () => void;
   onNavigate: (page: Page) => void;
   onLogout: () => void;
+  role: DemoRole;
+  onRoleChange: (role: DemoRole) => void;
 }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -64,6 +70,23 @@ function Topbar({
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-xs" style={{ color: "#F4EFE7" }}>
+          <span className="hidden md:inline">Perfil de demonstração</span>
+          <select
+            value={role}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value === "doctor" || value === "secretary" || value === "patient") onRoleChange(value);
+            }}
+            aria-label="Perfil de demonstração"
+            className="rounded-md px-2 py-1 text-xs"
+            style={{ background: "#F4EFE7", color: "#5B2333" }}
+          >
+            <option value="doctor">Médica</option>
+            <option value="secretary">Secretaria</option>
+            <option value="patient">Paciente</option>
+          </select>
+        </label>
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
@@ -176,8 +199,34 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<Page>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [role, setRole] = useState<DemoRole>("doctor");
 
   if (!loggedIn) return <Login onLogin={() => setLoggedIn(true)} />;
+
+  if (role === "patient") {
+    return (
+      <div className="min-h-screen" style={{ background: "#F4EFE7" }}>
+        <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6" style={{ background: "#5B2333" }}>
+          <div>
+            <p className="text-lg text-white" style={{ fontFamily: "var(--font-serif)" }}>Lapidar</p>
+            <p className="text-xs" style={{ color: "#D4B578" }}>Portal da paciente · demonstração</p>
+          </div>
+          <button
+            onClick={() => setRole("doctor")}
+            className="rounded-lg px-3 py-2 text-sm"
+            style={{ background: "rgba(255,255,255,0.12)", color: "#F4EFE7" }}
+          >
+            Voltar ao painel da equipe
+          </button>
+        </header>
+        <PatientPortal />
+      </div>
+    );
+  }
+
+  const visibleNavItems = role === "secretary"
+    ? navItems.filter((item) => item.id !== "reports")
+    : navItems;
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F4EFE7" }}>
@@ -213,7 +262,7 @@ export default function App() {
         </div>
 
         <nav className="flex flex-col gap-0.5 px-3 py-4 flex-1">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <button
               key={item.id}
               onClick={() => { setPage(item.id); setSidebarOpen(false); }}
@@ -237,6 +286,8 @@ export default function App() {
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           onNavigate={setPage}
           onLogout={() => { setLoggedIn(false); setPage("dashboard"); }}
+          role={role}
+          onRoleChange={(nextRole) => { setRole(nextRole); setSidebarOpen(false); }}
         />
         <div className="flex-1 overflow-y-auto">
           {page === "dashboard" && <Dashboard />}

@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const SETTINGS_KEY = "lapidar-demo-settings-v1";
 
 export default function Settings() {
   const [clinicName, setClinicName] = useState("Clínica Lapidar");
@@ -10,10 +12,61 @@ export default function Settings() {
   const [ldlAlert, setLdlAlert] = useState(true);
   const [vitDAlert, setVitDAlert] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        !("clinicName" in parsed) ||
+        typeof parsed.clinicName !== "string" ||
+        !("doctorName" in parsed) ||
+        typeof parsed.doctorName !== "string" ||
+        !("crm" in parsed) ||
+        typeof parsed.crm !== "string" ||
+        !("email" in parsed) ||
+        typeof parsed.email !== "string" ||
+        !("phone" in parsed) ||
+        typeof parsed.phone !== "string" ||
+        !("habitCheckin" in parsed) ||
+        typeof parsed.habitCheckin !== "boolean" ||
+        !("ldlAlert" in parsed) ||
+        typeof parsed.ldlAlert !== "boolean" ||
+        !("vitDAlert" in parsed) ||
+        typeof parsed.vitDAlert !== "boolean"
+      ) {
+        setStorageError("As configurações locais salvas estão inválidas. Revise os dados e salve para substituir a demonstração.");
+        return;
+      }
+      setClinicName(parsed.clinicName);
+      setDoctorName(parsed.doctorName);
+      setCrm(parsed.crm);
+      setEmail(parsed.email);
+      setPhone(parsed.phone);
+      setHabitCheckin(parsed.habitCheckin);
+      setLdlAlert(parsed.ldlAlert);
+      setVitDAlert(parsed.vitDAlert);
+    } catch {
+      setStorageError("Não foi possível carregar as configurações deste navegador.");
+    }
+  }, []);
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    try {
+      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        clinicName, doctorName, crm, email, phone, habitCheckin, ldlAlert, vitDAlert,
+      }));
+      setStorageError(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setSaved(false);
+      setStorageError("Não foi possível salvar as configurações. Verifique o armazenamento do navegador.");
+    }
   };
 
   return (
@@ -29,6 +82,8 @@ export default function Settings() {
           Dados da clínica e preferências do sistema
         </p>
       </div>
+      {storageError && <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">{storageError}</p>}
+      <p className="text-xs" style={{ color: "#9B8B7A" }}>Configurações de demonstração armazenadas apenas neste navegador.</p>
 
       {/* Clinic data */}
       <div
@@ -162,7 +217,7 @@ export default function Settings() {
         </button>
         {saved && (
           <span className="text-sm" style={{ color: "#66724A" }}>
-            ✓ Salvo com sucesso
+            ✓ Salvo neste navegador
           </span>
         )}
       </div>

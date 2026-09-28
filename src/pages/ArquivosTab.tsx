@@ -52,8 +52,25 @@ const initialArquivos: Record<number, Arquivo[]> = {
   ],
 };
 
+function readFiles(patientId: number) {
+  const demo = initialArquivos[patientId] ?? [];
+  try {
+    const saved = window.localStorage.getItem(`lapidar-demo-files-${patientId}`);
+    if (!saved) return { arquivos: demo, error: null as string | null };
+    const parsed: unknown = JSON.parse(saved);
+    if (!Array.isArray(parsed) || !parsed.every((file) => file && typeof file.id === "number" && typeof file.nome === "string" && typeof file.enviado === "boolean")) {
+      return { arquivos: demo, error: "A lista local de arquivos está inválida. Um novo envio de demonstração poderá substituí-la." };
+    }
+    return { arquivos: parsed as Arquivo[], error: null as string | null };
+  } catch {
+    return { arquivos: demo, error: "Não foi possível ler os arquivos salvos neste navegador." };
+  }
+}
+
 export default function ArquivosTab({ patientId }: { patientId: number }) {
-  const [arquivos, setArquivos] = useState<Arquivo[]>(initialArquivos[patientId] ?? []);
+  const [loaded] = useState(() => readFiles(patientId));
+  const [arquivos, setArquivos] = useState<Arquivo[]>(loaded.arquivos);
+  const [error, setError] = useState<string | null>(loaded.error);
   const [descricao, setDescricao] = useState("");
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -65,31 +82,43 @@ export default function ArquivosTab({ patientId }: { patientId: number }) {
 
   const hoje = () => new Date().toLocaleDateString("pt-BR");
 
-  const addArquivo = (file: File) => {
-    const novo: Arquivo = {
-      id: Date.now(),
+  const saveFiles = (next: Arquivo[]) => {
+    try {
+      window.localStorage.setItem(`lapidar-demo-files-${patientId}`, JSON.stringify(next));
+      setArquivos(next);
+      setError(null);
+    } catch {
+      setError("Não foi possível salvar a lista de arquivos neste navegador.");
+    }
+  };
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+    const selected = Array.from(files);
+    const valid = selected.filter((file) =>
+      ["application/pdf", "image/jpeg", "image/png"].includes(file.type) &&
+      file.size <= 20 * 1024 * 1024,
+    );
+    if (valid.length === 0) {
+      setError("Selecione PDFs, JPGs ou PNGs de até 20 MB.");
+      return;
+    }
+    const added = valid.map((file, index): Arquivo => ({
+      id: Date.now() + index,
       nome: file.name,
       descricao: descricao || file.name,
       tipo: file.type,
       tamanho: formatBytes(file.size),
       data: hoje(),
       enviado: false,
-    };
-    setArquivos((prev) => [novo, ...prev]);
+    }));
+    saveFiles([...added, ...arquivos]);
+    if (valid.length !== selected.length) setError("Arquivos inválidos ignorados. Os válidos foram adicionados para demonstração.");
     setDescricao("");
   };
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    Array.from(files).forEach(addArquivo);
-  };
-
   const handleEnviar = (id: number) => {
-    setArquivos((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, enviado: true, dataEnvio: hoje() } : a
-      )
-    );
+    saveFiles(arquivos.map((a) => a.id === id ? { ...a, enviado: true, dataEnvio: hoje() } : a));
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -106,6 +135,11 @@ export default function ArquivosTab({ patientId }: { patientId: number }) {
 
   return (
     <div className="space-y-5">
+
+      <p className="text-xs" style={{ color: "#9B8B7A" }}>
+        Protótipo: o navegador guarda apenas nomes, descrições e status. Arquivos não são carregados para servidor nem enviados à paciente.
+      </p>
+      {error && <p role="alert" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
 
       {/* Upload area */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
@@ -206,7 +240,7 @@ export default function ArquivosTab({ patientId }: { patientId: number }) {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                     </svg>
-                    Enviar
+                    Simular envio
                   </button>
                 </div>
               );

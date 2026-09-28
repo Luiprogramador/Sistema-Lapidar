@@ -79,6 +79,7 @@ function ScoreDot({ value, max = 7 }: { value: number; max?: number }) {
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState<"overview" | "habits" | "cardiovascular">("overview");
+  const [selectedReport, setSelectedReport] = useState<(typeof reportItems)[number] | null>(null);
 
   return (
     <div className="p-6 space-y-6">
@@ -123,6 +124,7 @@ export default function Reports() {
           {reportItems.map((r) => (
             <button
               key={r.title}
+              onClick={() => setSelectedReport(r)}
               className="group rounded-xl p-5 text-left transition-all hover:shadow-md"
               style={{ background: "#fff", border: "1px solid #E8E0D0" }}
             >
@@ -272,6 +274,34 @@ export default function Reports() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setSelectedReport(null);
+        }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="report-preview-title" className="w-full max-w-lg rounded-2xl p-5 shadow-xl" style={{ background: "#F4EFE7", border: "1px solid #E8E0D0" }}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#9B8B7A" }}>Prévia do relatório</p>
+                <h3 id="report-preview-title" className="mt-1 text-xl" style={{ fontFamily: "var(--font-serif)", color: "#5B2333" }}>{selectedReport.title}</h3>
+              </div>
+              <button type="button" aria-label="Fechar prévia" onClick={() => setSelectedReport(null)} className="text-xl" style={{ color: "#5B2333" }}>×</button>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed" style={{ color: "#6D5C50" }}>{selectedReport.description}</p>
+            <div className="my-4 rounded-xl bg-white p-4">
+              <p className="text-xs font-semibold" style={{ color: "#5B2333" }}>Relatório demonstrativo</p>
+              <p className="mt-1 text-xs leading-relaxed" style={{ color: "#9B8B7A" }}>
+                Este protótipo usa dados fictícios. O relatório final deverá ser calculado a partir dos registros da clínica e filtrado conforme o perfil autorizado.
+              </p>
+              <p className="mt-3 text-xs" style={{ color: "#9B8B7A" }}>Gerado em {new Date().toLocaleDateString("pt-BR")}</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setSelectedReport(null)} className="rounded-lg px-4 py-2 text-sm" style={{ background: "#E8E0D0", color: "#5B2333" }}>Fechar</button>
+              <button type="button" onClick={() => window.print()} className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#5B2333" }}>Imprimir prévia</button>
+            </div>
+          </section>
         </div>
       )}
     </div>

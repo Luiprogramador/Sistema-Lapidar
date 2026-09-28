@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PatientDetail from "./PatientDetail";
 import type { Patient } from "./PatientDetail";
 
 const PROTOCOLS = ["Todos", "Lapidar 40+", "Lapidar SOP", "Lapidar Fertilidade", "Pocket"];
+const PATIENT_STORAGE_KEY = "lapidar-demo-patients-v1";
 
 const patients: Patient[] = [
   {
@@ -105,11 +106,48 @@ const habitLabels = [
   { key: "musculacao", label: "Musculação" },
 ] as const;
 
+function readSavedPatients(): { patients: Patient[]; error: string | null; canPersist: boolean } {
+  try {
+    const saved = window.localStorage.getItem(PATIENT_STORAGE_KEY);
+    if (!saved) return { patients, error: null, canPersist: true };
+
+    const parsed: unknown = JSON.parse(saved);
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every((patient) =>
+        patient &&
+        typeof patient.id === "number" &&
+        typeof patient.nome === "string" &&
+        typeof patient.protocolo === "string" &&
+        typeof patient.ativa === "boolean" &&
+        Array.isArray(patient.alertas) &&
+        patient.habitos,
+      )
+    ) {
+      return {
+        patients,
+        error: "Os dados de demonstração salvos não são válidos. Restaure a lista de exemplo para continuar.",
+        canPersist: false,
+      };
+    }
+
+    return { patients: parsed as Patient[], error: null, canPersist: true };
+  } catch {
+    return {
+      patients,
+      error: "Não foi possível ler os dados locais das pacientes. Verifique o armazenamento do navegador.",
+      canPersist: false,
+    };
+  }
+}
+
 export default function Patients() {
-  const [patientList, setPatientList] = useState(patients);
+  const [savedState, setSavedState] = useState(readSavedPatients);
+  const [patientList, setPatientList] = useState(savedState.patients);
   const [filter, setFilter] = useState("Todos");
   const [search, setSearch] = useState("");
   const [detailPatient, setDetailPatient] = useState<Patient | null>(null);
+  const [previewPatient, setPreviewPatient] = useState<Patient | null>(null);
   const [newPatientOpen, setNewPatientOpen] = useState(false);
   const [form, setForm] = useState({
     nome: "",
@@ -127,8 +165,43 @@ export default function Patients() {
     origemLead: "",
   });
 
+  useEffect(() => {
+    if (!savedState.canPersist) return;
+    try {
+      window.localStorage.setItem(PATIENT_STORAGE_KEY, JSON.stringify(patientList));
+    } catch {
+      setSavedState((current) => ({
+        ...current,
+        error: "Não foi possível salvar as alterações no navegador. Verifique o armazenamento local.",
+        canPersist: false,
+      }));
+    }
+  }, [patientList, savedState.canPersist]);
+
+  const restoreDemoPatients = () => {
+    try {
+      window.localStorage.removeItem(PATIENT_STORAGE_KEY);
+      setPatientList(patients);
+      setSavedState({ patients, error: null, canPersist: true });
+    } catch {
+      setSavedState((current) => ({
+        ...current,
+        error: "Não foi possível restaurar os dados locais. Verifique as permissões do navegador.",
+        canPersist: false,
+      }));
+    }
+  };
+
   if (detailPatient) {
-    return <PatientDetail patient={detailPatient} onBack={() => setDetailPatient(null)} />;
+    return (
+      <PatientDetail
+        patient={detailPatient}
+        onBack={() => {
+          setPatientList((current) => current.map((patient) => patient.id === detailPatient.id ? detailPatient : patient));
+          setDetailPatient(null);
+        }}
+      />
+    );
   }
 
   const filtered = patientList.filter((p) => {
@@ -166,7 +239,7 @@ export default function Patients() {
       habitos: { fibras: false, proteinas: false, hidratacao: false, cardio: false, musculacao: false, sono: "—" },
     };
     setPatientList((current) => [createdPatient, ...current]);
-    setDetailPatient(createdPatient);
+    setPreviewPatient(createdPatient);
     setNewPatientOpen(false);
     setForm({ nome: "", telefone: "", cpf: "", dataNascimento: "", objetivo: "", protocolo: "Lapidar 40+", consultaAtual: "", pesoInicial: "", pesoMeta: "", trh: "", contraceptivo: "", observacoes: "", origemLead: "" });
   };
@@ -186,6 +259,19 @@ export default function Patients() {
           + Nova Paciente
         </button>
       </div>
+
+      {savedState.error && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">
+          <span>{savedState.error} Os dados apresentados são fictícios e ficam apenas neste navegador.</span>
+          <button type="button" onClick={restoreDemoPatients} className="rounded-lg border border-amber-500 px-3 py-1.5 text-xs font-semibold">
+            Restaurar dados de demonstração
+          </button>
+        </div>
+      )}
+
+      <p className="mb-3 text-xs" style={{ color: "#9B8B7A" }}>
+        Protótipo com dados fictícios; alterações persistem apenas neste navegador.
+      </p>
 
       {/* Search + filters */}
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
@@ -221,7 +307,7 @@ export default function Patients() {
         {filtered.map((p) => (
           <button
             key={p.id}
-            onClick={() => setDetailPatient(p)}
+            onClick={() => setPreviewPatient(p)}
             className="rounded-xl p-5 text-left transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
             style={{ background: "#fff", border: "1px solid #E8E0D0" }}
           >
@@ -303,6 +389,74 @@ export default function Patients() {
           </button>
         ))}
       </div>
+
+      {filtered.length === 0 && (
+        <div className="rounded-xl border p-8 text-center" style={{ background: "#fff", borderColor: "#E8E0D0", color: "#9B8B7A" }}>
+          Nenhuma paciente corresponde à busca e ao protocolo selecionados.
+        </div>
+      )}
+
+      {previewPatient && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setPreviewPatient(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="patient-preview-title"
+            className="w-full max-w-lg rounded-2xl p-5 shadow-xl"
+            style={{ background: "#F4EFE7", border: "1px solid #E8E0D0" }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#9B8B7A" }}>Resumo da paciente</p>
+                <h3 id="patient-preview-title" className="mt-1 text-2xl" style={{ fontFamily: "var(--font-serif)", color: "#5B2333" }}>
+                  {previewPatient.nome}
+                </h3>
+                <p className="text-sm" style={{ color: "#66724A" }}>{previewPatient.idade} anos · {previewPatient.protocolo}</p>
+              </div>
+              <button type="button" onClick={() => setPreviewPatient(null)} aria-label="Fechar resumo" className="rounded-lg px-3 py-1 text-xl" style={{ color: "#5B2333" }}>×</button>
+            </div>
+            <div className="my-4 grid grid-cols-2 gap-3 rounded-xl bg-white p-4">
+              {[
+                ["Objetivo", previewPatient.objetivo || "Não informado"],
+                ["Telefone", previewPatient.telefone || "Não informado"],
+                ["Peso inicial", previewPatient.pesoInicial ? `${previewPatient.pesoInicial} kg` : "Não informado"],
+                ["Meta", previewPatient.pesoMeta ? `${previewPatient.pesoMeta} kg` : "Não informada"],
+                ["Última consulta", previewPatient.ultimaConsulta],
+                ["Próxima consulta", previewPatient.proximaConsulta],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-xs" style={{ color: "#9B8B7A" }}>{label}</p>
+                  <p className="text-sm font-medium" style={{ color: "#1A1008" }}>{value}</p>
+                </div>
+              ))}
+            </div>
+            {previewPatient.alertas.length > 0 && (
+              <div className="mb-4 rounded-lg px-3 py-2 text-sm" style={{ background: "#FEE2E2", color: "#991B1B" }}>
+                Atenção: {previewPatient.alertas.join(" · ")}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setPreviewPatient(null)} className="rounded-lg px-4 py-2 text-sm" style={{ color: "#5B2333", background: "#E8E0D0" }}>Fechar</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDetailPatient(previewPatient);
+                  setPreviewPatient(null);
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                style={{ background: "#5B2333" }}
+              >
+                Abrir ficha
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {newPatientOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {

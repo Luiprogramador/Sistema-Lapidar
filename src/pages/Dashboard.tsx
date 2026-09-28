@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -93,6 +94,12 @@ function AlertBadge({ type }: { type: string }) {
 }
 
 export default function Dashboard() {
+  const [alertFilter, setAlertFilter] = useState("Todos");
+  const alertTypes = ["Todos", ...new Set(alertasPacientes.map((patient) => patient.alerta))];
+  const visibleAlerts = alertFilter === "Todos"
+    ? alertasPacientes
+    : alertasPacientes.filter((patient) => patient.alerta === alertFilter);
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -233,8 +240,25 @@ export default function Dashboard() {
           <p className="text-xs mb-4" style={{ color: "#9B8B7A" }}>
             Exames pendentes · Bioimpedâncias · LDL · Vitamina D · Atividade física
           </p>
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {alertTypes.map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setAlertFilter(type)}
+                aria-pressed={alertFilter === type}
+                className="rounded-full px-2.5 py-1 text-xs"
+                style={{
+                  background: alertFilter === type ? "#5B2333" : "#F4EFE7",
+                  color: alertFilter === type ? "#F4EFE7" : "#5B2333",
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2">
-            {alertasPacientes.map((p, i) => (
+            {visibleAlerts.map((p, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between py-2 border-b last:border-0"
@@ -251,6 +275,7 @@ export default function Dashboard() {
                 <AlertBadge type={p.alerta} />
               </div>
             ))}
+            {visibleAlerts.length === 0 && <p className="py-4 text-sm" style={{ color: "#9B8B7A" }}>Não há alertas nesta categoria.</p>}
           </div>
         </div>
 

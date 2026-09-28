@@ -8,6 +8,8 @@ import RiscoCV from "./RiscoCV";
 import { MedicamentosTab, SuplementosTab } from "./TabelaHistorico";
 import TimelineTab from "./TimelineTab";
 import ArquivosTab from "./ArquivosTab";
+import PatientJourney from "./PatientJourney";
+import ConsultationWorkspace from "./ConsultationWorkspace";
 
 export type Patient = {
   id: number;
@@ -40,7 +42,7 @@ export type Patient = {
   foto?: string;
 };
 
-type BioRow = { data: string; peso: number; gordura: number; musculo: number; agua: number; imc: number };
+type BioRow = { data: string; peso: number; gordura: number; musculo: number; agua: number; imc: number; visceral?: number; basal?: number; nota?: number; circunferencia?: number; pressao?: string };
 
 const bioimpedanciaData: Record<number, BioRow[]> = {
   1: [
@@ -362,8 +364,10 @@ const examesData: Record<number, ExamesRecord> = {
 
 // ─── METRICS ─────────────────────────────────────────────────────────────────
 
+type BioMetricKey = "peso" | "gordura" | "musculo" | "agua" | "imc";
+
 type MetricDef = {
-  key: keyof Omit<BioRow, "data">;
+  key: BioMetricKey;
   label: string;
   unit: string;
   color: string;
@@ -817,11 +821,38 @@ function FichaKPI({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-type Tab = "bioimpedancia" | "score" | "risco" | "medicamentos" | "suplementos" | "timeline" | "arquivos";
+type Tab = "bioimpedancia" | "score" | "risco" | "medicamentos" | "suplementos" | "timeline" | "arquivos" | "jornada";
+
+function loadBioHistory(patientId: number): { history: BioRow[]; error: string | null } {
+  const demo = bioimpedanciaData[patientId] || [];
+  try {
+    const saved = window.localStorage.getItem(`lapidar-demo-bio-${patientId}`);
+    if (!saved) return { history: demo, error: null };
+    const parsed: unknown = JSON.parse(saved);
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every((row) =>
+        row &&
+        typeof row.data === "string" &&
+        ["peso", "gordura", "musculo", "agua", "imc"].every((key) => typeof row[key] === "number"),
+      )
+    ) {
+      return { history: demo, error: "Os dados locais de bioimpedância estão inválidos. Uma nova medição poderá substituir a demonstração." };
+    }
+    return { history: [...demo, ...(parsed as BioRow[])], error: null };
+  } catch {
+    return { history: demo, error: "Não foi possível ler o histórico local de bioimpedância." };
+  }
+}
 
 export default function PatientDetail({ patient, onBack }: { patient: Patient; onBack: () => void }) {
   const [tab, setTab] = useState<Tab>("bioimpedancia");
-  const history = bioimpedanciaData[patient.id] || [];
+  const [consultationOpen, setConsultationOpen] = useState(false);
+  const [bioState] = useState(() => loadBioHistory(patient.id));
+  const [history, setHistory] = useState(bioState.history);
+  const [bioError, setBioError] = useState<string | null>(bioState.error);
+  const [newBioOpen, setNewBioOpen] = useState(false);
+  const [newBio, setNewBio] = useState({ data: new Date().toISOString().slice(0, 10), peso: "", gordura: "", musculo: "", agua: "", imc: "", visceral: "", basal: "", nota: "", circunferencia: "", pressao: "" });
   const latest = history[history.length - 1];
   const pesoAtual = latest?.peso ?? patient.pesoInicial ?? 0;
   const pesoInicial = patient.pesoInicial ?? pesoAtual;
@@ -836,6 +867,20 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
   }
   const pctStr = `${Math.round(pctAtingido)}%`;
   const pctColor = pctAtingido >= 80 ? "#66724A" : pctAtingido >= 40 ? "#C6A15B" : "#B91C1C";
+
+  if (consultationOpen) {
+    return (
+      <ConsultationWorkspace
+        nomePaciente={patient.nome}
+        protocolo={patient.protocolo}
+        onBack={() => setConsultationOpen(false)}
+        onOpenJourney={() => {
+          setConsultationOpen(false);
+          setTab("jornada");
+        }}
+      />
+    );
+  }
 
   const initials = patient.nome.split(" ").slice(0, 2).map((n) => n[0]).join("");
   const fichaDetails = [
@@ -859,23 +904,33 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
           <span style={{ color: "#D0C8BE" }}>/</span>
           <span className="text-sm" style={{ color: "#9B8B7A" }}>{patient.nome}</span>
         </div>
-        <BotaoImprimirResumo
-          patient={patient}
-          bioAtual={history[history.length - 1] ? {
-            peso: history[history.length - 1].peso,
-            gordura: history[history.length - 1].gordura,
-            musculo: history[history.length - 1].musculo,
-            agua: history[history.length - 1].agua,
-            imc: history[history.length - 1].imc,
-          } : undefined}
-          bioInicial={history[0] ? {
-            peso: history[0].peso,
-            gordura: history[0].gordura,
-            musculo: history[0].musculo,
-            agua: history[0].agua,
-            imc: history[0].imc,
-          } : undefined}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setConsultationOpen(true)}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-white"
+            style={{ background: "#5B2333" }}
+          >
+            Abrir consulta
+          </button>
+          <BotaoImprimirResumo
+            patient={patient}
+            bioAtual={history[history.length - 1] ? {
+              peso: history[history.length - 1].peso,
+              gordura: history[history.length - 1].gordura,
+              musculo: history[history.length - 1].musculo,
+              agua: history[history.length - 1].agua,
+              imc: history[history.length - 1].imc,
+            } : undefined}
+            bioInicial={history[0] ? {
+              peso: history[0].peso,
+              gordura: history[0].gordura,
+              musculo: history[0].musculo,
+              agua: history[0].agua,
+              imc: history[0].imc,
+            } : undefined}
+          />
+        </div>
       </div>
 
       {/* ── FICHA DA PACIENTE ── */}
@@ -1040,6 +1095,7 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
           { id: "suplementos", label: "Suplementos" },
           { id: "timeline", label: "Timeline" },
           { id: "arquivos", label: "Arquivos" },
+          { id: "jornada", label: "Jornada" },
         ] as { id: Tab; label: string }[]).map((t) => (
           <button
             key={t.id}
@@ -1058,17 +1114,118 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
 
       {/* ── Bioimpedância ── */}
       {tab === "bioimpedancia" && (
-        history.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 480px), 1fr))" }}>
-            {metrics.map((m) => (
-              <MetricCard key={m.key} metric={m} history={history} />
-            ))}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold" style={{ color: "#5B2333" }}>Histórico de bioimpedância</h3>
+              <p className="mt-1 text-xs" style={{ color: "#9B8B7A" }}>Dados fictícios de demonstração · sem finalidade diagnóstica.</p>
+            </div>
+            <button type="button" onClick={() => setNewBioOpen(true)} className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#5B2333" }}>+ Nova bioimpedância</button>
           </div>
-        ) : (
-          <div className="rounded-xl p-10 text-center" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
-            <p className="text-sm" style={{ color: "#9B8B7A" }}>Nenhuma medição registrada.</p>
-          </div>
-        )
+          {bioError && <p role="alert" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{bioError}</p>}
+          {history.length > 0 ? (
+            <div className="grid grid-cols-1 gap-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 480px), 1fr))" }}>
+              {metrics.map((m) => (
+                <MetricCard key={m.key} metric={m} history={history} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl p-10 text-center" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
+              <p className="text-sm" style={{ color: "#9B8B7A" }}>Nenhuma medição registrada.</p>
+            </div>
+          )}
+          {history.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                ["Gordura visceral", history[history.length - 1].visceral, "nível"],
+                ["Taxa metabólica basal", history[history.length - 1].basal, "kcal"],
+                ["Nota", history[history.length - 1].nota, "0–100"],
+                ["Circunferência abdominal", history[history.length - 1].circunferencia, "cm"],
+                ["Pressão arterial", history[history.length - 1].pressao, ""],
+              ].map(([label, value, unit]) => (
+                <div key={label} className="rounded-xl border bg-white p-4" style={{ borderColor: "#E8E0D0" }}>
+                  <p className="text-xs" style={{ color: "#9B8B7A" }}>{label}</p>
+                  <p className="mt-1 text-lg font-semibold" style={{ color: "#5B2333" }}>{value === undefined || value === "" ? "—" : `${value} ${unit}`}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {newBioOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setNewBioOpen(false);
+        }}>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              const row: BioRow = {
+                data: new Date(`${newBio.data}T12:00:00`).toLocaleDateString("pt-BR"),
+                peso: Number(newBio.peso),
+                gordura: Number(newBio.gordura),
+                musculo: Number(newBio.musculo),
+                agua: Number(newBio.agua),
+                imc: Number(newBio.imc),
+                visceral: newBio.visceral ? Number(newBio.visceral) : undefined,
+                basal: newBio.basal ? Number(newBio.basal) : undefined,
+                nota: newBio.nota ? Number(newBio.nota) : undefined,
+                circunferencia: newBio.circunferencia ? Number(newBio.circunferencia) : undefined,
+                pressao: newBio.pressao.trim() || undefined,
+              };
+              const added = [...history, row];
+              try {
+                window.localStorage.setItem(`lapidar-demo-bio-${patient.id}`, JSON.stringify(added.slice((bioimpedanciaData[patient.id] || []).length)));
+                setHistory(added);
+                setBioError(null);
+                setNewBioOpen(false);
+                setNewBio({ data: new Date().toISOString().slice(0, 10), peso: "", gordura: "", musculo: "", agua: "", imc: "", visceral: "", basal: "", nota: "", circunferencia: "", pressao: "" });
+              } catch {
+                setBioError("Não foi possível salvar esta medição neste navegador.");
+              }
+            }}
+            className="max-h-[90vh] w-full max-w-2xl space-y-4 overflow-y-auto rounded-2xl p-5"
+            style={{ background: "#F4EFE7", border: "1px solid #E8E0D0" }}
+          >
+            <div>
+              <h3 className="text-xl" style={{ fontFamily: "var(--font-serif)", color: "#5B2333" }}>Nova bioimpedância</h3>
+              <p className="mt-1 text-xs" style={{ color: "#9B8B7A" }}>Registro de demonstração local · revise valores antes de salvar.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {([
+                ["data", "Data", "date", true],
+                ["peso", "Peso (kg)", "number", true],
+                ["gordura", "Gordura corporal (%)", "number", true],
+                ["musculo", "Músculo esquelético (kg)", "number", true],
+                ["agua", "Água corporal (%)", "number", true],
+                ["imc", "IMC", "number", true],
+                ["visceral", "Gordura visceral (nível)", "number", false],
+                ["basal", "Taxa metabólica basal (kcal)", "number", false],
+                ["nota", "Nota", "number", false],
+                ["circunferencia", "Circunferência abdominal (cm)", "number", false],
+                ["pressao", "Pressão arterial", "text", false],
+              ] as const).map(([key, label, type, required]) => (
+                <label key={key} className="text-xs font-medium" style={{ color: "#6D5C50" }}>
+                  {label}
+                  <input
+                    type={type}
+                    required={required}
+                    min={type === "number" ? "0" : undefined}
+                    step={type === "number" ? "0.1" : undefined}
+                    value={newBio[key]}
+                    onChange={(event) => setNewBio((current) => ({ ...current, [key]: event.target.value }))}
+                    className="mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm"
+                    style={{ background: "#fff", border: "1px solid #E8E0D0" }}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 border-t pt-4" style={{ borderColor: "#E8E0D0" }}>
+              <button type="button" onClick={() => setNewBioOpen(false)} className="rounded-lg px-4 py-2 text-sm" style={{ background: "#E8E0D0", color: "#5B2333" }}>Cancelar</button>
+              <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#5B2333" }}>Salvar medição</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* ── Score Lapidar ── */}
@@ -1088,6 +1245,8 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
 
       {/* ── Arquivos ── */}
       {tab === "arquivos" && <ArquivosTab patientId={patient.id} />}
+
+      {tab === "jornada" && <PatientJourney patientId={patient.id} />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type RiscoNivel = "baixo" | "moderado" | "alto" | "muito-alto";
+type RiscoNivel = "baixo" | "intermediario" | "alto" | "muito-alto" | "extremo";
 
 type RiscoState = {
   nivel: RiscoNivel;
@@ -9,23 +9,42 @@ type RiscoState = {
   tabagismo: boolean;
   historiaFamiliar: boolean;
   ldlAtual?: number;
+  naoHdlAtual?: number;
   apob?: number;
   lpa?: number;
   pcrus?: number;
 };
 
 const nivelConfig: Record<RiscoNivel, { label: string; cor: string; bg: string; ldlMeta: number; descricao: string }> = {
-  "baixo":      { label: "Baixo",      cor: "#3D6B2E", bg: "#E8F0E0", ldlMeta: 130, descricao: "Sem fatores de risco significativos. Foco em prevenção primária." },
-  "moderado":   { label: "Moderado",   cor: "#92610A", bg: "#FEF3C7", ldlMeta: 100, descricao: "1–2 fatores de risco. Controle rigoroso do estilo de vida." },
-  "alto":       { label: "Alto",        cor: "#C2410C", bg: "#FEE2E2", ldlMeta: 70,  descricao: "≥3 fatores ou DM sem lesão de órgão-alvo. Terapia medicamentosa indicada." },
-  "muito-alto": { label: "Muito Alto",  cor: "#991B1B", bg: "#FEE2E2", ldlMeta: 55,  descricao: "DCV estabelecida, DM com lesão, ou Lp(a) elevado. Meta LDL < 55 mg/dL." },
+  "baixo":      { label: "Baixo",         cor: "#3D6B2E", bg: "#E8F0E0", ldlMeta: 130, descricao: "Classificação demonstrativa. A avaliação clínica deve ser feita pela profissional responsável." },
+  "intermediario": { label: "Intermediário", cor: "#92610A", bg: "#FEF3C7", ldlMeta: 100, descricao: "Classificação demonstrativa. A avaliação clínica deve ser feita pela profissional responsável." },
+  "alto":       { label: "Alto",          cor: "#C2410C", bg: "#FEE2E2", ldlMeta: 70,  descricao: "Classificação demonstrativa. A avaliação clínica deve ser feita pela profissional responsável." },
+  "muito-alto": { label: "Muito Alto",    cor: "#991B1B", bg: "#FEE2E2", ldlMeta: 55,  descricao: "Classificação demonstrativa. A avaliação clínica deve ser feita pela profissional responsável." },
+  "extremo":    { label: "Extremo",       cor: "#6B1021", bg: "#FCE7EA", ldlMeta: 40,  descricao: "Classificação demonstrativa. A avaliação clínica deve ser feita pela profissional responsável." },
 };
 
-const niveis: RiscoNivel[] = ["baixo", "moderado", "alto", "muito-alto"];
+const niveis: RiscoNivel[] = ["baixo", "intermediario", "alto", "muito-alto", "extremo"];
+function isRiskLevel(value: unknown): value is RiscoNivel {
+  return niveis.some((level) => level === value);
+}
+
+function isRiscoState(value: unknown): value is RiscoState {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return isRiskLevel(record.nivel) &&
+    ["has", "dm", "tabagismo", "historiaFamiliar"].every((key) => typeof record[key] === "boolean") &&
+    ["ldlAtual", "naoHdlAtual", "apob", "lpa", "pcrus"].every((key) =>
+      record[key] === undefined || (typeof record[key] === "number" && Number.isFinite(record[key]) && record[key] >= 0),
+    );
+}
+
+const lipidInputs: { key: keyof Pick<RiscoState, "naoHdlAtual">; label: string; meta: string }[] = [
+  { key: "naoHdlAtual", label: "Não-HDL atual", meta: "< 130 mg/dL" },
+];
 
 export default function RiscoCV({ patientId }: { patientId: number }) {
-  const [state, setState] = useState<RiscoState>({
-    nivel: patientId === 1 || patientId === 3 ? "alto" : patientId === 2 ? "moderado" : "baixo",
+  const initialRisk: RiscoState = {
+    nivel: patientId === 1 || patientId === 3 ? "alto" : patientId === 2 ? "intermediario" : "baixo",
     has: patientId === 3,
     dm: patientId === 3,
     tabagismo: false,
@@ -34,20 +53,50 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
     apob:  patientId === 1 ? 95 : patientId === 2 ? 78 : patientId === 3 ? 105 : undefined,
     lpa:   patientId === 1 ? 18 : patientId === 2 ? 22 : patientId === 3 ? 28  : undefined,
     pcrus: patientId === 1 ? 0.8 : patientId === 2 ? 1.4 : patientId === 3 ? 2.1 : undefined,
+  };
+  const storageKey = `lapidar-demo-cv-${patientId}`;
+  const [loaded] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (!saved) return { state: initialRisk, error: null as string | null };
+      const parsed: unknown = JSON.parse(saved);
+      if (!isRiscoState(parsed)) return { state: initialRisk, error: "Os dados cardiovasculares locais estão inválidos. Salve uma alteração para reiniciar a demonstração." };
+      return { state: { ...initialRisk, ...parsed }, error: null as string | null };
+    } catch {
+      return { state: initialRisk, error: "Não foi possível ler os dados cardiovasculares deste navegador." };
+    }
   });
+  const [state, setState] = useState<RiscoState>(loaded.state);
+  const [storageError, setStorageError] = useState<string | null>(loaded.error);
+
+  const updateState = (change: (current: RiscoState) => RiscoState) => {
+    const next = change(state);
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+      setState(next);
+      setStorageError(null);
+    } catch {
+      setStorageError("Não foi possível salvar os dados cardiovasculares neste navegador.");
+    }
+  };
 
   const cfg = nivelConfig[state.nivel];
   const metaAtingida = state.ldlAtual !== undefined && state.ldlAtual <= cfg.ldlMeta;
   const ldlDelta = state.ldlAtual !== undefined ? state.ldlAtual - cfg.ldlMeta : undefined;
 
   const toggle = (field: keyof Pick<RiscoState, "has" | "dm" | "tabagismo" | "historiaFamiliar">) =>
-    setState((s) => ({ ...s, [field]: !s[field] }));
+    updateState((current) => ({ ...current, [field]: !current[field] }));
 
-  const setNum = (field: keyof Pick<RiscoState, "ldlAtual" | "apob" | "lpa" | "pcrus">, v: string) =>
-    setState((s) => ({ ...s, [field]: v === "" ? undefined : parseFloat(v) }));
+  const setNum = (field: keyof Pick<RiscoState, "ldlAtual" | "naoHdlAtual" | "apob" | "lpa" | "pcrus">, v: string) => {
+    const parsed = v === "" ? undefined : Number(v);
+    if (parsed !== undefined && (!Number.isFinite(parsed) || parsed < 0)) return;
+    updateState((current) => ({ ...current, [field]: parsed }));
+  };
 
   return (
     <div className="space-y-5">
+      <p className="text-xs" style={{ color: "#9B8B7A" }}>Valores e recomendações são ilustrativos e não substituem avaliação clínica. Alterações ficam apenas neste navegador.</p>
+      {storageError && <p role="alert" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{storageError}</p>}
 
       {/* Nível de risco selector */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
@@ -58,14 +107,14 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
           <p className="text-xs mt-0.5" style={{ color: "#9B8B7A" }}>Selecione o nível de risco global da paciente</p>
         </div>
         <div className="p-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
             {niveis.map((n) => {
               const c = nivelConfig[n];
               const active = state.nivel === n;
               return (
                 <button
                   key={n}
-                  onClick={() => setState((s) => ({ ...s, nivel: n }))}
+                  onClick={() => updateState((current) => ({ ...current, nivel: n }))}
                   className="rounded-xl px-4 py-3 text-left transition-all"
                   style={{
                     background: active ? c.bg : "#F8F4EF",
@@ -144,7 +193,39 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
                 onBlur={(e) => (e.currentTarget.style.borderColor = "#E8E0D0")}
               />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              {lipidInputs.map((field) => (
+                <label key={field.key} className="block text-xs font-semibold" style={{ color: "#9B8B7A" }}>
+                  {field.label} (mg/dL)
+                  <input
+                    type="number"
+                    min="0"
+                    value={state[field.key] ?? ""}
+                    onChange={(event) => setNum(field.key, event.target.value)}
+                    placeholder={field.meta}
+                    className="mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                    style={{ background: "#F8F4EF", border: "1.5px solid #E8E0D0", color: "#1A1008" }}
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="text-xs" style={{ color: "#9B8B7A" }}>
+              Redução necessária estimada de LDL: {ldlDelta !== undefined && ldlDelta > 0 ? `${Math.round((ldlDelta / (state.ldlAtual ?? 1)) * 100)}%` : ldlDelta !== undefined ? "Meta demonstrativa atingida" : "Informe o LDL para estimar"}.
+            </p>
           </div>
+        </div>
+
+        <div className="rounded-xl border p-4" style={{ background: "#fff", borderColor: "#E8E0D0" }}>
+          <h4 className="text-sm font-semibold" style={{ color: "#5B2333" }}>Estratégias para discussão clínica</h4>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "#9B8B7A" }}>
+            Valores, metas e classificações exibidos são dados de demonstração e não substituem a avaliação clínica, diretrizes vigentes ou decisão da profissional responsável.
+          </p>
+          <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2" style={{ color: "#1A1008" }}>
+            <li>• Confirmar fatores de risco e histórico clínico.</li>
+            <li>• Revisar exames recentes e a meta individual definida.</li>
+            <li>• Registrar a decisão e o plano na consulta.</li>
+            <li>• Acompanhar exames conforme orientação profissional.</li>
+          </ul>
         </div>
 
         {/* Fatores de risco */}

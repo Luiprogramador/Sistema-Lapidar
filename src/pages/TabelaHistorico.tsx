@@ -71,14 +71,30 @@ const initialSups: Record<number, RegistroTabela[]> = {
   ],
 };
 
+function loadRecords(patientId: number, category: "medicamentos" | "suplementos", initial: Record<number, RegistroTabela[]>) {
+  try {
+    const saved = window.localStorage.getItem(`lapidar-demo-${category}-${patientId}`);
+    if (!saved) return { records: initial[patientId] ?? [], error: null as string | null };
+    const parsed: unknown = JSON.parse(saved);
+    if (!Array.isArray(parsed) || !parsed.every((record) => record && typeof record.id === "number" && typeof record.nome === "string")) {
+      return { records: initial[patientId] ?? [], error: "O histórico salvo está inválido. Adicionar um registro novo substituirá os dados de demonstração." };
+    }
+    return { records: parsed as RegistroTabela[], error: null as string | null };
+  } catch {
+    return { records: initial[patientId] ?? [], error: "Não foi possível ler este histórico local." };
+  }
+}
+
 function TabelaEditavel({
   titulo,
   registros,
   onAdd,
+  notice,
 }: {
   titulo: string;
   registros: RegistroTabela[];
   onAdd: (r: Omit<RegistroTabela, "id">) => void;
+  notice: string | null;
 }) {
   const [form, setForm] = useState({ data: "", nome: "", dose: "", motivo: "", observacao: "" });
   const [adding, setAdding] = useState(false);
@@ -105,6 +121,9 @@ function TabelaEditavel({
           Adicionar
         </button>
       </div>
+
+      {notice && <p role="alert" className="border-b bg-amber-50 px-5 py-2 text-xs text-amber-900">{notice}</p>}
+      <p className="px-5 pt-3 text-xs" style={{ color: "#9B8B7A" }}>Histórico fictício de demonstração; alterações são salvas apenas neste navegador.</p>
 
       {/* Add form */}
       {adding && (
@@ -178,19 +197,39 @@ function TabelaEditavel({
 }
 
 export function MedicamentosTab({ patientId }: { patientId: number }) {
-  const [meds, setMeds] = useState<RegistroTabela[]>(initialMeds[patientId] ?? []);
+  const [loaded] = useState(() => loadRecords(patientId, "medicamentos", initialMeds));
+  const [meds, setMeds] = useState<RegistroTabela[]>(loaded.records);
+  const [error, setError] = useState<string | null>(loaded.error);
 
-  const addMed = (r: Omit<RegistroTabela, "id">) =>
-    setMeds((s) => [...s, { ...r, id: Date.now() }]);
+  const addMed = (r: Omit<RegistroTabela, "id">) => {
+    const next = [...meds, { ...r, id: Date.now() }];
+    try {
+      window.localStorage.setItem(`lapidar-demo-medicamentos-${patientId}`, JSON.stringify(next));
+      setMeds(next);
+      setError(null);
+    } catch {
+      setError("Não foi possível salvar o medicamento neste navegador.");
+    }
+  };
 
-  return <TabelaEditavel titulo="Histórico de Medicamentos" registros={meds} onAdd={addMed} />;
+  return <TabelaEditavel titulo="Histórico de Medicamentos" registros={meds} onAdd={addMed} notice={error} />;
 }
 
 export function SuplementosTab({ patientId }: { patientId: number }) {
-  const [sups, setSups] = useState<RegistroTabela[]>(initialSups[patientId] ?? []);
+  const [loaded] = useState(() => loadRecords(patientId, "suplementos", initialSups));
+  const [sups, setSups] = useState<RegistroTabela[]>(loaded.records);
+  const [error, setError] = useState<string | null>(loaded.error);
 
-  const addSup = (r: Omit<RegistroTabela, "id">) =>
-    setSups((s) => [...s, { ...r, id: Date.now() }]);
+  const addSup = (r: Omit<RegistroTabela, "id">) => {
+    const next = [...sups, { ...r, id: Date.now() }];
+    try {
+      window.localStorage.setItem(`lapidar-demo-suplementos-${patientId}`, JSON.stringify(next));
+      setSups(next);
+      setError(null);
+    } catch {
+      setError("Não foi possível salvar o suplemento neste navegador.");
+    }
+  };
 
-  return <TabelaEditavel titulo="Histórico de Suplementos" registros={sups} onAdd={addSup} />;
+  return <TabelaEditavel titulo="Histórico de Suplementos" registros={sups} onAdd={addSup} notice={error} />;
 }
