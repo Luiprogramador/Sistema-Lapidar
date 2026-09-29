@@ -33,6 +33,8 @@ const alertasPacientes = [
   { nome: "Juliana Ramos", protocolo: "Lapidar Fertilidade", alerta: "Sem atividade física" },
   { nome: "Carla Mendes", protocolo: "Lapidar 40+", alerta: "LDL acima da meta" },
   { nome: "Beatriz Lima", protocolo: "Pocket", alerta: "Vitamina D baixa" },
+  { nome: "Roberta Nunes", protocolo: "Lapidar 40+", alerta: "Exames pendentes" },
+  { nome: "Gabriela Torres", protocolo: "Lapidar SOP", alerta: "Bioimpedância pendente" },
 ];
 
 const proximosContatos = [
@@ -81,6 +83,8 @@ function AlertBadge({ type }: { type: string }) {
     "LDL acima da meta": { bg: "#FEE2E2", text: "#991B1B" },
     "Vitamina D baixa": { bg: "#FEF3C7", text: "#92400E" },
     "Sem atividade física": { bg: "#E0F2FE", text: "#075985" },
+    "Exames pendentes": { bg: "#EDE9FE", text: "#5B21B6" },
+    "Bioimpedância pendente": { bg: "#FCE7F3", text: "#9D174D" },
   };
   const style = map[type] || { bg: "#F3F4F6", text: "#374151" };
   return (

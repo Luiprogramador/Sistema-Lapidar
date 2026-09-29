@@ -33,26 +33,33 @@ const STARTER_GOALS: Goal[] = [
   { id: "meta-rotina", name: "Rotina de autocuidado", guidance: "Siga o combinado na sua consulta.", frequency: "5x por semana" },
 ];
 const SYMPTOMS = ["Fogachos", "Ressecamento", "Irritabilidade", "Névoa mental", "Libido"];
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "inicio", label: "Início", icon: "⌂" },
-  { id: "ficha", label: "Minha ficha", icon: "♡" },
-  { id: "diario", label: "Diário", icon: "✎" },
-  { id: "evolucao", label: "Evolução", icon: "↗" },
-  { id: "materiais", label: "Materiais", icon: "▤" },
-  { id: "arquivos", label: "Arquivos", icon: "▧" },
-  { id: "avisos", label: "Notificações", icon: "♧" },
+const NAV_TABS: { id: TabId; label: string; mobileLabel: string; icon: string }[] = [
+  { id: "inicio", label: "Início", mobileLabel: "Início", icon: "⌂" },
+  { id: "ficha", label: "Minha ficha", mobileLabel: "Ficha", icon: "♡" },
+  { id: "diario", label: "Diário", mobileLabel: "Diário", icon: "✎" },
+  { id: "evolucao", label: "Evolução", mobileLabel: "Evolução", icon: "↗" },
+  { id: "materiais", label: "Materiais", mobileLabel: "Materiais", icon: "▤" },
+  { id: "arquivos", label: "Arquivos", mobileLabel: "Arquivos", icon: "▧" },
 ];
 const colors = {
   wine: "#5B2333",
+  wineDark: "#3E1623",
   wineLight: "#7A3047",
+  wineSoft: "rgba(91, 35, 51, 0.07)",
   gold: "#C6A15B",
-  cream: "#F4EFE7",
-  paper: "#FFFCF8",
-  border: "#E8E0D0",
-  text: "#46363A",
-  muted: "#6E6460",
+  goldLight: "#E2C98D",
+  cream: "#F5EFE6",
+  paper: "#FAF6F0",
+  border: "rgba(91, 35, 51, 0.16)",
+  text: "#2A0E16",
+  muted: "#7A6569",
 };
-const cardStyle = { background: colors.paper, border: `1px solid ${colors.border}`, borderRadius: 20 };
+const cardStyle = {
+  background: "#FAF6F0",
+  border: "1px solid rgba(91, 35, 51, 0.13)",
+  borderRadius: 20,
+  boxShadow: "0 4px 18px rgba(91, 35, 51, 0.05)",
+};
 const buttonBase = { border: 0, cursor: "pointer", font: "inherit" };
 
 function localToday() {
@@ -141,9 +148,12 @@ function Card({ children, className = "", style = {} }: { children: ReactNode; c
 
 function Heading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
-    <div className="mb-5">
-      <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#8B6A42" }}>{eyebrow}</p>
-      <h2 className="text-2xl font-medium sm:text-3xl" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>{title}</h2>
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: colors.gold }} />
+        <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "#8B6A42" }}>{eyebrow}</p>
+      </div>
+      <h2 className="text-2xl font-semibold sm:text-3xl" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>{title}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: colors.muted }}>{description}</p>
     </div>
   );
@@ -157,7 +167,7 @@ function Choice<T extends string>({ label, value, options, onChange }: {
 }) {
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>{label}</legend>
+      <legend className="mb-2 text-sm font-semibold" style={{ color: colors.wine }}>{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const selected = value === option.value;
@@ -167,8 +177,16 @@ function Choice<T extends string>({ label, value, options, onChange }: {
               type="button"
               aria-pressed={selected}
               onClick={() => onChange(option.value)}
-              className="rounded-full px-3 py-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
-              style={{ ...buttonBase, background: selected ? colors.wine : colors.cream, color: selected ? colors.paper : colors.wine, outlineColor: colors.gold }}
+              className="rounded-full px-3.5 py-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
+              style={{
+                ...buttonBase,
+                background: selected ? "linear-gradient(135deg, #6B2A3C, #5B2333)" : "rgba(91, 35, 51, 0.06)",
+                color: selected ? "#F4EFE7" : colors.wine,
+                border: `1.5px solid ${selected ? "#5B2333" : "rgba(91, 35, 51, 0.2)"}`,
+                boxShadow: selected ? "0 2px 10px rgba(91,35,51,0.28)" : "none",
+                outlineColor: colors.gold,
+                transition: "all 0.15s ease",
+              }}
             >
               {option.label}
             </button>
@@ -218,6 +236,7 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
   const [range, setRange] = useState<Range>("30");
   const [goalEditorOpen, setGoalEditorOpen] = useState(false);
   const [goalDraft, setGoalDraft] = useState<Goal>({ id: "", name: "", guidance: "", frequency: "" });
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     try {
@@ -276,6 +295,12 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
     const next = { ...data, checkIns: [entry, ...data.checkIns] };
     if (persist(next)) {
       setData(next);
+      // Comemoração por meta: confete se adesão >= 80%
+      const adh = adherenceFor(entry, data.goals);
+      if (adh !== null && adh >= 80) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3500);
+      }
       setDraft(emptyDraft(data.goals));
       setActiveTab("evolucao");
     }
@@ -344,13 +369,33 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
         <button type="button" onClick={() => setActiveTab("diario")} className="mt-5 rounded-full px-5 py-3 text-sm font-bold" style={{ ...buttonBase, background: "#E2C98D", color: "#3E1623" }}>Fazer meu check-in <span aria-hidden="true">→</span></button>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Próxima consulta</p><p className="mt-2 text-lg font-semibold" style={{ color: colors.wine }}>15 de outubro</p><p className="mt-1 text-sm" style={{ color: colors.muted }}>Quinta-feira · 14h30 · Online</p></Card>
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Diário Lapidar</p><p className="mt-2 text-lg font-semibold" style={{ color: colors.wine }}>{data.checkIns.length} {data.checkIns.length === 1 ? "registro" : "registros"}</p><p className="mt-1 text-sm" style={{ color: colors.muted }}>{latestCheckIn ? `Último: ${dateLabel(latestCheckIn.date)}` : "Seu primeiro check-in começa aqui."}</p></Card>
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Para você</p><p className="mt-2 text-lg font-semibold" style={{ color: colors.wine }}>1 material novo</p><p className="mt-1 text-sm" style={{ color: colors.muted }}>Guia de rotina e bem-estar</p></Card>
+        <Card className="p-5" style={{ borderTop: "3.5px solid #5B2333", background: "#FAF6F0" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#8B6A42" }}>Próxima consulta</p>
+          <p className="mt-2 text-xl font-bold" style={{ color: colors.wine }}>15 de outubro</p>
+          <p className="mt-1 text-sm" style={{ color: colors.muted }}>Quinta-feira · 14h30 · Online</p>
+        </Card>
+        <Card className="p-5" style={{ borderTop: "3.5px solid #5B2333", background: "#FAF6F0" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#8B6A42" }}>Diário Lapidar</p>
+          <p className="mt-2 text-xl font-bold" style={{ color: colors.wine }}>{data.checkIns.length} {data.checkIns.length === 1 ? "registro" : "registros"}</p>
+          <p className="mt-1 text-sm" style={{ color: colors.muted }}>{latestCheckIn ? `Último: ${dateLabel(latestCheckIn.date)}` : "Seu primeiro check-in começa aqui."}</p>
+        </Card>
+        <Card className="p-5" style={{ borderTop: "3.5px solid #5B2333", background: "#FAF6F0" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#8B6A42" }}>Para você</p>
+          <p className="mt-2 text-xl font-bold" style={{ color: colors.wine }}>1 material novo</p>
+          <p className="mt-1 text-sm" style={{ color: colors.muted }}>Guia de rotina e bem-estar</p>
+        </Card>
       </div>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Card className="p-5 sm:p-6"><h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Sua próxima conversa</h3><p className="mt-2 text-sm leading-6" style={{ color: colors.muted }}>Nutrição e hábitos · 15 de outubro, às 14h30</p><button type="button" onClick={() => setActiveTab("ficha")} className="mt-4 text-sm font-bold" style={{ ...buttonBase, background: "transparent", color: colors.wineLight }}>Ver consultas →</button></Card>
-        <Card className="p-5 sm:p-6"><h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Um lembrete gentil</h3><p className="mt-2 text-sm leading-6" style={{ color: colors.muted }}>Pequenas escolhas consistentes também são progresso. Registre seu dia sem buscar perfeição.</p><button type="button" onClick={() => setActiveTab("evolucao")} className="mt-4 text-sm font-bold" style={{ ...buttonBase, background: "transparent", color: colors.wineLight }}>Ver minha evolução →</button></Card>
+        <Card className="p-5 sm:p-6" style={{ borderLeft: "4px solid #5B2333", background: "#FAF6F0" }}>
+          <h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Sua próxima conversa</h3>
+          <p className="mt-2 text-sm leading-6" style={{ color: colors.muted }}>Nutrição e hábitos · 15 de outubro, às 14h30</p>
+          <button type="button" onClick={() => setActiveTab("ficha")} className="mt-4 text-sm font-bold" style={{ ...buttonBase, background: "transparent", color: colors.wine }}>Ver consultas →</button>
+        </Card>
+        <Card className="p-5 sm:p-6" style={{ borderLeft: "4px solid #5B2333", background: "#FAF6F0" }}>
+          <h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Um lembrete gentil</h3>
+          <p className="mt-2 text-sm leading-6" style={{ color: colors.muted }}>Pequenas escolhas consistentes também são progresso. Registre seu dia sem buscar perfeição.</p>
+          <button type="button" onClick={() => setActiveTab("evolucao")} className="mt-4 text-sm font-bold" style={{ ...buttonBase, background: "transparent", color: colors.wine }}>Ver minha evolução →</button>
+        </Card>
       </div>
     </>
   );
@@ -452,15 +497,25 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
         {[{ value: "7", label: "7 dias" }, { value: "30", label: "30 dias" }, { value: "90", label: "90 dias" }, { value: "todo", label: "Todo o período" }].map((option) => <button key={option.value} type="button" aria-pressed={range === option.value} onClick={() => setRange(option.value as Range)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ ...buttonBase, background: range === option.value ? colors.wine : colors.paper, color: range === option.value ? colors.paper : colors.wine, border: `1px solid ${colors.border}` }}>{option.label}</button>)}
       </div>
       <div className="mb-5 grid gap-4 sm:grid-cols-3">
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Check-ins no período</p><p className="mt-2 text-3xl font-semibold" style={{ color: colors.wine }}>{filteredCheckIns.length}</p></Card>
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Ações acompanhadas</p><p className="mt-2 text-3xl font-semibold" style={{ color: colors.wine }}>{averageAdherence === null ? "—" : `${averageAdherence}%`}</p><p className="mt-1 text-xs" style={{ color: "#807572" }}>Média das ações programadas</p></Card>
-        <Card className="p-5"><p className="text-xs uppercase tracking-wide" style={{ color: "#807572" }}>Energia média</p><p className="mt-2 text-3xl font-semibold" style={{ color: colors.wine }}>{filteredCheckIns.length ? `${(filteredCheckIns.reduce((sum, item) => sum + item.energy, 0) / filteredCheckIns.length).toFixed(1)}/10` : "—"}</p></Card>
+        <div className="rounded-[20px] p-5 text-white" style={{ background: "linear-gradient(135deg, #5B2333 0%, #441422 100%)", boxShadow: "0 6px 20px rgba(91,35,51,0.2)", border: "1px solid rgba(198,161,91,0.3)" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#E2C98D" }}>Check-ins no período</p>
+          <p className="mt-2 text-3xl font-bold" style={{ color: "#F4EFE7" }}>{filteredCheckIns.length}</p>
+        </div>
+        <div className="rounded-[20px] p-5 text-white" style={{ background: "linear-gradient(135deg, #5B2333 0%, #441422 100%)", boxShadow: "0 6px 20px rgba(91,35,51,0.2)", border: "1px solid rgba(198,161,91,0.3)" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#E2C98D" }}>Ações acompanhadas</p>
+          <p className="mt-2 text-3xl font-bold" style={{ color: "#F4EFE7" }}>{averageAdherence === null ? "—" : `${averageAdherence}%`}</p>
+          <p className="mt-1 text-xs" style={{ color: "rgba(244,239,231,0.75)" }}>Média das ações programadas</p>
+        </div>
+        <div className="rounded-[20px] p-5 text-white" style={{ background: "linear-gradient(135deg, #5B2333 0%, #441422 100%)", boxShadow: "0 6px 20px rgba(91,35,51,0.2)", border: "1px solid rgba(198,161,91,0.3)" }}>
+          <p className="text-xs uppercase tracking-wide font-bold" style={{ color: "#E2C98D" }}>Energia média</p>
+          <p className="mt-2 text-3xl font-bold" style={{ color: "#F4EFE7" }}>{filteredCheckIns.length ? `${(filteredCheckIns.reduce((sum, item) => sum + item.energy, 0) / filteredCheckIns.length).toFixed(1)}/10` : "—"}</p>
+        </div>
       </div>
-      <Card className="mb-5 p-5 sm:p-7">
+      <Card className="mb-5 p-5 sm:p-7" style={{ borderTop: "3.5px solid #5B2333", background: "#FAF6F0" }}>
         <h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Ações acompanhadas por check-in</h3><p className="mt-1 text-xs" style={{ color: "#807572" }}>Percentual de ações concluídas ou parcialmente concluídas. Itens não programados são excluídos.</p>
-        {filteredCheckIns.length === 0 ? <p className="mt-5 rounded-xl p-4 text-sm" style={{ background: colors.cream, color: colors.muted }}>Ainda não há registros neste período. Seu primeiro check-in já vai aparecer aqui.</p> : <div className="mt-5 space-y-4">{[...filteredCheckIns].reverse().map((entry) => {
+        {filteredCheckIns.length === 0 ? <p className="mt-5 rounded-xl p-4 text-sm" style={{ background: "rgba(91,35,51,0.06)", color: colors.muted }}>Ainda não há registros neste período. Seu primeiro check-in já vai aparecer aqui.</p> : <div className="mt-5 space-y-4">{[...filteredCheckIns].reverse().map((entry) => {
           const value = adherenceFor(entry, data.goals);
-          return <div key={entry.id} className="grid grid-cols-[92px_1fr_44px] items-center gap-3"><span className="text-xs" style={{ color: colors.muted }}>{new Date(`${entry.date}T12:00:00`).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}</span><div className="h-3 overflow-hidden rounded-full" style={{ background: "#EEE7DD" }}><div className="h-full rounded-full" style={{ width: `${value ?? 0}%`, background: "#7A8A58" }} /></div><span className="text-right text-xs font-bold" style={{ color: colors.wine }}>{value === null ? "—" : `${value}%`}</span></div>;
+          return <div key={entry.id} className="grid grid-cols-[92px_1fr_44px] items-center gap-3"><span className="text-xs" style={{ color: colors.muted }}>{new Date(`${entry.date}T12:00:00`).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}</span><div className="h-3 overflow-hidden rounded-full" style={{ background: "rgba(91,35,51,0.12)" }}><div className="h-full rounded-full" style={{ width: `${value ?? 0}%`, background: "linear-gradient(90deg, #5B2333, #C6A15B)" }} /></div><span className="text-right text-xs font-bold" style={{ color: colors.wine }}>{value === null ? "—" : `${value}%`}</span></div>;
         })}</div>}
       </Card>
       <Card className="p-5 sm:p-7"><h3 className="text-lg font-semibold" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Seus registros</h3>
@@ -505,16 +560,142 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
     avisos: renderNotifications,
   }[activeTab]();
 
+  const confettiColors = ["#5B2333", "#C6A15B", "#66724A", "#F4EFE7", "#E2C98D", "#7A3047"];
+  const confettiPieces = Array.from({ length: 60 }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 1.5}s`,
+    duration: `${2 + Math.random() * 1.5}s`,
+    color: confettiColors[i % confettiColors.length],
+    size: `${6 + Math.random() * 8}px`,
+    rotation: `${Math.random() * 720}deg`,
+  }));
+
   return (
     <div className="min-h-screen font-sans" style={{ background: colors.cream, color: "#2D2020" }}>
-      <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: colors.border, background: "rgba(255,252,248,.96)" }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <button type="button" onClick={() => setActiveTab("inicio")} className="text-left" aria-label="Lapidar, ir para o início"><span className="block text-2xl leading-none" style={{ color: colors.wine, fontFamily: "var(--font-serif, Georgia, serif)" }}>Lapidar</span><span className="mt-1 block text-[9px] uppercase tracking-[0.17em]" style={{ color: "#8B6A42" }}>Seu espaço de cuidado</span></button>
-          <div className="hidden text-right sm:block"><p className="text-sm font-semibold" style={{ color: colors.wine }}>Olá, Mariana</p><p className="text-xs" style={{ color: "#807572" }}>Que bom ter você por aqui</p></div>
-          <button type="button" onClick={() => setActiveTab("avisos")} className="relative flex h-10 w-10 items-center justify-center rounded-full text-lg sm:hidden" aria-label="Ver notificações" style={{ ...buttonBase, background: colors.cream, color: colors.wine }}>♧<span className="absolute right-2 top-2 h-2 w-2 rounded-full" style={{ background: colors.gold }} /></button>
+      <style>{`
+        @keyframes confettiFall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes celebrationBanner {
+          0% { transform: scale(0.65); opacity: 0; }
+          15% { transform: scale(1.04); opacity: 1; }
+          25% { transform: scale(1); opacity: 1; }
+          85% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(0.85); opacity: 0; }
+        }
+      `}</style>
+
+      {/* ✨ Confete de celebração */}
+      {showConfetti && (
+        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
+          {confettiPieces.map((piece) => (
+            <div
+              key={piece.id}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: piece.left,
+                width: piece.size,
+                height: piece.size,
+                background: piece.color,
+                borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+                animation: `confettiFall ${piece.duration} ${piece.delay} ease-in forwards`,
+              }}
+            />
+          ))}
+          {/* Popup de parabéns — perfeitamente centralizado no meio da viewport */}
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+            padding: 16,
+          }}>
+            <div style={{
+              background: "linear-gradient(135deg, #5B2333, #7A3047)",
+              color: "#F4EFE7",
+              borderRadius: 24,
+              padding: "28px 36px",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(198,161,91,0.3)",
+              animation: "celebrationBanner 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              maxWidth: 420,
+              width: "100%",
+            }}>
+              <p style={{ fontSize: 36, marginBottom: 6, lineHeight: 1 }}>🎉</p>
+              <p style={{ fontFamily: "var(--font-serif, Georgia, serif)", fontSize: 22, fontWeight: 700, margin: 0, color: "#F4EFE7" }}>Parabéns!</p>
+              <p style={{ fontSize: 14, opacity: 0.9, marginTop: 8, marginBottom: 0, lineHeight: 1.4 }}>Você atingiu 80% ou mais das suas metas hoje!</p>
+            </div>
+          </div>
         </div>
-        <nav aria-label="Navegação do portal" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 pb-2 sm:px-6">
-          {TABS.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={activeTab === tab.id ? "page" : undefined} className="flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1" style={{ ...buttonBase, background: activeTab === tab.id ? colors.wine : "transparent", color: activeTab === tab.id ? colors.paper : colors.muted, outlineColor: colors.gold }}><span aria-hidden="true">{tab.icon}</span>{tab.label}</button>)}
+      )}
+      <header className="sticky z-20 border-b backdrop-blur" style={{ top: 56, borderColor: "rgba(198,161,91,0.25)", background: "linear-gradient(180deg, #5B2333 0%, #4D1826 100%)", boxShadow: "0 4px 20px rgba(0,0,0,0.18)" }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <button type="button" onClick={() => setActiveTab("inicio")} className="text-left" aria-label="Lapidar, ir para o início">
+            <span className="block text-2xl leading-none font-bold" style={{ color: "#F4EFE7", fontFamily: "var(--font-serif, Georgia, serif)" }}>Lapidar</span>
+            <span className="mt-1 block text-[10px] uppercase font-semibold tracking-[0.18em]" style={{ color: "#D4B578" }}>Seu espaço de cuidado</span>
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold" style={{ color: "#F4EFE7" }}>Olá, Mariana</p>
+              <p className="text-xs" style={{ color: "rgba(244,239,231,0.72)" }}>Que bom ter você por aqui</p>
+            </div>
+            
+            {/* Botão redondo com o sininho para notificações */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("avisos")}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full transition-all"
+              aria-label="Ver notificações"
+              style={{
+                ...buttonBase,
+                background: activeTab === "avisos" ? "#C6A15B" : "rgba(255, 255, 255, 0.12)",
+                color: activeTab === "avisos" ? "#3E1623" : "#F4EFE7",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                cursor: "pointer",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full" style={{ background: "#C6A15B", border: "1.5px solid #5B2333" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Barra de abas: visível apenas em telas grandes (desktop >= 1024px); no celular é oculta para não poluir */}
+        <nav aria-label="Navegação do portal" className="desktop-nav-tabs mx-auto max-w-6xl gap-1.5 overflow-x-auto px-3 pb-2.5 sm:px-6">
+          {NAV_TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                aria-current={active ? "page" : undefined}
+                className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+                style={{
+                  ...buttonBase,
+                  background: active ? "#C6A15B" : "rgba(255,255,255,0.08)",
+                  color: active ? "#3E1623" : "rgba(244,239,231,0.85)",
+                  boxShadow: active ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
+                  outlineColor: colors.gold,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <span aria-hidden="true">{tab.icon}</span>{tab.label}
+              </button>
+            );
+          })}
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 sm:pt-9">
@@ -522,8 +703,60 @@ export default function PatientPortal({ lapidar40Plus = false }: { lapidar40Plus
         {storageError && <div role="alert" className="mb-5 flex flex-col gap-3 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "#C86C54", background: "#FFF3EF", color: "#783A31" }}><p className="text-sm leading-5">{storageError}</p><button type="button" onClick={resetLocalData} className="shrink-0 self-start rounded-full px-4 py-2 text-xs font-bold sm:self-auto" style={{ ...buttonBase, background: colors.wine, color: colors.paper }}>Apagar dados locais e reiniciar</button></div>}
         {!storageError && notice && <p role="status" className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: "#EEF1E8", color: "#455136" }}>{notice}</p>}
         {content}
-        <footer className="mt-10 rounded-2xl px-4 py-4 text-center text-xs leading-5" style={{ background: "#EAE2D7", color: "#655C56" }}><p className="font-semibold">Protótipo local · dados totalmente fictícios</p><p>Este portal é uma demonstração e não substitui orientação, avaliação ou atendimento médico. Os registros ficam neste dispositivo e podem ser apagados pelo navegador.</p></footer>
+        <footer className="mt-10 rounded-2xl px-4 py-4 text-center text-xs leading-5" style={{ background: "rgba(91,35,51,0.06)", border: "1px solid rgba(91,35,51,0.14)", color: "#5B2333" }}>
+          <p className="font-bold">Protótipo local · dados totalmente fictícios</p>
+          <p style={{ color: "#7A6569" }}>Este portal é uma demonstração e não substitui orientação, avaliação ou atendimento médico. Os registros ficam neste dispositivo e podem ser apagados pelo navegador.</p>
+        </footer>
       </main>
+
+      {/* ── Bottom Bar Mobile no Portal da Paciente (visível apenas em telas menores) ── */}
+      <nav
+        className="lapidar-mobile-bottombar"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 40,
+          background: "#5B2333",
+          borderTop: "1px solid rgba(255,255,255,0.15)",
+          boxShadow: "0 -4px 16px rgba(0,0,0,0.2)",
+          alignItems: "center",
+          justifyContent: "space-around",
+          height: 60,
+          padding: "0 4px",
+        }}
+        aria-label="Navegação rápida do portal"
+      >
+        {NAV_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+              height: "100%",
+              color: activeTab === tab.id ? "#C6A15B" : "rgba(244,239,231,0.6)",
+              background: activeTab === tab.id ? "rgba(198,161,91,0.15)" : "transparent",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            aria-current={activeTab === tab.id ? "page" : undefined}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{tab.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: activeTab === tab.id ? 600 : 400 }}>{tab.mobileLabel}</span>
+          </button>
+        ))}
+      </nav>
+      {/* Espaço compensador do bottom nav no mobile */}
+      <div className="lapidar-mobile-bottombar" style={{ height: 60 }} />
     </div>
   );
 }

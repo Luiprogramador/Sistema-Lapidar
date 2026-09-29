@@ -120,7 +120,7 @@ const bioimpedanciaData: Record<number, BioRow[]> = {
 type ScoreEntry = {
   data: string;
   saciedade: number; fome: number; energia: number; sono: number; humor: number;
-  libido: number; fogachos: number; perdaUrinaria: number; constipacao: number; adesao: number;
+  libido: number; fogachos: number; perdaUrinaria: number; constipacao: number; atividadeFisica: number; adesao: number;
 };
 
 const scoreLabels: { key: keyof Omit<ScoreEntry, "data">; label: string; lowerIsBetter?: boolean }[] = [
@@ -129,6 +129,7 @@ const scoreLabels: { key: keyof Omit<ScoreEntry, "data">; label: string; lowerIs
   { key: "sono", label: "Sono" },
   { key: "humor", label: "Humor" },
   { key: "libido", label: "Libido" },
+  { key: "atividadeFisica", label: "Atividade física" },
   { key: "adesao", label: "Adesão" },
   { key: "fome", label: "Fome", lowerIsBetter: true },
   { key: "fogachos", label: "Fogachos", lowerIsBetter: true },
@@ -138,33 +139,33 @@ const scoreLabels: { key: keyof Omit<ScoreEntry, "data">; label: string; lowerIs
 
 const scoreData: Record<number, ScoreEntry[]> = {
   1: [
-    { data: "Mar/26", saciedade: 5, fome: 7, energia: 4, sono: 5, humor: 5, libido: 4, fogachos: 6, perdaUrinaria: 3, constipacao: 4, adesao: 5 },
-    { data: "Jun/26", saciedade: 7, fome: 5, energia: 6, sono: 7, humor: 7, libido: 5, fogachos: 4, perdaUrinaria: 2, constipacao: 2, adesao: 7 },
-    { data: "Set/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 7, fogachos: 2, perdaUrinaria: 1, constipacao: 1, adesao: 9 },
+    { data: "Mar/26", saciedade: 5, fome: 7, energia: 4, sono: 5, humor: 5, libido: 4, fogachos: 6, perdaUrinaria: 3, constipacao: 4, atividadeFisica: 3, adesao: 5 },
+    { data: "Jun/26", saciedade: 7, fome: 5, energia: 6, sono: 7, humor: 7, libido: 5, fogachos: 4, perdaUrinaria: 2, constipacao: 2, atividadeFisica: 6, adesao: 7 },
+    { data: "Set/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 7, fogachos: 2, perdaUrinaria: 1, constipacao: 1, atividadeFisica: 8, adesao: 9 },
   ],
   2: [
-    { data: "Mar/26", saciedade: 4, fome: 8, energia: 3, sono: 4, humor: 4, libido: 3, fogachos: 2, perdaUrinaria: 2, constipacao: 6, adesao: 5 },
-    { data: "Jun/26", saciedade: 6, fome: 6, energia: 5, sono: 6, humor: 6, libido: 5, fogachos: 1, perdaUrinaria: 1, constipacao: 4, adesao: 7 },
-    { data: "Set/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 6, fogachos: 1, perdaUrinaria: 1, constipacao: 2, adesao: 8 },
+    { data: "Mar/26", saciedade: 4, fome: 8, energia: 3, sono: 4, humor: 4, libido: 3, fogachos: 2, perdaUrinaria: 2, constipacao: 6, atividadeFisica: 2, adesao: 5 },
+    { data: "Jun/26", saciedade: 6, fome: 6, energia: 5, sono: 6, humor: 6, libido: 5, fogachos: 1, perdaUrinaria: 1, constipacao: 4, atividadeFisica: 5, adesao: 7 },
+    { data: "Set/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 6, fogachos: 1, perdaUrinaria: 1, constipacao: 2, atividadeFisica: 7, adesao: 8 },
   ],
   3: [
-    { data: "Mar/26", saciedade: 3, fome: 9, energia: 2, sono: 3, humor: 3, libido: 2, fogachos: 8, perdaUrinaria: 6, constipacao: 7, adesao: 3 },
-    { data: "Jun/26", saciedade: 5, fome: 7, energia: 4, sono: 5, humor: 5, libido: 4, fogachos: 6, perdaUrinaria: 4, constipacao: 5, adesao: 5 },
-    { data: "Set/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 5, fogachos: 4, perdaUrinaria: 3, constipacao: 3, adesao: 7 },
+    { data: "Mar/26", saciedade: 3, fome: 9, energia: 2, sono: 3, humor: 3, libido: 2, fogachos: 8, perdaUrinaria: 6, constipacao: 7, atividadeFisica: 1, adesao: 3 },
+    { data: "Jun/26", saciedade: 5, fome: 7, energia: 4, sono: 5, humor: 5, libido: 4, fogachos: 6, perdaUrinaria: 4, constipacao: 5, atividadeFisica: 3, adesao: 5 },
+    { data: "Set/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 5, fogachos: 4, perdaUrinaria: 3, constipacao: 3, atividadeFisica: 5, adesao: 7 },
   ],
   4: [
-    { data: "Mar/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 2, adesao: 8 },
-    { data: "Jun/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 8, fogachos: 1, perdaUrinaria: 1, constipacao: 1, adesao: 9 },
-    { data: "Set/26", saciedade: 9, fome: 2, energia: 9, sono: 9, humor: 9, libido: 9, fogachos: 0, perdaUrinaria: 0, constipacao: 1, adesao: 10 },
+    { data: "Mar/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 2, atividadeFisica: 7, adesao: 8 },
+    { data: "Jun/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 8, fogachos: 1, perdaUrinaria: 1, constipacao: 1, atividadeFisica: 9, adesao: 9 },
+    { data: "Set/26", saciedade: 9, fome: 2, energia: 9, sono: 9, humor: 9, libido: 9, fogachos: 0, perdaUrinaria: 0, constipacao: 1, atividadeFisica: 10, adesao: 10 },
   ],
   5: [
-    { data: "Mar/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 6, fogachos: 2, perdaUrinaria: 2, constipacao: 3, adesao: 7 },
-    { data: "Jun/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 2, adesao: 8 },
-    { data: "Set/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 1, adesao: 9 },
+    { data: "Mar/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 6, fogachos: 2, perdaUrinaria: 2, constipacao: 3, atividadeFisica: 5, adesao: 7 },
+    { data: "Jun/26", saciedade: 7, fome: 4, energia: 7, sono: 7, humor: 7, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 2, atividadeFisica: 7, adesao: 8 },
+    { data: "Set/26", saciedade: 8, fome: 3, energia: 8, sono: 8, humor: 8, libido: 7, fogachos: 1, perdaUrinaria: 1, constipacao: 1, atividadeFisica: 8, adesao: 9 },
   ],
   6: [
-    { data: "Mar/26", saciedade: 5, fome: 6, energia: 5, sono: 5, humor: 5, libido: 4, fogachos: 5, perdaUrinaria: 4, constipacao: 5, adesao: 4 },
-    { data: "Set/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 5, fogachos: 4, perdaUrinaria: 3, constipacao: 4, adesao: 5 },
+    { data: "Mar/26", saciedade: 5, fome: 6, energia: 5, sono: 5, humor: 5, libido: 4, fogachos: 5, perdaUrinaria: 4, constipacao: 5, atividadeFisica: 4, adesao: 4 },
+    { data: "Set/26", saciedade: 6, fome: 5, energia: 6, sono: 6, humor: 6, libido: 5, fogachos: 4, perdaUrinaria: 3, constipacao: 4, atividadeFisica: 6, adesao: 5 },
   ],
 };
 
@@ -559,7 +560,15 @@ function MetricCard({ metric, history }: { metric: MetricDef; history: BioRow[] 
 // ─── SCORE LAPIDAR COMPONENT ──────────────────────────────────────────────────
 
 function ScoreLapidar({ patientId }: { patientId: number }) {
-  const entries = scoreData[patientId] ?? [];
+  const [allEntries, setAllEntries] = useState<ScoreEntry[]>(() => scoreData[patientId] ?? []);
+  const [novoScoreOpen, setNovoScoreOpen] = useState(false);
+  const [novoScore, setNovoScore] = useState<Omit<ScoreEntry, "data"> & { data: string }>({
+    data: new Date().toISOString().slice(0, 10),
+    saciedade: 5, fome: 5, energia: 5, sono: 5, humor: 5,
+    libido: 5, fogachos: 5, perdaUrinaria: 5, constipacao: 5, atividadeFisica: 5, adesao: 5,
+  });
+
+  const entries = allEntries;
   if (!entries.length) return <p className="text-sm text-center py-8" style={{ color: "#9B8B7A" }}>Sem dados de Score Lapidar.</p>;
 
   const first = entries[0];
@@ -575,7 +584,56 @@ function ScoreLapidar({ patientId }: { patientId: number }) {
 
   const radarData = toRadar(first);
 
+  const scoreFields: { key: keyof Omit<ScoreEntry, "data">; label: string; lowerIsBetter?: boolean }[] = scoreLabels;
+
   return (
+    <div className="space-y-4">
+    {novoScoreOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setNovoScoreOpen(false); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const entry: ScoreEntry = {
+              ...novoScore,
+              data: new Date(`${novoScore.data}T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(".", "").replace(/^\w/, c => c.toUpperCase()),
+            };
+            setAllEntries(prev => [...prev, entry]);
+            setNovoScoreOpen(false);
+            setNovoScore({ data: new Date().toISOString().slice(0, 10), saciedade: 5, fome: 5, energia: 5, sono: 5, humor: 5, libido: 5, fogachos: 5, perdaUrinaria: 5, constipacao: 5, atividadeFisica: 5, adesao: 5 });
+          }}
+          className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 space-y-4"
+          style={{ background: "#F4EFE7", border: "1px solid #E8E0D0" }}
+        >
+          <div>
+            <h3 className="text-xl" style={{ fontFamily: "var(--font-serif)", color: "#5B2333" }}>Novo Score Lapidar</h3>
+            <p className="mt-1 text-xs" style={{ color: "#9B8B7A" }}>Registre como você está hoje em cada dimensão (escala 0–10).</p>
+          </div>
+          <label className="block text-xs font-medium" style={{ color: "#6D5C50" }}>
+            Data
+            <input type="date" required value={novoScore.data} max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setNovoScore(s => ({ ...s, data: e.target.value }))}
+              className="mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm" style={{ background: "#fff", border: "1px solid #E8E0D0" }} />
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {scoreFields.map(({ key, label, lowerIsBetter }) => (
+              <label key={key} className="block text-xs font-medium" style={{ color: "#6D5C50" }}>
+                {label} {lowerIsBetter ? <span style={{ color: "#9B8B7A" }}>(menor = melhor)</span> : ""}
+                <div className="flex items-center gap-3 mt-1.5">
+                  <input type="range" min="0" max="10" value={novoScore[key]}
+                    onChange={(e) => setNovoScore(s => ({ ...s, [key]: Number(e.target.value) }))}
+                    className="flex-1 accent-[#5B2333]" />
+                  <span className="w-8 text-center text-sm font-bold rounded-lg py-1" style={{ background: "#fff", color: "#5B2333", border: "1px solid #E8E0D0" }}>{novoScore[key]}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 border-t pt-4" style={{ borderColor: "#E8E0D0" }}>
+            <button type="button" onClick={() => setNovoScoreOpen(false)} className="rounded-lg px-4 py-2 text-sm" style={{ background: "#E8E0D0", color: "#5B2333" }}>Cancelar</button>
+            <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#5B2333" }}>Salvar score</button>
+          </div>
+        </form>
+      </div>
+    )}
     <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
       <div className="px-6 pt-5 pb-3 border-b flex items-center justify-between" style={{ borderColor: "#F0EAE0" }}>
         <div>
@@ -584,13 +642,18 @@ function ScoreLapidar({ patientId }: { patientId: number }) {
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "#9B8B7A" }}>Escala 0–10 · Radar de evolução</p>
         </div>
-        <div className="flex items-center gap-4 text-xs" style={{ color: "#9B8B7A" }}>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 rounded inline-block" style={{ background: "#C6A15B" }} /> Inicial
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 rounded inline-block" style={{ background: "#5B2333" }} /> Atual
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 text-xs" style={{ color: "#9B8B7A" }}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 rounded inline-block" style={{ background: "#C6A15B" }} /> Inicial
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 rounded inline-block" style={{ background: "#5B2333" }} /> Atual
+            </span>
+          </div>
+          <button type="button" onClick={() => setNovoScoreOpen(true)}
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+            style={{ background: "#5B2333" }}>+ Novo Score</button>
         </div>
       </div>
 
@@ -670,6 +733,7 @@ function ScoreLapidar({ patientId }: { patientId: number }) {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
@@ -821,7 +885,85 @@ function FichaKPI({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-type Tab = "bioimpedancia" | "score" | "risco" | "medicamentos" | "suplementos" | "timeline" | "arquivos" | "jornada";
+type Tab = "painel" | "bioimpedancia" | "score" | "risco" | "medicamentos" | "suplementos" | "timeline" | "arquivos" | "jornada";
+
+// ─── PAINEL CLÍNICO COMPONENT ─────────────────────────────────────────────────
+function PainelClinico({ patient, bioLatest }: { patient: Patient; bioLatest?: BioRow }) {
+  const peso = bioLatest?.peso ?? patient.pesoInicial ?? 0;
+  const imc = bioLatest?.imc;
+  const massaGorda = bioLatest?.gordura;
+  const massaMagra = bioLatest?.musculo;
+  const circunferencia = bioLatest?.circunferencia;
+  const pressao = bioLatest?.pressao;
+
+  const kpis = [
+    { label: "Peso", value: `${peso.toLocaleString("pt-BR")} kg`, color: "#5B2333" },
+    { label: "IMC", value: imc ? `${imc.toFixed(1)}` : "—", color: imc ? (imc < 18.5 ? "#C6A15B" : imc < 25 ? "#66724A" : imc < 30 ? "#C6A15B" : "#DC2626") : "#9B8B7A" },
+    { label: "Massa gorda", value: massaGorda ? `${massaGorda.toFixed(1)} %` : "—", color: massaGorda ? (massaGorda < 30 ? "#66724A" : massaGorda < 35 ? "#C6A15B" : "#DC2626") : "#9B8B7A" },
+    { label: "Massa magra", value: massaMagra ? `${massaMagra.toFixed(1)} kg` : "—", color: "#66724A" },
+    { label: "Circ. abdominal", value: circunferencia ? `${circunferencia} cm` : "—", color: circunferencia ? (Number(circunferencia) < 80 ? "#66724A" : Number(circunferencia) < 88 ? "#C6A15B" : "#DC2626") : "#9B8B7A" },
+    { label: "Pressão arterial", value: pressao || "—", color: "#5B2333" },
+    { label: "TRH", value: patient.trh || "—", color: "#5B2333" },
+    { label: "Contraceptivo", value: patient.contraceptivo || "—", color: "#5B2333" },
+    { label: "Última consulta", value: patient.ultimaConsulta, color: "#5B2333" },
+    { label: "Próxima consulta", value: patient.proximaConsulta, color: "#66724A" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-semibold" style={{ color: "#5B2333" }}>Painel Clínico</h3>
+        <p className="mt-1 text-xs" style={{ color: "#9B8B7A" }}>Análise rápida · dados da última bioimpedância e ficha</p>
+      </div>
+
+      {/* KPIs grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {kpis.map((k) => (
+          <div key={k.label} className="rounded-2xl p-4 flex flex-col gap-1" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
+            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "#9B8B7A", fontSize: "0.6rem" }}>{k.label}</span>
+            <span className="text-xl font-semibold leading-tight" style={{ fontFamily: "var(--font-serif)", color: k.color }}>{k.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Medicamentos e Suplementos — resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
+          <h4 className="text-sm font-semibold mb-3" style={{ color: "#5B2333" }}>Medicamentos atuais</h4>
+          <div className="space-y-2">
+            {["Metformina 850 mg", "Levotiroxina 50 mcg", "Losartana 50 mg"].map(m => (
+              <div key={m} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#5B2333" }} />
+                <span className="text-sm" style={{ color: "#1A1008" }}>{m}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
+          <h4 className="text-sm font-semibold mb-3" style={{ color: "#5B2333" }}>Suplementos atuais</h4>
+          <div className="space-y-2">
+            {["Vitamina D 5.000 UI", "Ômega 3 2g", "Magnésio Quelato 300 mg"].map(s => (
+              <div key={s} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#66724A" }} />
+                <span className="text-sm" style={{ color: "#1A1008" }}>{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bioimpedância placeholder */}
+      <div className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #E8E0D0" }}>
+        <h4 className="text-sm font-semibold mb-3" style={{ color: "#5B2333" }}>Bioimpedância — arquivo</h4>
+        <div className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center py-8 gap-2" style={{ borderColor: "#E8E0D0" }}>
+          <span className="text-2xl">📎</span>
+          <p className="text-sm" style={{ color: "#9B8B7A" }}>Nenhum arquivo anexado</p>
+          <button type="button" className="mt-2 rounded-lg px-4 py-2 text-xs font-medium text-white" style={{ background: "#5B2333" }}>Anexar arquivo</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function loadBioHistory(patientId: number): { history: BioRow[]; error: string | null } {
   const demo = bioimpedanciaData[patientId] || [];
@@ -846,7 +988,7 @@ function loadBioHistory(patientId: number): { history: BioRow[]; error: string |
 }
 
 export default function PatientDetail({ patient, onBack }: { patient: Patient; onBack: () => void }) {
-  const [tab, setTab] = useState<Tab>("bioimpedancia");
+  const [tab, setTab] = useState<Tab>("painel");
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [bioState] = useState(() => loadBioHistory(patient.id));
   const [history, setHistory] = useState(bioState.history);
@@ -1088,6 +1230,7 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
       {/* ── Abas ── */}
       <div className="flex gap-1 p-1 rounded-xl w-fit flex-wrap" style={{ background: "#E8E0D0" }}>
         {([
+          { id: "painel", label: "Painel Clínico" },
           { id: "bioimpedancia", label: "Bioimpedância" },
           { id: "score", label: "Score Lapidar" },
           { id: "risco", label: "Risco CV" },
@@ -1111,6 +1254,11 @@ export default function PatientDetail({ patient, onBack }: { patient: Patient; o
           </button>
         ))}
       </div>
+
+      {/* ── Painel Clínico ── */}
+      {tab === "painel" && (
+        <PainelClinico patient={patient} bioLatest={history[history.length - 1]} />
+      )}
 
       {/* ── Bioimpedância ── */}
       {tab === "bioimpedancia" && (

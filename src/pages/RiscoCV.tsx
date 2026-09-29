@@ -151,7 +151,7 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
           <div className="p-5 space-y-4">
 
             {/* KPIs */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl p-3 text-center" style={{ background: "#F8F4EF" }}>
                 <p className="text-xs mb-1" style={{ color: "#9B8B7A", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>Meta LDL</p>
                 <p className="text-2xl font-bold" style={{ color: "#5B2333" }}>&lt; {cfg.ldlMeta}</p>
@@ -164,18 +164,35 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
                 </p>
                 <p className="text-xs" style={{ color: "#9B8B7A" }}>mg/dL</p>
               </div>
+              <div className="rounded-xl p-3 text-center" style={{ background: "#F8F4EF" }}>
+                <p className="text-xs mb-1" style={{ color: "#9B8B7A", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>Redução necess.</p>
+                <p className="text-2xl font-bold" style={{ color: ldlDelta !== undefined && ldlDelta > 0 ? "#DC2626" : "#3D6B2E" }}>
+                  {ldlDelta !== undefined ? (ldlDelta > 0 ? `${ldlDelta} mg/dL` : "0") : "—"}
+                </p>
+                <p className="text-xs" style={{ color: "#9B8B7A" }}>{ldlDelta !== undefined && ldlDelta > 0 ? `${Math.round((ldlDelta / (state.ldlAtual ?? 1)) * 100)}% de redução` : ldlDelta !== undefined ? "meta atingida" : "informe LDL"}</p>
+              </div>
               <div className="rounded-xl p-3 text-center" style={{
                 background: state.ldlAtual === undefined ? "#F8F4EF" : metaAtingida ? "#E8F0E0" : "#FEE2E2",
               }}>
-                <p className="text-xs mb-1" style={{ color: "#9B8B7A", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>Meta</p>
+                <p className="text-xs mb-1" style={{ color: "#9B8B7A", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>Meta atingida</p>
                 <p className="text-lg font-bold" style={{ color: state.ldlAtual === undefined ? "#9B8B7A" : metaAtingida ? "#3D6B2E" : "#DC2626" }}>
                   {state.ldlAtual === undefined ? "—" : metaAtingida ? "✓ Sim" : "✗ Não"}
                 </p>
-                {ldlDelta !== undefined && (
-                  <p className="text-xs" style={{ color: ldlDelta > 0 ? "#DC2626" : "#3D6B2E" }}>
-                    {ldlDelta > 0 ? `+${ldlDelta}` : ldlDelta} mg/dL
-                  </p>
-                )}
+              </div>
+            </div>
+
+            {/* Não-HDL */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl p-3" style={{ background: "#F8F4EF" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#9B8B7A", textTransform: "uppercase", fontSize: "0.65rem" }}>Não-HDL atual</p>
+                <p className="text-xl font-bold" style={{ color: state.naoHdlAtual ? (state.naoHdlAtual <= cfg.ldlMeta + 30 ? "#3D6B2E" : "#DC2626") : "#9B8B7A" }}>
+                  {state.naoHdlAtual ?? "—"} {state.naoHdlAtual ? "mg/dL" : ""}
+                </p>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "#F8F4EF" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#9B8B7A", textTransform: "uppercase", fontSize: "0.65rem" }}>Meta Não-HDL</p>
+                <p className="text-xl font-bold" style={{ color: "#5B2333" }}>&lt; {cfg.ldlMeta + 30} mg/dL</p>
+                <p className="text-xs" style={{ color: "#9B8B7A" }}>Meta LDL + 30</p>
               </div>
             </div>
 
@@ -209,9 +226,6 @@ export default function RiscoCV({ patientId }: { patientId: number }) {
                 </label>
               ))}
             </div>
-            <p className="text-xs" style={{ color: "#9B8B7A" }}>
-              Redução necessária estimada de LDL: {ldlDelta !== undefined && ldlDelta > 0 ? `${Math.round((ldlDelta / (state.ldlAtual ?? 1)) * 100)}%` : ldlDelta !== undefined ? "Meta demonstrativa atingida" : "Informe o LDL para estimar"}.
-            </p>
           </div>
         </div>
 

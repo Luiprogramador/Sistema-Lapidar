@@ -41,3 +41,26 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(91, 35, 51, 0.5);
 }
+
+/* Responsividade da Bottom Bar móvel (visível somente quando a tela for menor que 1024px) */
+@media (min-width: 1024px) {
+  .lapidar-mobile-bottombar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .lapidar-mobile-bottombar {
+    display: flex !important;
+  }
+  .desktop-nav-tabs {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-nav-tabs {
+    display: flex !important;
+  }
+}
+

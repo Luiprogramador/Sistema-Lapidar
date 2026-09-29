@@ -500,16 +500,19 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
       }}
     >
       {/* ═══════════════════════════════════════════════════════
-          LEFT PANEL — 60% — dark photo scene + vinho overlay
+          LEFT PANEL — editorial photo scene + vinho overlay com recorte diagonal
       ═══════════════════════════════════════════════════════ */}
       <div
         style={{
-          width: "60%",
+          width: "58%",
           minHeight: "100vh",
           position: "relative",
           overflow: "hidden",
           flexShrink: 0,
           display: "none",
+          clipPath: "polygon(0 0, 100% 0, calc(100% - 90px) 100%, 0 100%)",
+          marginRight: "-90px",
+          zIndex: 2,
         }}
         className="lg-left-panel"
       >
@@ -523,13 +526,13 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           }}
         />
 
-        {/* Layer 2: Photo — right 55% of panel, full height */}
+        {/* Layer 2: Photo — ocupa a lateral direita até a diagonal */}
         <div
           style={{
             position: "absolute",
             right: 0,
             top: 0,
-            width: "55%",
+            width: "60%",
             height: "100%",
             zIndex: 1,
           }}
@@ -537,24 +540,52 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           <SceneSVG />
         </div>
 
-        {/* Layer 3: Vinho overlay — diagonal aligned with book-spine line in photo */}
+        {/* Layer 3: Vinho overlay — fade contínuo que se estende até a linha divisória diagonal */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(to right, rgba(91,35,51,1) 0%, rgba(87,32,48,1) 40%, rgba(76,22,38,0.97) 56%, rgba(58,14,28,0.70) 68%, rgba(38,8,18,0.22) 80%, rgba(15,3,8,0) 100%)",
-            clipPath: "polygon(0 0, 88% 0, 76% 100%, 0 100%)",
+              "linear-gradient(98deg, #5B2333 0%, #5B2333 38%, rgba(91,35,51,0.95) 52%, rgba(91,35,51,0.82) 68%, rgba(91,35,51,0.65) 84%, rgba(91,35,51,0.48) 96%, rgba(91,35,51,0.42) 100%)",
             zIndex: 2,
           }}
         />
+
+        {/* Linha divisória diagonal em acabamento dourado editorial */}
+        <svg
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "90px",
+            height: "100%",
+            zIndex: 4,
+            pointerEvents: "none",
+          }}
+          preserveAspectRatio="none"
+          viewBox="0 0 90 1000"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="goldDiagonalGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#D4B578" stopOpacity="0.85" />
+              <stop offset="35%" stopColor="#C6A15B" stopOpacity="1" />
+              <stop offset="70%" stopColor="#E2C98D" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#9E7D40" stopOpacity="0.7" />
+            </linearGradient>
+          </defs>
+          {/* Sombra de profundidade na borda */}
+          <line x1="90" y1="0" x2="0" y2="1000" stroke="rgba(0,0,0,0.3)" strokeWidth="3" />
+          {/* Filete dourado refinado */}
+          <line x1="90" y1="0" x2="0" y2="1000" stroke="url(#goldDiagonalGrad)" strokeWidth="1.5" />
+        </svg>
 
         {/* Layer 4: Text content — space-between fills full panel height */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 3,
+            zIndex: 5,
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -796,6 +827,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           RIGHT PANEL — cream/bege with form
       ═══════════════════════════════════════════════════════ */}
       <div
+        className="login-right-panel"
         style={{
           flex: 1,
           minHeight: "100vh",
@@ -1230,11 +1262,13 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           .lg-left-panel { display: block !important; }
           .lg-mobile-logo { display: none !important; }
           .login-form-container { margin-top: 0; }
+          .login-right-panel { padding-left: clamp(2rem, 5vw, 4.5rem) !important; }
         }
         @media (max-width: 1023px) {
           .lg-left-panel { display: none !important; }
           .lg-mobile-logo { display: flex !important; flex-direction: column; align-items: center; }
           .login-form-container { margin-top: 11rem; padding-bottom: 2.5rem; }
+          .login-right-panel { padding-left: 0 !important; }
         }
         @media (max-width: 480px) {
           .login-form-container { margin-top: 10rem; padding: 0 1.4rem 2rem; }
