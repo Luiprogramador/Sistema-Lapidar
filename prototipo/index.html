@@ -6,34 +6,17 @@
   <title>Lapidar — Sistema</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
-  <style>
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      flex-direction: column;
-      gap: 16px;
-      background: var(--bege);
-    }
-    .splash {
-      text-align: center;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity:0; transform:translateY(8px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-  </style>
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/layout.css">
 </head>
-<body>
+<body class="splash-page">
 <div class="splash">
-  <svg width="64" height="64" viewBox="0 0 80 80" fill="none" style="margin:0 auto 16px;">
+  <svg class="splash-logo" width="64" height="64" viewBox="0 0 80 80" fill="none">
     <polygon points="40,8 72,64 8,64" fill="none" stroke="#5B2333" stroke-width="3"/>
     <polygon points="40,20 62,60 18,60" fill="rgba(91,35,51,0.08)" stroke="#C6A15B" stroke-width="1.5"/>
     <circle cx="40" cy="40" r="5" fill="#C6A15B"/>
   </svg>
-  <p style="font-family:'Montserrat',sans-serif;font-size:13px;color:#9B8B7A;">Redirecionando...</p>
+  <p class="splash-text">Redirecionando...</p>
 </div>
 
 <script src="js/data.js"></script>
