@@ -3,36 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=prototipo/">
   <title>Lapidar — Sistema</title>
-  <script>
-    window.location.replace('prototipo/');
-  </script>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #F4EFE7;
-      color: #5B2333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .redirect-card {
-      text-align: center;
-      padding: 32px;
-    }
-    a {
-      color: #5B2333;
-      font-weight: 600;
-    }
-  </style>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/layout.css">
 </head>
-<body>
-  <div class="redirect-card">
-    <p>Redirecionando para o Sistema Lapidar...</p>
-    <p><small>Se não for redirecionado automaticamente, <a href="prototipo/">clique aqui</a>.</small></p>
-  </div>
+<body class="splash-page">
+<div class="splash">
+  <svg class="splash-logo" width="64" height="64" viewBox="0 0 80 80" fill="none">
+    <polygon points="40,8 72,64 8,64" fill="none" stroke="#5B2333" stroke-width="3"/>
+    <polygon points="40,20 62,60 18,60" fill="rgba(91,35,51,0.08)" stroke="#C6A15B" stroke-width="1.5"/>
+    <circle cx="40" cy="40" r="5" fill="#C6A15B"/>
+  </svg>
+  <p class="splash-text">Redirecionando...</p>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/router.js"></script>
+<script>
+  // Redireciona para login (sempre) ao abrir o index
+  window.location.replace('pages/login.html');
+</script>
 </body>
 </html>
