@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha da Paciente — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .bio-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+    }
+    .bio-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .bio-card-value {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--vinho);
+    }
+    .bio-card-unit {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 4px;
+      font-weight: 400;
+    }
+    .bio-card-delta {
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .delta-pos { color: var(--oliva); }
+    .delta-neg { color: var(--red-text); }
+
+    /* Arquivos magazine-style cards */
+    .file-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--white);
+      padding: 16px;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .file-card:hover {
+      border-color: var(--vinho);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .file-card-preview {
+      height: 90px;
+      background: var(--vinho-xlight);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: var(--vinho);
+      border: 1px dashed rgba(91,35,51,0.2);
+    }
+    .file-card-title {
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--vinho);
+      margin-bottom: 4px;
+    }
+    .file-card-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      flex: 1;
+    }
+    .file-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+
+    /* Print report styles */
+    @media print {
+      body { background: #fff !important; }
+      #topbar-container, #sidebar-container, #bottombar-container,
+      .top-actions-bar, .tabs, .no-print { display: none !important; }
+      .main-content { margin: 0 !important; padding: 0 !important; }
+      .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #5B2333; padding-bottom: 12px; }
+      .tab-content { display: block !important; margin-bottom: 24px; page-break-inside: avoid; }
+      .card, .section-card, .bio-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+    }
+    .print-header { display: none; }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+
+  <!-- Printable Header (Visible only when printing) -->
+  <div class="print-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="../assets/logo_lapidar_tp.png" alt="Lapidar" style="height:36px;">
+        <span style="font-family:var(--font-serif);font-size:24px;color:var(--vinho);font-weight:600;">Sistema Lapidar</span>
+      </div>
+      <div style="text-align:right;font-size:12px;color:#555;">
+        <strong>Dra. Andressa Gomide</strong> · CRM 12345/MG<br>
+        Relatório Clínico da Paciente
+      </div>
+    </div>
+  </div>
+
+  <!-- Back button + top actions bar -->
+  <div class="top-actions-bar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patients')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar para Pacientes
+    </button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-subtle btn-sm" id="btn-print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir Resumo (PDF)
+      </button>
+      <button class="btn btn-subtle btn-sm" id="btn-jornada">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Ver Jornada
+      </button>
+      <button class="btn btn-subtle btn-sm" id="btn-diario-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Diário Lapidar
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-consulta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Iniciar Consulta
+      </button>
+    </div>
+  </div>
+
+  <!-- Patient header -->
+  <div class="patient-header" id="patient-header"></div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs" id="tabs-nav">
+    <button class="tab-item active" data-tab="painel">Painel Clínico</button>
+    <button class="tab-item" data-tab="bio">Bioimpedância</button>
+    <button class="tab-item" data-tab="score">Score Lapidar</button>
+    <button class="tab-item" data-tab="risco">Risco CV</button>
+    <button class="tab-item" data-tab="medicamentos">Medicamentos</button>
+    <button class="tab-item" data-tab="arquivos">Arquivos</button>
+    <button class="tab-item" data-tab="diario">Diário & Hábitos</button>
+    <button class="tab-item" data-tab="timeline">Timeline</button>
+  </div>
+
+  <!-- Tab 1: Painel Clínico -->
+  <div class="tab-content active" id="tab-painel"></div>
+
+  <!-- Tab 2: Bioimpedância -->
+  <div class="tab-content" id="tab-bio"></div>
+
+  <!-- Tab 3: Score Lapidar -->
+  <div class="tab-content" id="tab-score"></div>
+
+  <!-- Tab 4: Risco CV -->
+  <div class="tab-content" id="tab-risco"></div>
+
+  <!-- Tab 5: Medicamentos & Suplementos -->
+  <div class="tab-content" id="tab-medicamentos"></div>
+
+  <!-- Tab 6: Arquivos (Estilo Revista) -->
+  <div class="tab-content" id="tab-arquivos"></div>
+
+  <!-- Tab 7: Diário & Hábitos -->
+  <div class="tab-content" id="tab-diario"></div>
+
+  <!-- Tab 8: Timeline -->
+  <div class="tab-content" id="tab-timeline"></div>
+
+</main>
+
+<div id="bottombar-container"></div>
+
+<!-- Modal Nova Bioimpedância -->
+<div class="modal-overlay" id="modal-bio">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">Registrar Nova Bioimpedância</span>
+      <button class="modal-close" onclick="closeModalBio()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Data *</label>
+          <input type="date" class="form-input" id="bio-in-data">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Peso (kg) *</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-peso" placeholder="Ex: 73.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Músculo Esquelético (kg)</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-musculo" placeholder="Ex: 30.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Massa Gorda (kg)</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-gordura" placeholder="Ex: 30.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Taxa Gordura (%)</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-tx" placeholder="Ex: 41.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Água Corporal (%)</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-agua" placeholder="Ex: 45.8">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gordura Visceral (nível)</label>
+          <input type="number" class="form-input" id="bio-in-visceral" placeholder="Ex: 8">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nota Geral (0 a 10)</label>
+          <input type="number" step="0.1" class="form-input" id="bio-in-nota" placeholder="Ex: 8.2">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-subtle" onclick="closeModalBio()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNewBio()">Salvar Medição</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('patients');
+
+  // Load patient
+  const p = Router.getSelectedPatient() || PACIENTES[0];
+  const bio = p.bioimpedancia;
+  const latestBio = bio[bio.length - 1];
+  const prevBio   = bio[bio.length - 2] || null;
+
+  // Buttons navigation
+  document.getElementById('btn-consulta').addEventListener('click', () => {
+    Router.navigate('consultation', { patientId: p.id });
+  });
+  document.getElementById('btn-jornada').addEventListener('click', () => {
+    Router.navigate('journey', { patientId: p.id });
+  });
+  document.getElementById('btn-diario-link').addEventListener('click', () => {
+    Router.navigate('habits', { patientId: p.id });
+  });
+
+  // ── Patient Header ──
+  const pct = Math.round((p.metasConcluidas / (p.metas.length || 1)) * 100);
+  document.getElementById('patient-header').innerHTML = `
+    <div class="patient-header-inner">
+      <div class="patient-header-avatar">${p.iniciais}</div>
+      <div style="flex:1;">
+        <div class="patient-header-name">${p.nome}</div>
+        <div class="patient-header-meta">
+          <span>${p.idade} anos · ${p.nascimento}</span>
+          <span>${p.telefone}</span>
+          <span>${p.consultaAtual}</span>
+          <span>${getProtocolBadge(p.protocolo)}</span>
+          <span style="color:var(--text-muted);">Lead: ${p.origemLead || 'Indicação'}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">
+          <strong>Objetivo:</strong> ${p.objetivo}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;">
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">${p.pesoAtual} kg</div>
+            <div class="patient-header-stat-label">Peso atual</div>
+          </div>
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">${p.meta} kg</div>
+            <div class="patient-header-stat-label">Meta</div>
+          </div>
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">−${(p.pesoInicial - p.pesoAtual).toFixed(1)} kg</div>
+            <div class="patient-header-stat-label">Perda total</div>
+          </div>
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">${pct}%</div>
+            <div class="patient-header-stat-label">Metas atingidas</div>
+          </div>
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">${p.circunferenciaAbdominal || '84 cm'}</div>
+            <div class="patient-header-stat-label">Circunf. Abdominal</div>
+          </div>
+          <div class="patient-header-stat">
+            <div class="patient-header-stat-value">${p.pressao || '120/80'}</div>
+            <div class="patient-header-stat-label">Pressão Arterial</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── TAB 1: PAINEL CLÍNICO ──
+  document.getElementById('tab-painel').innerHTML = `
+    <div class="grid-responsive-4" style="gap:12px;margin-bottom:20px;">
+      ${[
+        { label:'Peso',               val:`${latestBio.peso} kg`,       delta: prevBio ? latestBio.peso - prevBio.peso : null, inv: true },
+        { label:'IMC',                val:`${latestBio.imc}`,            delta: prevBio ? latestBio.imc - prevBio.imc : null,  inv: true },
+        { label:'Massa Gorda',        val:`${latestBio.gordura} kg`,     delta: prevBio ? latestBio.gordura - prevBio.gordura : null, inv: true },
+        { label:'Massa Magra',        val:`${latestBio.musculo} kg`,     delta: prevBio ? latestBio.musculo - prevBio.musculo : null, inv: false },
+        { label:'Tx. Gordura',        val:`${latestBio.txGordura}%`,     delta: prevBio ? latestBio.txGordura - prevBio.txGordura : null, inv: true },
+        { label:'Gordura Visceral',   val:`${latestBio.gorduraVisceral}`,delta: prevBio ? latestBio.gorduraVisceral - prevBio.gorduraVisceral : null, inv: true },
+        { label:'Circunferência Abdominal', val: p.circunferenciaAbdominal || '84 cm', delta: null },
+        { label:'Pressão Arterial',   val: p.pressao || '120/80 mmHg', delta: null },
+      ].map(c => {
+        let deltaHtml = '';
+        if (c.delta !== null) {
+          const improved = c.inv ? c.delta < 0 : c.delta > 0;
+          const sign = c.delta > 0 ? '+' : '';
+          const cls  = improved ? 'delta-pos' : 'delta-neg';
+          deltaHtml = `<div class="bio-card-delta ${cls}">${sign}${c.delta.toFixed(1)} vs. anterior</div>`;
+        }
+        return `<div class="bio-card"><div class="bio-card-label">${c.label}</div><div class="bio-card-value">${c.val}</div>${deltaHtml}</div>`;
+      }).join('')}
+    </div>
+
+    <div class="grid-responsive-2" style="gap:16px;">
+      <div class="card">
+        <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Parâmetros Clínicos & Hormonais</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-muted);">Terapia de Reposição Hormonal (TRH)</span>
+            <span style="font-weight:600;color:var(--vinho);">${p.trh}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-muted);">Contraceptivo Atual</span>
+            <span style="font-weight:500;">${p.contraceptivo}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-muted);">Última Consulta Realizada</span>
+            <span style="font-weight:500;">${p.ultimaConsulta}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-muted);">Próxima Consulta Agendada</span>
+            <span style="font-weight:600;color:var(--vinho);">${p.proximaConsulta}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:var(--text-muted);">Observações Clínicas</span>
+            <span style="font-size:12px;color:var(--text-secondary);text-align:right;max-width:260px;">${p.observacoes}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Metas da Jornada (${p.metasConcluidas}/${p.metas.length})</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${p.metas.map((m, i) => `
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${i < p.metasConcluidas ? 'var(--oliva)' : 'var(--border)'};background:${i < p.metasConcluidas ? 'var(--oliva)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                ${i < p.metasConcluidas ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+              </div>
+              <span style="color:${i < p.metasConcluidas ? 'var(--text-muted);text-decoration:line-through' : 'var(--text-primary)'};">${m}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:6px;">
+            <span>Adesão ao plano</span><span>${pct}%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div></div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── TAB 2: BIOIMPEDÂNCIA ──
+  const bioFields = [
+    { key:'peso',            label:'Peso Total',          unit:'kg',   inv:true  },
+    { key:'musculo',         label:'Massa Magra',         unit:'kg',   inv:false },
+    { key:'gordura',         label:'Massa Gorda',         unit:'kg',   inv:true  },
+    { key:'txGordura',       label:'Taxa de Gordura',     unit:'%',    inv:true  },
+    { key:'gorduraVisceral', label:'Gordura Visceral',    unit:'',     inv:true  },
+    { key:'aguaCorporal',    label:'Água Corporal Total', unit:'%',    inv:false },
+    { key:'tmb',             label:'Taxa Metabólica Basal',unit:'kcal',inv:false },
+    { key:'nota',            label:'Nota InBody / Score', unit:'/10',  inv:false },
+  ];
+
+  let bioHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);">Evolução Segmental de Bioimpedância</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Data da última avaliação: <strong>${latestBio.data}</strong> (${bio.length} medições registradas)</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openModalBio()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova Bioimpedância
+      </button>
+    </div>
+    <div class="grid-responsive-4" style="gap:16px;">`;
+
+  bioFields.forEach(f => {
+    const vals = bio.map(b => b[f.key] || 0);
+    const last = vals[vals.length - 1];
+    const prev2 = vals.length >= 2 ? vals[vals.length - 2] : null;
+    const delta = prev2 !== null ? last - prev2 : null;
+    const improved = delta !== null ? (f.inv ? delta < 0 : delta > 0) : null;
+    const sign = delta > 0 ? '+' : '';
+    bioHTML += `
+      <div class="bio-card">
+        <div class="bio-card-label">${f.label}</div>
+        <div class="bio-card-value">${last}<span class="bio-card-unit">${f.unit}</span></div>
+        ${delta !== null ? `<div class="bio-card-delta ${improved ? 'delta-pos' : 'delta-neg'}">${sign}${delta.toFixed(1)} vs. anterior</div>` : '<div class="bio-card-delta delta-pos">— Estável</div>'}
+        <canvas id="spark-${f.key}" style="width:100%;height:44px;margin-top:8px;display:block;"></canvas>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;">
+          <span>${bio[0].data}</span><span>${bio[bio.length-1].data}</span>
+        </div>
+      </div>`;
+  });
+  bioHTML += `</div>`;
+  document.getElementById('tab-bio').innerHTML = bioHTML;
+
+  // ── TAB 3: SCORE LAPIDAR (11 Dimensões) ──
+  document.getElementById('tab-score').innerHTML = `
+    <div class="grid-responsive-2" style="gap:20px;">
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;">
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:12px;">
+          <div>
+            <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Score Lapidar — Radar 11 Eixos</h4>
+            <p style="font-size:11px;color:var(--text-muted);">Avaliação integrada: atual (vinho) vs anterior (dourado tracejado)</p>
+          </div>
+          <button class="btn btn-subtle btn-sm" onclick="Router.navigate('habits',{patientId:${p.id}})">
+            Novo Score Diário
+          </button>
+        </div>
+        <canvas id="radar-chart" style="width:340px;height:340px;max-width:100%;"></canvas>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:14px;">Detalhamento das 11 Dimensões (0 a 10)</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${p.scoreLabels.map((lbl, i) => {
+            const val = p.scoreAtual[i];
+            const prev = p.scoreAnterior[i];
+            const diff = val - prev;
+            const sign = diff > 0 ? '+' : '';
+            return `
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+                  <span style="color:var(--text-secondary);font-weight:500;">${lbl}</span>
+                  <span style="font-weight:600;color:var(--vinho);">${val}/10 <span style="font-weight:400;color:${diff>=0?'var(--oliva)':'var(--red-text)'};">(${sign}${diff})</span></span>
+                </div>
+                <div class="progress-bar" style="height:7px;">
+                  <div class="progress-fill" style="width:${val*10}%;background:${val>=7?'var(--oliva)':val>=5?'var(--dourado)':'#DC2626'};"></div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  // ── TAB 4: RISCO CARDIOVASCULAR ──
+  const rv = p.riscoCV;
+  const riscoClass = { 'Baixo':'risco-baixo','Intermediário':'risco-inter','Alto':'risco-alto','Muito Alto':'risco-muito','Extremo':'risco-extremo' };
+  document.getElementById('tab-risco').innerHTML = `
+    <div class="grid-responsive-2" style="gap:20px;margin-bottom:20px;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Estratificação de Risco Cardiovascular</h4>
+            <p style="font-size:11px;color:var(--text-muted);">${rv.preventScore || 'Calculadora AHA PREVENT'}</p>
+          </div>
+          <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+              <span style="font-weight:600;">Colesterol LDL</span>
+              <span style="color:${rv.ldl<=rv.metaLdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.ldl} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaLdl})</span></span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.ldl/rv.metaLdl)*100,100)}%;background:${rv.ldl<=rv.metaLdl?'var(--oliva)':'#DC2626'};"></div></div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+              <span style="font-weight:600;">Colesterol Não-HDL</span>
+              <span style="color:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.naoHdl} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaNaoHdl})</span></span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.naoHdl/rv.metaNaoHdl)*100,100)}%;background:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'#DC2626'};"></div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;">
+            <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">ApoB</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.apob || '—'} <small style="font-size:10px;">mg/dL</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaApob || 90}</div>
+            </div>
+            <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Lp(a)</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.lpa || '—'} <small style="font-size:10px;">nmol/L</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaLpa || 50}</div>
+            </div>
+            <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">PCR-us</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.pcrUs || '—'} <small style="font-size:10px;">mg/L</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; 1.0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Fatores de Risco Clínico</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
+            <div style="font-size:10.5px;color:var(--text-muted);">Hipertensão (HAS)</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.has || 'Não'}</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
+            <div style="font-size:10.5px;color:var(--text-muted);">Diabetes (DM)</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.dm || 'Não'}</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
+            <div style="font-size:10.5px;color:var(--text-muted);">Tabagismo</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.tabagismo || 'Não fumante'}</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
+            <div style="font-size:10.5px;color:var(--text-muted);">História Familiar</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.historiaFamiliar || 'Sem histórico precoce'}</div>
+          </div>
+        </div>
+
+        <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Sugestões de Estratégia Clínica</h4>
+        <ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--text-secondary);display:flex;flex-direction:column;gap:6px;">
+          ${(rv.sugestoes || [
+            'Otimização do estilo de vida com aumento de fibras solúveis',
+            'Cardio contínuo moderado 150 min/semana (Zona 2)',
+            'Monitorar perfil lipídico trimestralmente'
+          ]).map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+    </div>`;
+
+  // ── TAB 5: MEDICAMENTOS & SUPLEMENTOS ──
+  document.getElementById('tab-medicamentos').innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Prescrição Vigente — Medicamentos & Suplementos</h4>
+          <p style="font-size:12px;color:var(--text-muted);">Monitoramento contínuo compartilhado com a paciente</p>
+        </div>
+        <div class="filter-chips" id="med-filter-chips">
+          <button class="filter-chip active" data-med-type="all">Todos (${p.medicamentos.length})</button>
+          <button class="filter-chip" data-med-type="Medicamento">Medicamentos</button>
+          <button class="filter-chip" data-med-type="Suplemento">Suplementos</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table" id="med-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Dose</th>
+              <th>Frequência</th>
+              <th>Início</th>
+              <th>Motivo / Indicação</th>
+              <th>Receita Anexa</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${p.medicamentos.map(m => `
+              <tr data-type="${m.tipo}">
+                <td style="font-weight:600;color:var(--vinho);">${m.nome}</td>
+                <td><span class="badge ${m.tipo==='Medicamento'?'badge-vinho':'badge-oliva'}">${m.tipo}</span></td>
+                <td>${m.dose}</td>
+                <td>${m.freq}</td>
+                <td>${m.inicio}</td>
+                <td style="color:var(--text-secondary);">${m.motivo}</td>
+                <td>
+                  ${m.receita ? `<a href="#" onclick="alert('Baixando receita: ${m.receita}');return false;" style="font-size:12px;color:var(--vinho);font-weight:600;">📥 Baixar</a>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Attach med filter chips
+  document.querySelectorAll('#med-filter-chips .filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#med-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const t = chip.dataset.medType;
+      document.querySelectorAll('#med-table tbody tr').forEach(row => {
+        if (t === 'all' || row.dataset.type === t) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // ── TAB 6: ARQUIVOS (Estilo Revista com Filtros) ──
+  const arquivos = p.arquivos || [
+    { id:1, titulo:'Receita TRH e Suplementação', tipo:'Receitas', data:'15/09/2026', origem:'Enviado', tamanho:'245 KB', icon:'📄', desc:'Progesterona micronizada e Estradiol gel' },
+    { id:2, titulo:'Pedido de Exames Trimestral', tipo:'Pedidos', data:'15/09/2026', origem:'Enviado', tamanho:'180 KB', icon:'📋', desc:'Lipidograma, ApoB, Lp(a), Hormônios' },
+    { id:3, titulo:'Laudo Fleury — Bioquímica e Hormônios', tipo:'Exames', data:'02/09/2026', origem:'Recebido', tamanho:'1.8 MB', icon:'🔬', desc:'Resultado de exames laboratoriais' },
+    { id:4, titulo:'Relatório de Bioimpedância InBody', tipo:'Exames', data:'15/09/2026', origem:'Recebido', tamanho:'920 KB', icon:'📊', desc:'Composição corporal comparativa' }
+  ];
+
+  document.getElementById('tab-arquivos').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);">Biblioteca de Arquivos da Paciente</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Visualização compactada estilo revista de tudo que foi enviado e recebido</p>
+      </div>
+      <div class="filter-chips" id="files-filter-chips">
+        <button class="filter-chip active" data-file-filter="all">Todos (${arquivos.length})</button>
+        <button class="filter-chip" data-file-filter="Receitas">Receitas</button>
+        <button class="filter-chip" data-file-filter="Pedidos">Pedidos</button>
+        <button class="filter-chip" data-file-filter="Exames">Exames</button>
+        <button class="filter-chip" data-file-filter="Enviado">Enviados</button>
+        <button class="filter-chip" data-file-filter="Recebido">Recebidos</button>
+      </div>
+    </div>
+
+    <div class="grid-responsive-3" style="gap:16px;" id="files-grid">
+      ${arquivos.map(f => `
+        <div class="file-card" data-tipo="${f.tipo}" data-origem="${f.origem}">
+          <div class="file-card-preview">
+            <span>${f.icon}</span>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span class="badge ${f.origem==='Enviado'?'badge-vinho':'badge-oliva'}">${f.origem}</span>
+              <span class="badge badge-gray">${f.tipo}</span>
+            </div>
+            <div class="file-card-title">${f.titulo}</div>
+            <div class="file-card-desc">${f.desc}</div>
+          </div>
+          <div class="file-card-meta">
+            <span>${f.data} · ${f.tamanho}</span>
+            <button class="btn btn-subtle btn-sm" style="padding:3px 8px;font-size:11px;" onclick="alert('Visualizando arquivo: ${f.titulo}');">
+              Visualizar
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Filter files
+  document.querySelectorAll('#files-filter-chips .filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#files-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const filter = chip.dataset.fileFilter;
+      document.querySelectorAll('#files-grid .file-card').forEach(card => {
+        if (filter === 'all' || card.dataset.tipo === filter || card.dataset.origem === filter) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // ── TAB 7: DIÁRIO & HÁBITOS ──
+  const d = p.diarioHoje || {};
+  document.getElementById('tab-diario').innerHTML = `
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Diário Lapidar — Monitoramento em Tempo Real</h4>
+          <p style="font-size:12px;color:var(--text-muted);">Registro diário da paciente entre uma consulta e outra · Constância > perfeição</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="Router.navigate('habits',{patientId:${p.id}})">
+          Abrir Diário Completo →
+        </button>
+      </div>
+
+      <div class="grid-responsive-3" style="gap:14px;margin-bottom:18px;">
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--bege);">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Movimento Hoje</div>
+          <div style="font-size:15px;font-weight:600;color:var(--vinho);margin-top:4px;">
+            Musculação: ${d.movimento?.musculacao === 'sim' ? '✓ Feito' : d.movimento?.musculacao === 'nao_programado' ? 'Descanso' : 'Não feito'}
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">
+            Cardio: ${d.movimento?.cardio === 'sim' ? '✓ Feito' : d.movimento?.cardio === 'nao_programado' ? 'Não programado' : 'Não feito'}
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--bege);">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Sono & Descanso</div>
+          <div style="font-size:15px;font-weight:600;color:var(--vinho);margin-top:4px;">
+            ${d.sono?.duracao || '7h30'} (Nota: ${d.sono?.qualidade || 8}/10)
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">
+            ${d.sono?.despertares || '1'} despertar · Dormiu ${d.sono?.dormiu || '23:00'}
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--bege);">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Disposição & Bem-Estar</div>
+          <div style="font-size:15px;font-weight:600;color:var(--oliva);margin-top:4px;">
+            Energia: ${d.bemEstar?.energia || 8}/10
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">
+            Estresse: ${d.bemEstar?.estresse || 3}/10 (baixo)
+          </div>
+        </div>
+      </div>
+
+      ${d.observacoes ? `
+        <div style="background:var(--vinho-xlight);border-left:3px solid var(--vinho);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--text-primary);">
+          <strong>Observação registrada pela paciente:</strong> "${d.observacoes}"
+        </div>
+      ` : ''}
+    </div>`;
+
+  // ── TAB 8: TIMELINE ──
+  const tlColors = { 'Consulta':'#5B2333','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B' };
+  document.getElementById('tab-timeline').innerHTML = `
+    <div class="timeline">
+      ${p.timeline.map(ev => `
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#9B8B7A'}22;color:${tlColors[ev.tipo]||'#9B8B7A'};">
+            <span style="font-size:18px;">${ev.icone}</span>
+          </div>
+          <div class="timeline-content">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="timeline-title">${ev.titulo}</span>
+              <span class="badge badge-gray">${ev.tipo}</span>
+            </div>
+            <div class="timeline-date">${ev.data}</div>
+            <div class="timeline-body">${ev.desc}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Draw initial sparklines & radar
+  setTimeout(() => {
+    bioFields.forEach(f => {
+      const c = document.getElementById(`spark-${f.key}`);
+      if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
+    });
+    const rc = document.getElementById('radar-chart');
+    if (rc) drawRadarChart(rc, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
+  }, 100);
+
+  // ── Tabs switching logic ──
+  document.querySelectorAll('#tabs-nav .tab-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tabs-nav .tab-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+
+      if (btn.dataset.tab === 'bio') {
+        setTimeout(() => {
+          bioFields.forEach(f => {
+            const c = document.getElementById(`spark-${f.key}`);
+            if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
+          });
+        }, 50);
+      }
+      if (btn.dataset.tab === 'score') {
+        setTimeout(() => {
+          const rc = document.getElementById('radar-chart');
+          if (rc) drawRadarChart(rc, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
+        }, 50);
+      }
+    });
+  });
+
+  // Modal Bioimpedância
+  function openModalBio() {
+    document.getElementById('bio-in-data').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modal-bio').classList.add('open');
+  }
+  function closeModalBio() {
+    document.getElementById('modal-bio').classList.remove('open');
+  }
+  function saveNewBio() {
+    const dataVal = document.getElementById('bio-in-data').value;
+    const pesoVal = parseFloat(document.getElementById('bio-in-peso').value);
+    if (!pesoVal) { alert('Informe ao menos o peso.'); return; }
+
+    const entry = {
+      data: formatDate(dataVal),
+      peso: pesoVal,
+      musculo: parseFloat(document.getElementById('bio-in-musculo').value) || latestBio.musculo,
+      gordura: parseFloat(document.getElementById('bio-in-gordura').value) || latestBio.gordura,
+      imc: parseFloat((pesoVal / 2.6).toFixed(1)),
+      txGordura: parseFloat(document.getElementById('bio-in-tx').value) || latestBio.txGordura,
+      aguaCorporal: parseFloat(document.getElementById('bio-in-agua').value) || latestBio.aguaCorporal,
+      gorduraVisceral: parseInt(document.getElementById('bio-in-visceral').value) || latestBio.gorduraVisceral,
+      tmb: 1600,
+      nota: parseFloat(document.getElementById('bio-in-nota').value) || 8.0
+    };
+
+    p.bioimpedancia.push(entry);
+    p.pesoAtual = pesoVal;
+    closeModalBio();
+    alert('Nova bioimpedância registrada com sucesso!');
+    location.reload();
+  }
+</script>
+</body>
+</html>

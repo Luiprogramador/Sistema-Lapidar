@@ -1,0 +1,96 @@
+/* ============================================================
+   LAPIDAR — Design Tokens
+   ============================================================ */
+
+:root {
+  /* Cores principais */
+  --vinho:         #5B2333;
+  --vinho-dark:    #3E1623;
+  --vinho-light:   #7A3047;
+  --vinho-xlight:  #F7EEF0;
+
+  /* Neutros */
+  --bege:          #F4EFE7;
+  --bege-dark:     #E8E0D0;
+  --bege-darker:   #D9CFC0;
+  --white:         #FFFFFF;
+
+  /* Acentos */
+  --dourado:       #C6A15B;
+  --dourado-light: #D4B578;
+  --dourado-pale:  #FBF5E8;
+  --oliva:         #66724A;
+  --oliva-light:   #7A8A58;
+  --oliva-pale:    #EEF1E8;
+
+  /* Texto */
+  --text-primary:  #1A1008;
+  --text-secondary:#5A4A3A;
+  --text-muted:    #9B8B7A;
+  --text-inverted: #F4EFE7;
+
+  /* Bordas */
+  --border:        #E8E0D0;
+  --border-dark:   #D9CFC0;
+
+  /* Status / Alertas */
+  --red-bg:        #FEE2E2;
+  --red-text:      #991B1B;
+  --yellow-bg:     #FEF3C7;
+  --yellow-text:   #92400E;
+  --blue-bg:       #E0F2FE;
+  --blue-text:     #075985;
+  --purple-bg:     #EDE9FE;
+  --purple-text:   #5B21B6;
+  --pink-bg:       #FCE7F3;
+  --pink-text:     #9D174D;
+  --green-bg:      #D1FAE5;
+  --green-text:    #065F46;
+
+  /* Tipografia */
+  --font-serif:    'Playfair Display', Georgia, serif;
+  --font-sans:     'Montserrat', system-ui, sans-serif;
+
+  /* Escala tipográfica */
+  --text-xs:       0.75rem;    /* 12px */
+  --text-sm:       0.875rem;   /* 14px */
+  --text-base:     1rem;       /* 16px */
+  --text-lg:       1.125rem;   /* 18px */
+  --text-xl:       1.25rem;    /* 20px */
+  --text-2xl:      1.5rem;     /* 24px */
+  --text-3xl:      1.875rem;   /* 30px */
+
+  /* Espaçamentos */
+  --space-1:       0.25rem;
+  --space-2:       0.5rem;
+  --space-3:       0.75rem;
+  --space-4:       1rem;
+  --space-5:       1.25rem;
+  --space-6:       1.5rem;
+  --space-8:       2rem;
+  --space-10:      2.5rem;
+  --space-12:      3rem;
+
+  /* Bordas arredondadas */
+  --radius-sm:     6px;
+  --radius:        10px;
+  --radius-md:     12px;
+  --radius-lg:     16px;
+  --radius-xl:     20px;
+  --radius-full:   9999px;
+
+  /* Sombras */
+  --shadow-sm:     0 1px 4px rgba(91,35,51,0.06);
+  --shadow:        0 2px 12px rgba(91,35,51,0.08);
+  --shadow-md:     0 4px 20px rgba(91,35,51,0.12);
+  --shadow-lg:     0 8px 40px rgba(91,35,51,0.16);
+
+  /* Layout */
+  --sidebar-width: 228px;
+  --topbar-height: 56px;
+  --bottombar-height: 60px;
+
+  /* Transições */
+  --transition:    all 0.2s ease;
+  --transition-slow: all 0.35s ease;
+}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financeiro — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="page-header">
+    <h1 class="page-title">Financeiro</h1>
+    <p class="page-subtitle">Receitas, pagamentos e pendências</p>
+  </div>
+
+  <!-- Cards de resumo -->
+  <div class="grid-responsive-4" style="gap:12px;margin-bottom:24px;">
+    <div class="card-stat stagger-1" style="border-left:3px solid var(--oliva);">
+      <span class="card-stat-label">Receita do Mês</span>
+      <span class="card-stat-value" style="color:var(--oliva);">R$ 7.230</span>
+      <span class="card-stat-sub">Setembro 2026</span>
+    </div>
+    <div class="card-stat stagger-2" style="border-left:3px solid var(--vinho);">
+      <span class="card-stat-label">Total Recebido</span>
+      <span class="card-stat-value">R$ 6.480</span>
+      <span class="card-stat-sub">8 pagamentos</span>
+    </div>
+    <div class="card-stat stagger-3" style="border-left:3px solid var(--yellow-text);">
+      <span class="card-stat-label">Pendente</span>
+      <span class="card-stat-value" style="color:var(--yellow-text);">R$ 1.600</span>
+      <span class="card-stat-sub">2 pagamentos</span>
+    </div>
+    <div class="card-stat stagger-4" style="border-left:3px solid var(--dourado);">
+      <span class="card-stat-label">Receita Anual</span>
+      <span class="card-stat-value" style="color:var(--dourado);">R$ 58.400</span>
+      <span class="card-stat-sub">Jan–Set 2026</span>
+    </div>
+  </div>
+
+  <!-- Gráfico de receita mensal -->
+  <div class="card" style="margin-bottom:24px;">
+    <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Receita Mensal — 2026</h3>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Valores acumulados por mês</p>
+    <canvas id="receita-chart" style="width:100%;height:160px;display:block;"></canvas>
+  </div>
+
+  <!-- Filtros e tabela -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Transações</h3>
+      <div class="filter-chips">
+        <button class="filter-chip active" data-status="Todos">Todos</button>
+        <button class="filter-chip" data-status="pago">Pagos</button>
+        <button class="filter-chip" data-status="pendente">Pendentes</button>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Paciente</th>
+            <th>Plano</th>
+            <th>Valor</th>
+            <th>Parcela</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="transactions-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('financial');
+
+  // Receita mensal data
+  const receitaMensal = [
+    { label:'Jan', value:5800 },
+    { label:'Fev', value:6200 },
+    { label:'Mar', value:5900 },
+    { label:'Abr', value:6500 },
+    { label:'Mai', value:6800 },
+    { label:'Jun', value:7100 },
+    { label:'Jul', value:6400 },
+    { label:'Ago', value:6900 },
+    { label:'Set', value:7230 },
+  ];
+
+  requestAnimationFrame(() => {
+    drawBarChart(document.getElementById('receita-chart'), receitaMensal, { color:'#66724A' });
+  });
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(() => drawBarChart(document.getElementById('receita-chart'), receitaMensal, { color:'#66724A' }));
+  });
+
+  // Transactions
+  let activeStatus = 'Todos';
+
+  function renderTransactions() {
+    const filtered = activeStatus === 'Todos'
+      ? TRANSACOES
+      : TRANSACOES.filter(t => t.status === activeStatus);
+
+    document.getElementById('transactions-body').innerHTML = filtered.map(t => `
+      <tr>
+        <td style="color:var(--text-muted);font-size:12px;">${t.data}</td>
+        <td style="font-weight:500;">${t.paciente}</td>
+        <td>${getProtocolBadge(t.plano)}</td>
+        <td style="font-weight:600;color:var(--vinho);">R$ ${t.valor.toLocaleString('pt-BR')}</td>
+        <td style="color:var(--text-muted);font-size:12px;">${t.parcelas}</td>
+        <td>${getStatusBadge(t.status)}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeStatus = btn.dataset.status;
+      document.querySelectorAll('.filter-chip[data-status]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTransactions();
+    });
+  });
+
+  renderTransactions();
+</script>
+</body>
+</html>

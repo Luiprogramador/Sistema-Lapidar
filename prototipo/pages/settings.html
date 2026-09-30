@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .settings-section {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-5);
+      margin-bottom: 16px;
+    }
+    .settings-section h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vinho);
+      margin-bottom: 16px;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-switch {
+      position: relative; width: 40px; height: 22px; flex-shrink: 0;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      border-radius: 11px;
+      background: var(--border-dark);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: left 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--vinho); }
+    .toggle-switch input:checked + .toggle-track::after { left: 20px; }
+    .proto-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .proto-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="page-header">
+    <h1 class="page-title">Configurações</h1>
+    <p class="page-subtitle">Dados da clínica e preferências do sistema</p>
+  </div>
+
+  <div style="max-width:680px;">
+    <!-- Dados da Clínica -->
+    <div class="settings-section">
+      <h3>Dados da Clínica</h3>
+      <div style="display:flex;flex-direction:column;gap:12px;" id="clinic-fields"></div>
+    </div>
+
+    <!-- Protocolos -->
+    <div class="settings-section">
+      <h3>Protocolos Ativos</h3>
+      <div id="protocols-list">
+        <div class="proto-row"><span>Lapidar 40+</span><span class="badge badge-oliva">Ativo</span></div>
+        <div class="proto-row"><span>Lapidar SOP</span><span class="badge badge-oliva">Ativo</span></div>
+        <div class="proto-row"><span>Lapidar Fertilidade</span><span class="badge badge-oliva">Ativo</span></div>
+        <div class="proto-row"><span>Pocket</span><span class="badge badge-oliva">Ativo</span></div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="settings-section">
+      <h3>Alertas e Notificações</h3>
+      <div id="alerts-list"></div>
+    </div>
+
+    <!-- Ebook -->
+    <div class="settings-section">
+      <h3>Ebook e Materiais</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Configure o material educativo enviado às pacientes</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm">Gerenciar Envios</button>
+        <button class="btn btn-subtle btn-sm">Ver Postagens</button>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="btn btn-primary" id="btn-save">Salvar Configurações</button>
+      <span style="font-size:12px;color:var(--oliva);display:none;" id="saved-msg">✓ Salvo neste navegador</span>
+    </div>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('settings');
+
+  var SETTINGS_KEY = 'lapidar-settings-v1';
+
+  // Defaults
+  var settings = {
+    clinicName:    'Clínica Lapidar',
+    doctorName:    'Dra. Andressa Gomide',
+    crm:           'CRM 12345/MG · RQE 24717',
+    email:         'contato@clinicalapidar.com.br',
+    phone:         '(11) 99999-0000',
+    habitCheckin:  true,
+    ldlAlert:      true,
+    vitDAlert:     true,
+  };
+
+  // Load from localStorage
+  try {
+    var raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      Object.assign(settings, parsed);
+    }
+  } catch(e) {}
+
+  // Clinic fields
+  var clinicFieldDefs = [
+    { key:'clinicName', label:'Nome da Clínica' },
+    { key:'doctorName', label:'Profissional' },
+    { key:'crm',        label:'CRM / Registro' },
+    { key:'email',      label:'E-mail', type:'email' },
+    { key:'phone',      label:'Telefone / WhatsApp', type:'tel' },
+  ];
+  var clinicFieldEls = {};
+  var clinicFields = document.getElementById('clinic-fields');
+  clinicFieldDefs.forEach(function(def) {
+    var group = document.createElement('div');
+    group.className = 'form-group';
+    var lbl = document.createElement('label');
+    lbl.className = 'form-label';
+    lbl.textContent = def.label;
+    var input = document.createElement('input');
+    input.type = def.type || 'text';
+    input.className = 'form-input';
+    input.value = settings[def.key];
+    clinicFieldEls[def.key] = input;
+    group.appendChild(lbl);
+    group.appendChild(input);
+    clinicFields.appendChild(group);
+  });
+
+  // Toggles
+  var alertDefs = [
+    { key:'habitCheckin', label:'Check diário de hábitos', sub:'Receber aviso de pacientes sem check' },
+    { key:'ldlAlert',     label:'Alerta LDL acima da meta', sub:'Notificar quando LDL > meta do protocolo' },
+    { key:'vitDAlert',    label:'Alerta Vitamina D baixa', sub:'Notificar dosagem < 30 ng/mL' },
+  ];
+  var toggleEls = {};
+  var alertsList = document.getElementById('alerts-list');
+  alertDefs.forEach(function(def) {
+    var row = document.createElement('div');
+    row.className = 'toggle-row';
+    var info = document.createElement('div');
+    info.innerHTML =
+      '<p style="font-size:13px;color:var(--text-primary);margin-bottom:2px;">' + def.label + '</p>' +
+      '<p style="font-size:11px;color:var(--text-muted);">' + def.sub + '</p>';
+    var sw = document.createElement('label');
+    sw.className = 'toggle-switch';
+    var inp = document.createElement('input');
+    inp.type = 'checkbox';
+    inp.checked = settings[def.key];
+    toggleEls[def.key] = inp;
+    var track = document.createElement('div');
+    track.className = 'toggle-track';
+    sw.appendChild(inp);
+    sw.appendChild(track);
+    row.appendChild(info);
+    row.appendChild(sw);
+    alertsList.appendChild(row);
+  });
+
+  // Save
+  document.getElementById('btn-save').addEventListener('click', function() {
+    clinicFieldDefs.forEach(function(def) {
+      settings[def.key] = clinicFieldEls[def.key].value;
+    });
+    alertDefs.forEach(function(def) {
+      settings[def.key] = toggleEls[def.key].checked;
+    });
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      var msg = document.getElementById('saved-msg');
+      msg.style.display = 'inline';
+      setTimeout(function() { msg.style.display = 'none'; }, 2500);
+    } catch(e) {
+      alert('Não foi possível salvar. Verifique o armazenamento do navegador.');
+    }
+  });
+</script>
+</body>
+</html>

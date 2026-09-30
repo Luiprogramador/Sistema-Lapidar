@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .exam-row {
+      display: grid;
+      grid-template-columns: 1fr 90px 90px 90px 80px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .exam-row:last-child { border-bottom: none; }
+    .exam-header {
+      display: grid;
+      grid-template-columns: 1fr 90px 90px 90px 80px;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 2px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .status-ok   { color: var(--oliva); font-weight: 600; }
+    .status-warn { color: var(--yellow-text); font-weight: 600; }
+    .status-bad  { color: var(--red-text); font-weight: 600; }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-box {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      border: 2px solid var(--border-dark);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .checklist-item.checked .checklist-box {
+      background: var(--oliva);
+      border-color: var(--oliva);
+    }
+    .checklist-item.checked .checklist-label {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+    .checklist-label { font-size: 14px; color: var(--text-primary); }
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      border-radius: 12px;
+      background: var(--border-dark);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transition: left 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--vinho); }
+    .toggle-switch input:checked + .toggle-track::after { left: 23px; }
+    @media (max-width: 768px) {
+      .exam-row, .exam-header { grid-template-columns: 1fr 70px 70px; }
+      .exam-row .exam-goal, .exam-header .exam-goal-h,
+      .exam-row .exam-status, .exam-header .exam-status-h { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <!-- Header da consulta -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div>
+      <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail')" style="margin-bottom:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Voltar para Ficha
+      </button>
+      <h1 class="page-title" id="consult-title">Consulta</h1>
+      <p class="page-subtitle" id="consult-subtitle"></p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:Router.getState().patientId})">Ver Jornada</button>
+      <button class="btn btn-primary btn-sm" id="btn-finalizar">Finalizar Consulta</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs-nav">
+    <button class="tab-item active" data-tab="checklist">Checklist</button>
+    <button class="tab-item" data-tab="exames">Exames</button>
+    <button class="tab-item" data-tab="anotacoes">Anotações</button>
+    <button class="tab-item" data-tab="analises">Análises em Consulta</button>
+  </div>
+
+  <!-- Tab: Checklist -->
+  <div class="tab-content active" id="tab-checklist">
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Checklist da Consulta</h3>
+        <span class="badge badge-oliva" id="checklist-progress">0/5</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Auxiliar a médica a não esquecer nada durante a consulta</p>
+      <div class="progress-bar" style="margin-bottom:16px;">
+        <div class="progress-fill" id="checklist-bar" style="width:0%;background:linear-gradient(90deg,var(--vinho),var(--dourado));"></div>
+      </div>
+      <div id="checklist-items"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Exames -->
+  <div class="tab-content" id="tab-exames">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Painel de Exames</h3>
+          <p style="font-size:11px;color:var(--text-muted);">Resultado atual vs anterior, com meta e avaliação clínica</p>
+        </div>
+        <button class="btn btn-subtle btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Exame
+        </button>
+      </div>
+      <div class="exam-header">
+        <div>Exame</div>
+        <div style="text-align:right;">Anterior</div>
+        <div style="text-align:right;">Atual</div>
+        <div class="exam-goal-h" style="text-align:right;">Meta</div>
+        <div class="exam-status-h" style="text-align:center;">Status</div>
+      </div>
+      <div id="exam-list"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Anotações -->
+  <div class="tab-content" id="tab-anotacoes">
+    <div class="grid-responsive-2" style="gap:16px;">
+      <div class="card">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Anotações Privadas</h3>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Visíveis apenas para a médica — não aparecem para a paciente</p>
+        <textarea class="form-textarea" id="private-notes" style="min-height:200px;"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+          <span style="font-size:11px;color:var(--text-muted);" id="private-saved"></span>
+          <button class="btn btn-primary btn-sm" id="save-private">Salvar</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Plano até Próximo Contato</h3>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Resumo que será compartilhado com a paciente nas Análises</p>
+        <textarea class="form-textarea" id="public-draft" style="min-height:200px;"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+          <span style="font-size:11px;color:var(--text-muted);" id="draft-saved"></span>
+          <button class="btn btn-ghost btn-sm" id="save-draft">Salvar Rascunho</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Análises -->
+  <div class="tab-content" id="tab-analises">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Análises em Consulta</h3>
+          <p style="font-size:11px;color:var(--text-muted);">Publicado para a paciente ver no portal</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-subtle btn-sm" id="btn-load-draft">Carregar Rascunho</button>
+          <button class="btn btn-primary btn-sm" id="btn-publish">Publicar para Paciente</button>
+        </div>
+      </div>
+      <div id="published-info" style="display:none;margin:12px 0;padding:10px;background:var(--green-bg);border-radius:var(--radius);font-size:12px;color:var(--green-text);"></div>
+      <textarea class="form-textarea" id="analysis-draft" style="min-height:240px;margin-top:16px;" placeholder="Escreva aqui as análises da consulta para compartilhar com a paciente..."></textarea>
+    </div>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('patients');
+
+  var state = Router.getState();
+  var p = Router.getSelectedPatient() || PACIENTES[0];
+  var STORAGE_KEY = 'lapidar-consulta-' + p.id;
+
+  // Header
+  document.getElementById('consult-title').textContent = 'Consulta — ' + p.nome;
+  document.getElementById('consult-subtitle').textContent = p.protocolo + ' · ' + p.consultaAtual;
+
+  // ── Load state from localStorage ──
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  }
+  function saveState(data) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  var saved = loadState() || {
+    checklist: { pressao: false, peso: false, medicamentos: true, historico: true, objetivos: false },
+    privateNotes: 'DEMO — Relata melhora percebida na disposição. Conversamos sobre rotina e pontos que deseja acompanhar.',
+    publicDraft: 'Neste encontro, revisamos seus objetivos e os dados disponíveis para acompanhar sua jornada. Vamos continuar observando sua evolução em conjunto.',
+    analysis: '',
+    publishedAt: ''
+  };
+
+  // ── CHECKLIST ──
+  var checkItems = [
+    { id:'pressao',     label:'Verificar pressão arterial' },
+    { id:'peso',        label:'Registrar peso e medidas' },
+    { id:'medicamentos',label:'Revisar medicamentos e suplementos' },
+    { id:'historico',   label:'Analisar histórico desde a última consulta' },
+    { id:'objetivos',   label:'Revisar metas e objetivos da paciente' },
+  ];
+
+  function renderChecklist() {
+    var completed = checkItems.filter(function(c) { return saved.checklist[c.id]; }).length;
+    var total = checkItems.length;
+    var pct = Math.round((completed / total) * 100);
+    document.getElementById('checklist-progress').textContent = completed + '/' + total;
+    document.getElementById('checklist-bar').style.width = pct + '%';
+
+    var container = document.getElementById('checklist-items');
+    container.innerHTML = '';
+    checkItems.forEach(function(item) {
+      var div = document.createElement('div');
+      div.className = 'checklist-item' + (saved.checklist[item.id] ? ' checked' : '');
+      div.dataset.id = item.id;
+      div.innerHTML =
+        '<div class="checklist-box">' +
+          (saved.checklist[item.id] ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+        '</div>' +
+        '<span class="checklist-label">' + item.label + '</span>';
+      div.addEventListener('click', function() {
+        saved.checklist[item.id] = !saved.checklist[item.id];
+        saveState(saved);
+        renderChecklist();
+      });
+      container.appendChild(div);
+    });
+  }
+  renderChecklist();
+
+  // ── EXAMES (22 Marcadores do Catálogo com Formatação Condicional 3 Níveis) ──
+  var exams = (typeof EXAMES_CATALOGO !== 'undefined' && EXAMES_CATALOGO.length > 0)
+    ? EXAMES_CATALOGO
+    : [
+        { nome:'Colesterol LDL', unidade:'mg/dL', meta:'< 100', anterior:'148', atual:'128', dir:'max', refMax:100, warnThreshold:130 },
+        { nome:'Colesterol HDL', unidade:'mg/dL', meta:'≥ 50',  anterior:'48',  atual:'52',  dir:'min', refMin:50, warnThreshold:45 },
+        { nome:'Triglicerídeos', unidade:'mg/dL', meta:'< 150', anterior:'162', atual:'138', dir:'max', refMax:150, warnThreshold:175 },
+      ];
+
+  function getStatus(exam) {
+    var val = parseFloat(String(exam.atual).replace(',','.'));
+    if (isNaN(val)) return { cls:'', text:'—' };
+
+    if (exam.dir === 'max') {
+      if (val <= exam.refMax) return { cls:'status-ok', text:'✓ Meta' };
+      if (exam.warnThreshold && val <= exam.warnThreshold) return { cls:'status-warn', text:'⚠ Atenção' };
+      return { cls:'status-bad', text:'✗ Fora' };
+    } else if (exam.dir === 'min') {
+      if (val >= exam.refMin) return { cls:'status-ok', text:'✓ Meta' };
+      if (exam.warnThreshold && val >= exam.warnThreshold) return { cls:'status-warn', text:'⚠ Atenção' };
+      return { cls:'status-bad', text:'✗ Fora' };
+    } else if (exam.dir === 'range') {
+      if (val >= exam.refMin && val <= exam.refMax) return { cls:'status-ok', text:'✓ Meta' };
+      if ((exam.warnMin && val >= exam.warnMin) || (exam.warnMax && val <= exam.warnMax)) return { cls:'status-warn', text:'⚠ Atenção' };
+      return { cls:'status-bad', text:'✗ Fora' };
+    }
+    return { cls:'status-ok', text:'✓ Normal' };
+  }
+
+  function getDelta(prev, curr) {
+    if (!prev || !curr) return '';
+    var p = parseFloat(String(prev).replace(',','.'));
+    var c = parseFloat(String(curr).replace(',','.'));
+    if (isNaN(p) || isNaN(c)) return '';
+    var d = c - p;
+    var sign = d > 0 ? '+' : '';
+    return sign + d.toFixed(1);
+  }
+
+  var examList = document.getElementById('exam-list');
+  examList.innerHTML = '';
+  exams.forEach(function(ex) {
+    var st = getStatus(ex);
+    var delta = getDelta(ex.anterior, ex.atual);
+    var deltaColor = delta.startsWith('-') ? 'var(--oliva)' : (delta.startsWith('+') ? 'var(--red-text)' : '');
+    var row = document.createElement('div');
+    row.className = 'exam-row';
+    row.innerHTML =
+      '<div><span style="font-weight:600;color:var(--vinho);">' + ex.nome + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:4px;">' + ex.unidade + '</span>' +
+        (delta ? '<span style="font-size:11px;color:' + deltaColor + ';margin-left:6px;">(' + delta + ')</span>' : '') +
+      '</div>' +
+      '<div style="text-align:right;color:var(--text-muted);">' + ex.anterior + '</div>' +
+      '<div style="text-align:right;font-weight:700;color:var(--text-primary);">' + ex.atual + '</div>' +
+      '<div class="exam-goal" style="text-align:right;color:var(--text-secondary);font-size:12px;font-weight:500;">' + ex.meta + '</div>' +
+      '<div style="text-align:center;"><span class="' + st.cls + '" style="font-size:11.5px;padding:3px 8px;border-radius:999px;background:' + (st.cls==='status-ok'?'var(--green-bg)':st.cls==='status-warn'?'var(--yellow-bg)':'var(--red-bg)') + ';">' + st.text + '</span></div>';
+    examList.appendChild(row);
+  });
+
+  // ── ANOTAÇÕES ──
+  document.getElementById('private-notes').value = saved.privateNotes;
+  document.getElementById('public-draft').value  = saved.publicDraft;
+
+  document.getElementById('save-private').addEventListener('click', function() {
+    saved.privateNotes = document.getElementById('private-notes').value;
+    saveState(saved);
+    var el = document.getElementById('private-saved');
+    el.textContent = '✓ Salvo';
+    setTimeout(function() { el.textContent = ''; }, 2000);
+  });
+  document.getElementById('save-draft').addEventListener('click', function() {
+    saved.publicDraft = document.getElementById('public-draft').value;
+    saveState(saved);
+    var el = document.getElementById('draft-saved');
+    el.textContent = '✓ Rascunho salvo';
+    setTimeout(function() { el.textContent = ''; }, 2000);
+  });
+
+  // ── ANÁLISES ──
+  document.getElementById('analysis-draft').value = saved.analysis || '';
+  if (saved.publishedAt) {
+    var info = document.getElementById('published-info');
+    info.style.display = 'block';
+    info.textContent = '✓ Análise publicada em ' + saved.publishedAt;
+  }
+
+  document.getElementById('btn-load-draft').addEventListener('click', function() {
+    document.getElementById('analysis-draft').value = saved.publicDraft;
+  });
+  document.getElementById('btn-publish').addEventListener('click', function() {
+    saved.analysis = document.getElementById('analysis-draft').value;
+    saved.publishedAt = new Date().toLocaleString('pt-BR');
+    saveState(saved);
+    var info = document.getElementById('published-info');
+    info.style.display = 'block';
+    info.textContent = '✓ Análise publicada em ' + saved.publishedAt;
+  });
+
+  // ── Finalizar consulta ──
+  document.getElementById('btn-finalizar').addEventListener('click', function() {
+    if (confirm('Deseja finalizar esta consulta e voltar para a ficha da paciente?')) {
+      Router.navigate('patient-detail', { patientId: p.id });
+    }
+  });
+
+  // ── Tabs ──
+  document.querySelectorAll('.tab-item').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-item').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

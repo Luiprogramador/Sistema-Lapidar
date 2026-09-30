@@ -1,41 +1,74 @@
-# figma-make-app
+# lapidar-prototipo
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+Protótipo estático do Sistema Lapidar em HTML, CSS e JavaScript puro — sem frameworks, sem build tools.
 
-## Development Server
+## Como abrir
 
-A Vite development server is **already running** on `$PORT` (default 8443). You don't need to start it manually.
+Abra o arquivo `prototipo/index.html` diretamente no navegador. Nenhum servidor ou instalação necessária.
 
-- Preview URL: The user can access the running app through the preview panel
-- Hot reload: Changes to source files are reflected immediately
+## Estrutura do projeto
 
-## Project Structure
+```
+prototipo/
+├── index.html                  Ponto de entrada (redireciona para login)
+├── assets/                     Logos oficiais (transparentes, vetor e texto)
+├── css/
+│   ├── variables.css           Tokens de design (cores, fontes, espaçamentos)
+│   ├── base.css                Reset global e tipografia
+│   ├── layout.css              Shell: topbar, sidebar, bottom bar, responsividade
+│   ├── components.css          Sistema de componentes (cards, botões, modais, tabs)
+│   └── animations.css          Micro-animações e transições
+└── js/
+│   ├── data.js                 Mock data: 8 pacientes completos, catálogo com 22 exames, check-in diário
+│   ├── charts.js               Gráficos via Canvas 2D API (barras, donut, radar 11 eixos, sparklines)
+│   ├── router.js               Navegação entre páginas via localStorage
+│   └── components.js           Topbar, sidebar, bottom bar, modal de leitura rápida
+└── pages/
+    ├── login.html              Tela de login (layout split com logo oficial)
+    ├── dashboard.html          Dashboard com gráficos e alertas clínicos
+    ├── patients.html           Lista de pacientes, popup rápido e cadastro
+    ├── patient-detail.html     Ficha da paciente (8 abas + impressão de relatório PDF)
+    ├── habits.html             Diário Lapidar (check-in diário, metas personalizadas, bloco 40+)
+    ├── consultation.html       Workspace de consulta (checklist, 22 exames com 3 status, anotações)
+    ├── journey.html            Jornada operacional (visão geral com timeline e checklist com fases pós-ciclo)
+    ├── agenda.html             Agenda com calendário interativo, contatos de terça e retorno > 7d
+    ├── financial.html          Financeiro com gráfico e tabela de transações
+    ├── portal.html             Portal da paciente (score radar, progresso, acesso ao diário, consultas)
+    └── settings.html           Configurações da clínica e alertas
+```
 
-This is the canonical project structure. Start with task-relevant files below. Only follow imports or inspect other files when required, when a documented path is missing, or when the repository contradicts this guide.
+## Navegação
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into the `#root` element
-- `src/App.tsx` - Primary application component and the usual starting point for UI work
-- `src/index.css` - Global CSS entrypoint and Tailwind CSS v4 import
-- `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
-- `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
-- `vite.config.ts` - Vite configuration with React, Tailwind CSS v4, and Figma Make plugins plus the `@` alias for `src`
-- `.mise.toml` - Toolchain versions for Node.js and pnpm
+O roteamento é feito via `localStorage` (sem URL hash). O objeto `Router` em `js/router.js` gerencia o estado da página atual, perfil ativo e paciente selecionado.
 
-## Dependencies
+Para navegar entre páginas, use sempre:
+```js
+Router.navigate('nome-da-pagina');               // sem parâmetros
+Router.navigate('patient-detail', { patientId: 1 }); // com parâmetros
+```
 
-- Runtime: React 19 and React DOM 19
-- Styling: Tailwind CSS v4 with the `@tailwindcss/vite` plugin
-- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-react`
-- Formatting: oxfmt
+## Perfis de demonstração
 
-## Styling
+O seletor no topbar alterna entre três perfis, cada um com menu e conteúdo adaptados:
 
-This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
+| Perfil | Acesso |
+|---|---|
+| **Médica** | Dashboard, Pacientes, Agenda, Financeiro, Configurações |
+| **Secretaria** | Dashboard, Pacientes, Agenda, Financeiro, Configurações |
+| **Paciente** | Minha Ficha, Diário Lapidar, Consultas |
 
-`src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
+## Paleta de cores
 
-## Code quality
+| Token | Valor | Uso |
+|---|---|---|
+| `--vinho` | `#5B2333` | Cor primária |
+| `--dourado` | `#C6A15B` | Destaques e acentos |
+| `--bege` | `#F4EFE7` | Background |
+| `--oliva` | `#66724A` | Sucesso / metas atingidas |
 
-- Use double quotes for strings containing apostrophes (`"We're here to help"`), or escape them in single-quoted strings. An unescaped apostrophe in a single-quoted string breaks the build.
-- Ensure JSX tags are closed and braces are balanced.
-- Export components as default exports.
+## Convenções
+
+- Todo conteúdo dinâmico é gerado via `innerHTML` ou `appendChild` dentro de `<script>` — nunca template literals soltos no HTML.
+- Estado persistido no `localStorage` com chaves prefixadas `lapidar-`.
+- Gráficos são redesenhados no evento `resize` e na troca de aba via `requestAnimationFrame`.
+- O shell (topbar + sidebar + bottom bar) é inicializado em cada página com `initShell('nome-da-pagina')`.

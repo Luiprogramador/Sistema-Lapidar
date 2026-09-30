@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jornada da Paciente — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .journey-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    /* Timeline styles from jornada-lapidar */
+    .timeline-container {
+      position: relative;
+      padding-left: 36px;
+      margin-top: 20px;
+    }
+    .timeline-container::before {
+      content: "";
+      position: absolute;
+      left: 14px; top: 8px; bottom: 8px;
+      width: 2px;
+      background: var(--border);
+    }
+    .tl-node {
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .tl-marker {
+      position: absolute;
+      left: -36px; top: 2px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-family: var(--font-serif);
+      font-size: 13px; font-weight: 700;
+      box-shadow: 0 0 0 4px var(--bege);
+    }
+    .tl-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .tl-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .tl-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: var(--vinho);
+      font-weight: 600;
+    }
+    .tl-who {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .who-andressa { background: var(--vinho-xlight); color: var(--vinho); }
+    .who-gabi     { background: var(--green-bg); color: var(--oliva); }
+    .who-paciente { background: var(--dourado-pale); color: #8A622A; }
+
+    .tl-explain {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    .tl-list {
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tl-list li {
+      padding-left: 16px;
+      position: relative;
+    }
+    .tl-list li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      color: var(--dourado);
+      font-size: 16px;
+      top: -2px;
+    }
+    .tl-note {
+      margin-top: 12px;
+      background: var(--bege);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    .fork-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 580px) { .fork-grid { grid-template-columns: 1fr; } }
+    .fork-card {
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .fork-no  { background: #EFE7DA; color: var(--text-secondary); }
+    .fork-yes { background: var(--vinho-xlight); color: var(--vinho); }
+    .fork-card b { display: block; font-size: 11px; margin-bottom: 2px; }
+
+    /* Post cycle paths */
+    .paths-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 700px) { .paths-grid { grid-template-columns: 1fr; } }
+    .path-card {
+      border-radius: var(--radius-md);
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .path-card.alta  { background: var(--vinho); color: #fff; border-color: var(--vinho); }
+    .path-card.media { background: var(--oliva); color: #fff; border-color: var(--oliva); }
+    .path-card.manutencao { background: #EFE6D6; color: #4A3A2C; border-color: var(--border); }
+    .path-card h4 { font-family: var(--font-serif); font-size: 15px; margin: 0 0 6px; }
+    .path-card p  { font-size: 12px; margin: 0; opacity: .9; }
+
+    .society-card {
+      margin-top: 20px;
+      background: var(--oliva);
+      color: #fff;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Checklist accordion stages */
+    .stage-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .stage-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--white);
+      transition: background .2s ease;
+    }
+    .stage-header-row:hover { background: var(--bege); }
+    .stage-badge-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 12px; font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .stage-header-info { flex: 1; min-width: 0; }
+    .stage-header-title {
+      font-family: var(--font-serif);
+      font-size: 15.5px;
+      font-weight: 600;
+      color: var(--vinho);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .stage-header-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .stage-chev {
+      width: 10px; height: 10px;
+      border-right: 2px solid var(--text-muted);
+      border-bottom: 2px solid var(--text-muted);
+      transform: rotate(45deg);
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+    .stage-card.open .stage-chev { transform: rotate(-135deg); }
+    .stage-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--bege);
+    }
+    .stage-card.open .stage-body { display: block; }
+    
+    .chk-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px solid var(--bege);
+      cursor: pointer;
+    }
+    .chk-item:first-of-type { border-top: none; }
+    .chk-box {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-dark);
+      background: #fff;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .chk-item.checked .chk-box {
+      background: var(--vinho);
+      border-color: var(--vinho);
+    }
+    .chk-item.checked .chk-text {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+    .chk-text { font-size: 13.5px; color: var(--text-primary); }
+    .group-sub-header {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      color: var(--dourado);
+      margin: 16px 0 4px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="journey-wrap">
+
+    <!-- Top Action / Back -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div>
+        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:p.id})" style="margin-bottom:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar para Ficha de <span id="back-name"></span>
+        </button>
+        <h1 class="page-title" id="journey-page-title">Jornada da Paciente</h1>
+        <p class="page-subtitle">Mapa Operacional · Uso interno da equipe médica e administrativa</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:p.id})">
+          Iniciar Consulta
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode Tabs: Visão Geral vs Checklist Operacional -->
+    <div class="tabs" style="margin-bottom:20px;">
+      <button class="tab-item active" data-view="overview" id="tab-overview">Visão Geral do Método</button>
+      <button class="tab-item" data-view="checklist" id="tab-checklist">Checklist Operacional</button>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;font-size:12.5px;color:var(--text-secondary);background:var(--white);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);">
+      <span style="display:inline-flex;align-items:center;gap:6px;">
+        <i style="width:10px;height:10px;border-radius:50%;background:var(--vinho);display:inline-block;"></i>
+        <strong>Andressa</strong> — Clínico e presencial
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px;">
+        <i style="width:10px;height:10px;border-radius:50%;background:var(--oliva);display:inline-block;"></i>
+        <strong>Gabi</strong> — WhatsApp e administrativo
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px;">
+        <i style="width:10px;height:10px;border-radius:50%;background:var(--dourado);display:inline-block;"></i>
+        <strong>Paciente</strong> — Executa e recebe
+      </span>
+    </div>
+
+    <!-- ================= VIEW 1: VISÃO GERAL ================= -->
+    <div id="view-overview">
+      <div class="timeline-container" id="overview-timeline"></div>
+
+      <div style="margin:30px 0 8px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--dourado);text-transform:uppercase;">
+          Depois do Fechamento do Ciclo
+        </div>
+        <h3 style="font-family:var(--font-serif);font-size:18px;color:var(--vinho);margin:4px 0;">Para onde a paciente vai</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Ao final dos 6 ou 12 meses, Andressa decide com a paciente o melhor caminho de continuidade.</p>
+        
+        <div class="paths-grid">
+          <div class="path-card alta">
+            <h4>Evolução alta intensidade</h4>
+            <p>Para quem ainda precisa de acompanhamento próximo — consulta e bioimpedância mensais.</p>
+          </div>
+          <div class="path-card media">
+            <h4>Evolução média intensidade</h4>
+            <p>Para quem já evoluiu e precisa de acompanhamento regular — consulta e bio bimestrais.</p>
+          </div>
+          <div class="path-card manutencao">
+            <h4>Manutenção</h4>
+            <p>Para quem está estável e quer sustentar os resultados — consulta e bio trimestrais.</p>
+          </div>
+        </div>
+
+        <div class="society-card">
+          <svg viewBox="0 0 40 40" fill="none" width="28" height="28" style="flex-shrink:0;">
+            <path d="M20 3 L33 15 L20 37 L7 15 Z" stroke="#fff" stroke-width="1.8"/>
+          </svg>
+          <div>
+            <div style="font-family:var(--font-serif);font-weight:600;font-size:16px;">Lapidar Society</div>
+            <div style="font-size:12.5px;opacity:.95;">Comunidade contínua: eventos presenciais, palestras exclusivas e engajamento ativo durante toda a jornada.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: CHECKLIST OPERACIONAL ================= -->
+    <div id="view-checklist" style="display:none;">
+      
+      <!-- Overall Progress Card -->
+      <div class="card" style="margin-bottom:18px;background:var(--white);">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+          <div>
+            <span style="font-size:11px;font-weight:700;color:var(--dourado);letter-spacing:.05em;text-transform:uppercase;">Progresso Operacional</span>
+            <div style="font-size:13px;color:var(--text-secondary);" id="stage-progress-summary">Carregando...</div>
+          </div>
+          <div style="font-family:var(--font-serif);font-size:26px;font-weight:700;color:var(--vinho);" id="overall-pct">0%</div>
+        </div>
+        <div class="progress-bar" style="height:10px;">
+          <div class="progress-fill" id="overall-bar" style="width:0%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div>
+        </div>
+      </div>
+
+      <!-- Accordion Stages List -->
+      <div id="stages-accordion-list"></div>
+
+      <!-- Post-Cycle Phase Selection -->
+      <div style="margin-top:28px;">
+        <div style="font-size:11px;font-weight:700;color:var(--dourado);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px;">
+          Fase Pós-Ciclo Vigente
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Selecione o plano de continuidade ativo para esta paciente:</p>
+        <div id="post-stages-list"></div>
+      </div>
+
+      <div style="text-align:center;margin-top:28px;margin-bottom:40px;">
+        <button class="btn btn-subtle btn-sm" id="btn-reset-journey" style="font-size:12px;color:var(--text-muted);">
+          Limpar progresso desta paciente
+        </button>
+        <div style="font-size:11px;color:var(--oliva);margin-top:4px;" id="save-indicator"></div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('patients');
+
+  const p = Router.getSelectedPatient() || PACIENTES[0];
+  const STORAGE_KEY = 'lapidar-journey-' + p.id;
+
+  document.getElementById('back-name').textContent = p.nome;
+  document.getElementById('journey-page-title').textContent = 'Jornada — ' + p.nome;
+
+  const COLORS = { andressa: '#5B2333', gabi: '#66724A', paciente: '#C6A15B' };
+  const WHO_LABEL = { andressa: 'Andressa', gabi: 'Gabi', paciente: 'Paciente' };
+
+  const overviewData = [
+    {
+      n:1, who:'gabi', title:'Contato inicial', sub:'Gabi · WhatsApp',
+      explain:'Primeiro contato após o lead chegar por qualquer canal (Instagram, indicação, evento, Google ou parceiro).',
+      items:[
+        'Registra a origem do lead no sistema',
+        'Entende o motivo da procura e expectativas',
+        'Explica consulta particular e processo de reembolso',
+        'Agenda a primeira consulta presencial',
+        'Envia orientações pré-consulta e formulário Tally',
+        'Confirma o agendamento'
+      ]
+    },
+    {
+      n:2, who:'andressa', title:'Primeira consulta', sub:'Andressa · Presencial',
+      explain:'Consulta que define se a paciente segue avulsa ou entra na jornada do Método Lapidar.',
+      items:[
+        'Consulta médica completa e anamnese integrativa',
+        'Avalia queixas, histórico metabólico e objetivos',
+        'Identifica indicação para o Método Lapidar'
+      ],
+      fork: { no:'Sem indicação: segue como paciente avulsa', yes:'Com indicação: Andressa apresenta a jornada de 6 ou 12 meses' }
+    },
+    {
+      n:3, who:'gabi', title:'Fechamento', sub:'Gabi · Administrativo',
+      explain:'Formaliza a entrada da paciente no programa após a decisão da jornada.',
+      items:[
+        'Confirma o pagamento e parcelas contratadas',
+        'Registra no sistema a duração (6 ou 12 meses)',
+        'Agenda a consulta de Marco Zero',
+        'Envia orientações para o encontro inicial',
+        'Mantém lembretes e suporte contínuo pelo WhatsApp'
+      ]
+    },
+    {
+      n:4, who:'andressa', title:'Pré-Marco Zero', sub:'Andressa · Bastidores',
+      explain:'Preparação individualizada antes do primeiro encontro oficial — a paciente ainda não participa desta etapa.',
+      items:[
+        'Cria o plano terapêutico individual',
+        'Elabora o cronograma completo da jornada',
+        'Prepara o Kit Lapidar personalizado',
+        'Confere Diário Metabólico e materiais de suporte'
+      ]
+    },
+    {
+      n:5, who:'andressa', title:'Marco Zero', sub:'Andressa · Início Oficial Presencial',
+      explain:'O grande início: entrega do plano, kit, fotos e medições de base da paciente.',
+      items:[
+        'Consulta inaugural do programa Lapidar',
+        'Apresenta o plano e o cronograma detalhado',
+        'Entrega contrato, Kit Lapidar e Diário Metabólico',
+        'Orienta acesso à Biblioteca Lapidar e Society',
+        'Registro de fotos, circunferências e Bioimpedância inicial',
+        'Alinhamento e definição das metas da jornada'
+      ],
+      note:'Após o Marco Zero, Gabi envia o contato da nutricionista parceira quando incluso no plano.'
+    },
+    {
+      n:6, who:'paciente', title:'Jornada em andamento', sub:'Rotina, Acompanhamento & Entregas',
+      explain:'Fase central da transformação: rotina de consultas, bioimpedâncias e check-ins periódicos.',
+      items:[
+        'Todo mês: consulta médica, bioimpedância e check-in com Gabi',
+        'A cada 3 meses: exames laboratoriais completos e relatório da jornada',
+        'Radiofrequência vaginal / procedimentos conforme cronograma',
+        'Acompanhamento nutricional dedicado',
+        'Acesso contínuo aos encontros da Lapidar Society'
+      ]
+    },
+    {
+      n:7, who:'andressa', title:'Fechamento do ciclo', sub:'Andressa · 6 ou 12 meses',
+      explain:'Última consulta do ciclo contratado — comparativo de evolução e definição da fase seguinte.',
+      items:[
+        'Bioimpedância final comparativa e exames laboratoriais',
+        'Relatório comparativo da Jornada Lapidar',
+        'Consulta de fechamento e celebração dos resultados',
+        'Definição da fase de continuidade (Evolução ou Manutenção)'
+      ]
+    }
+  ];
+
+  const checklistData = [
+    {
+      id:'s1', who:'gabi', title:'1. Contato inicial',
+      items:[
+        'Registrar origem do lead e motivo da procura',
+        'Explicar consulta particular e reembolso',
+        'Agendar a primeira consulta',
+        'Enviar orientações pré-consulta e formulário Tally',
+        'Confirmar agendamento'
+      ]
+    },
+    {
+      id:'s2', who:'andressa', title:'2. Primeira consulta',
+      items:[
+        'Consulta médica e anamnese integrativa completa',
+        'Avaliar queixa, diagnóstico e metas',
+        'Identificar indicação para o Método Lapidar'
+      ]
+    },
+    {
+      id:'s3', who:'gabi', title:'3. Fechamento',
+      items:[
+        'Confirmar pagamento e plano (6 ou 12 meses)',
+        'Registrar paciente no sistema',
+        'Agendar Marco Zero',
+        'Enviar orientações da consulta inaugural'
+      ]
+    },
+    {
+      id:'s4', who:'andressa', title:'4. Pré-Marco Zero',
+      items:[
+        'Criar plano individualizado e metas vigentes',
+        'Elaborar cronograma da jornada',
+        'Separar Kit Lapidar e Diário Metabólico'
+      ]
+    },
+    {
+      id:'s5', who:'andressa', title:'5. Marco Zero (Presencial)',
+      items:[
+        'Apresentar plano e cronograma da jornada',
+        'Entregar Kit Lapidar e Diário Metabólico',
+        'Realizar fotos, medidas e bioimpedância inicial',
+        'Definir metas da jornada',
+        'Gabi enviar contato da nutricionista (quando aplicável)'
+      ]
+    },
+    {
+      id:'s6', who:'paciente', title:'6. Jornada em andamento',
+      groups:[
+        { h:'Todo mês', items:['Consulta médica com Andressa','Bioimpedância de controle','Check-in de acompanhamento com Gabi'] },
+        { h:'A cada 3 meses', items:['Solicitar e receber exames laboratoriais','Relatório comparativo da jornada'] },
+        { h:'Procedimentos & Tecnologias', items:['1ª sessão realizada','2ª sessão realizada','3ª sessão realizada'] },
+        { h:'Lapidar Society', items:['Acesso ativo e convites para eventos'] }
+      ]
+    },
+    {
+      id:'s7', who:'andressa', title:'7. Fechamento do ciclo',
+      items:[
+        'Bioimpedância final comparativa',
+        'Painel laboratorial de desfecho',
+        'Relatório consolidado de transformação',
+        'Consulta de fechamento e transição de fase'
+      ]
+    }
+  ];
+
+  const postStages = [
+    { id:'alta', title:'Evolução — Alta Intensidade', desc:'Consulta e bioimpedância mensais para consolidação de metas.' },
+    { id:'media', title:'Evolução — Média Intensidade', desc:'Consulta e bioimpedância bimestrais.' },
+    { id:'manutencao', title:'Manutenção Trimestral', desc:'Consulta e bioimpedância a cada 3 meses para sustentação de longo prazo.' }
+  ];
+
+  // State management
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return { checked:{}, postPhase:'alta' };
+  }
+  let state = loadState();
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const ind = document.getElementById('save-indicator');
+      if (ind) {
+        ind.textContent = 'Progresso salvo ✓';
+        setTimeout(() => { if (ind) ind.textContent = ''; }, 1500);
+      }
+    } catch(e) {}
+  }
+
+  // Render Overview Timeline
+  function renderOverview() {
+    const el = document.getElementById('overview-timeline');
+    el.innerHTML = overviewData.map(s => {
+      const color = COLORS[s.who] || '#5B2333';
+      const whoClass = 'who-' + s.who;
+      let inner = `<div class="tl-explain">${s.explain}</div>`;
+      inner += `<ul class="tl-list">${s.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+      if (s.fork) {
+        inner += `
+          <div class="fork-grid">
+            <div class="fork-card fork-no"><b>NÃO INDICAÇÃO</b>${s.fork.no}</div>
+            <div class="fork-card fork-yes"><b>COM INDICAÇÃO</b>${s.fork.yes}</div>
+          </div>`;
+      }
+      if (s.note) {
+        inner += `<div class="tl-note">${s.note}</div>`;
+      }
+      return `
+        <div class="tl-node">
+          <div class="tl-marker" style="background:${color};">${s.n}</div>
+          <div class="tl-card">
+            <div class="tl-head">
+              <div class="tl-title">${s.title}</div>
+              <div class="tl-who ${whoClass}">${s.sub}</div>
+            </div>
+            ${inner}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Calculate progress
+  function calculateProgress() {
+    let total = 0;
+    let done = 0;
+    checklistData.forEach(st => {
+      if (st.groups) {
+        st.groups.forEach(g => {
+          g.items.forEach((item, idx) => {
+            total++;
+            if (state.checked[`${st.id}::${g.h}::${idx}`]) done++;
+          });
+        });
+      } else {
+        st.items.forEach((item, idx) => {
+          total++;
+          if (state.checked[`${st.id}::${idx}`]) done++;
+        });
+      }
+    });
+    return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
+  }
+
+  // Render Checklist
+  function renderChecklist() {
+    const prog = calculateProgress();
+    document.getElementById('overall-pct').textContent = prog.pct + '%';
+    document.getElementById('overall-bar').style.width = prog.pct + '%';
+    document.getElementById('stage-progress-summary').textContent = `${prog.done} de ${prog.total} tarefas concluídas nesta jornada`;
+
+    const container = document.getElementById('stages-accordion-list');
+    container.innerHTML = checklistData.map((st, sIdx) => {
+      const color = COLORS[st.who] || '#5B2333';
+      const whoClass = 'who-' + st.who;
+
+      let itemsHTML = '';
+      if (st.groups) {
+        st.groups.forEach(g => {
+          itemsHTML += `<div class="group-sub-header">${g.h}</div>`;
+          g.items.forEach((item, idx) => {
+            const key = `${st.id}::${g.h}::${idx}`;
+            const isChecked = !!state.checked[key];
+            itemsHTML += `
+              <div class="chk-item ${isChecked ? 'checked' : ''}" data-key="${key}">
+                <div class="chk-box">
+                  ${isChecked ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                </div>
+                <div class="chk-text">${item}</div>
+              </div>`;
+          });
+        });
+      } else {
+        st.items.forEach((item, idx) => {
+          const key = `${st.id}::${idx}`;
+          const isChecked = !!state.checked[key];
+          itemsHTML += `
+            <div class="chk-item ${isChecked ? 'checked' : ''}" data-key="${key}">
+              <div class="chk-box">
+                ${isChecked ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+              </div>
+              <div class="chk-text">${item}</div>
+            </div>`;
+        });
+      }
+
+      // Check if all in stage done
+      let stageDone = 0, stageTotal = 0;
+      if (st.groups) {
+        st.groups.forEach(g => g.items.forEach((_, i) => { stageTotal++; if (state.checked[`${st.id}::${g.h}::${i}`]) stageDone++; }));
+      } else {
+        st.items.forEach((_, i) => { stageTotal++; if (state.checked[`${st.id}::${i}`]) stageDone++; });
+      }
+
+      const isOpen = sIdx === 0 || stageDone > 0;
+
+      return `
+        <div class="stage-card ${isOpen ? 'open' : ''}" id="stage-${st.id}">
+          <div class="stage-header-row" onclick="toggleStage('${st.id}')">
+            <div class="stage-badge-num" style="background:${color};">${sIdx+1}</div>
+            <div class="stage-header-info">
+              <div class="stage-header-title">
+                ${st.title} <span class="tl-who ${whoClass}">${WHO_LABEL[st.who]}</span>
+              </div>
+              <div class="stage-header-count">${stageDone} de ${stageTotal} concluídas</div>
+            </div>
+            <div class="stage-chev"></div>
+          </div>
+          <div class="stage-body">
+            ${itemsHTML}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Attach check listeners
+    container.querySelectorAll('.chk-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const key = item.dataset.key;
+        state.checked[key] = !state.checked[key];
+        saveState();
+        renderChecklist();
+      });
+    });
+
+    // Render post stages
+    const postContainer = document.getElementById('post-stages-list');
+    postContainer.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${postStages.map(ps => {
+          const isSelected = state.postPhase === ps.id;
+          return `
+            <div class="card" onclick="selectPostPhase('${ps.id}')" style="cursor:pointer;border:2px solid ${isSelected?'var(--vinho)':'var(--border)'};background:${isSelected?'var(--vinho-xlight)':'var(--white)'};padding:14px 18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:15px;font-weight:600;color:var(--vinho);">${ps.title}</div>
+                  <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${ps.desc}</div>
+                </div>
+                <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected?'var(--vinho)':'var(--border)'};background:${isSelected?'var(--vinho)':'#fff'};display:flex;align-items:center;justify-content:center;">
+                  ${isSelected?'<div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>':''}
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  window.toggleStage = function(id) {
+    const el = document.getElementById('stage-' + id);
+    if (el) el.classList.toggle('open');
+  };
+
+  window.selectPostPhase = function(phaseId) {
+    state.postPhase = phaseId;
+    saveState();
+    renderChecklist();
+  };
+
+  // Reset journey progress
+  document.getElementById('btn-reset-journey').addEventListener('click', () => {
+    if (confirm('Tem certeza de que deseja limpar todo o progresso do checklist para ' + p.nome + '?')) {
+      state = { checked:{}, postPhase:'alta' };
+      saveState();
+      renderChecklist();
+    }
+  });
+
+  // Switch between Overview and Checklist
+  document.getElementById('tab-overview').addEventListener('click', () => {
+    document.getElementById('tab-overview').classList.add('active');
+    document.getElementById('tab-checklist').classList.remove('active');
+    document.getElementById('view-overview').style.display = 'block';
+    document.getElementById('view-checklist').style.display = 'none';
+  });
+  document.getElementById('tab-checklist').addEventListener('click', () => {
+    document.getElementById('tab-checklist').classList.add('active');
+    document.getElementById('tab-overview').classList.remove('active');
+    document.getElementById('view-overview').style.display = 'none';
+    document.getElementById('view-checklist').style.display = 'block';
+    renderChecklist();
+  });
+
+  renderOverview();
+  renderChecklist();
+</script>
+</body>
+</html>

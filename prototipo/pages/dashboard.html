@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter" id="main">
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle" id="today-date"></p>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="grid-responsive-3" style="gap:12px;margin-bottom:20px;">
+    <div class="card-stat stagger-1">
+      <span class="card-stat-label">Total de Pacientes</span>
+      <span class="card-stat-value">88</span>
+      <span class="card-stat-sub">todas as ativas e inativas</span>
+    </div>
+    <div class="card-stat stagger-2">
+      <span class="card-stat-label">Pacientes Ativas</span>
+      <span class="card-stat-value" style="color:var(--oliva);">72</span>
+      <span class="card-stat-sub">em protocolo ativo</span>
+    </div>
+    <div class="card-stat stagger-3">
+      <span class="card-stat-label">Consultas na Semana</span>
+      <span class="card-stat-value">32</span>
+      <span class="card-stat-sub">segunda a sexta</span>
+    </div>
+  </div>
+
+  <!-- Protocol distribution -->
+  <div class="grid-responsive-4" style="gap:10px;margin-bottom:20px;" id="proto-cards"></div>
+
+  <!-- Charts row -->
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px;" class="charts-row">
+    <!-- Donut -->
+    <div class="card">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:16px;">Pacientes por Protocolo</h3>
+      <canvas id="donut-chart" style="width:100%;height:160px;display:block;"></canvas>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;" id="donut-legend"></div>
+    </div>
+    <!-- Bar chart -->
+    <div class="card">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Consultas Esta Semana</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Distribuição por dia</p>
+      <canvas id="bar-chart" style="width:100%;height:160px;display:block;"></canvas>
+    </div>
+  </div>
+
+  <!-- Bottom row: alerts + contacts -->
+  <div class="grid-responsive-2" style="gap:20px;">
+    <!-- Alertas -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Alertas Clínicos</h3>
+        <span class="badge badge-red" id="alert-count"></span>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Exames · Bioimpedâncias · LDL · Vitamina D</p>
+      <div class="filter-chips" id="alert-filters"></div>
+      <div style="margin-top:14px;" id="alert-list"></div>
+    </div>
+
+    <!-- Próximos contatos -->
+    <div class="card">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Próximos Contatos — Terça-feira</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;" id="contact-date"></p>
+      <div style="display:flex;flex-direction:column;gap:0;" id="contacts-list"></div>
+    </div>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('dashboard');
+
+  // Date
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Próximos contatos date
+  const nextTue = new Date();
+  const diff = (2 - nextTue.getDay() + 7) % 7 || 7;
+  nextTue.setDate(nextTue.getDate() + diff);
+  document.getElementById('contact-date').textContent =
+    nextTue.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+
+  // Protocol cards
+  const protoCards = document.getElementById('proto-cards');
+  PROTO_DIST.forEach((p, i) => {
+    protoCards.innerHTML += `
+      <div class="card-stat stagger-${i+1}" style="border-left:3px solid ${p.cor};">
+        <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};"></div>
+        <span class="card-stat-label">${p.nome}</span>
+        <span class="card-stat-value" style="color:${p.cor};">${p.valor}</span>
+        <span class="card-stat-sub">pacientes</span>
+      </div>`;
+  });
+
+  // Charts
+  requestAnimationFrame(() => {
+    const donutCanvas = document.getElementById('donut-chart');
+    drawDonutChart(donutCanvas, PROTO_DIST.map(p => ({ label:p.nome, value:p.valor, color:p.cor })));
+
+    const barCanvas = document.getElementById('bar-chart');
+    drawBarChart(barCanvas, CONSULTAS_SEMANA.map(d => ({ label:d.dia, value:d.n })));
+  });
+
+  // Donut legend
+  const legend = document.getElementById('donut-legend');
+  PROTO_DIST.forEach(p => {
+    legend.innerHTML += `
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};flex-shrink:0;"></div>
+          <span style="color:var(--text-secondary);">${p.nome}</span>
+        </div>
+        <span style="color:var(--text-muted);font-weight:500;">${p.valor}</span>
+      </div>`;
+  });
+
+  // Alertas
+  let activeFilter = 'Todos';
+  const tipos = ['Todos', ...new Set(ALERTAS.map(a => a.tipo))];
+  const filtersEl = document.getElementById('alert-filters');
+  const alertList = document.getElementById('alert-list');
+  const alertCount = document.getElementById('alert-count');
+
+  function renderAlerts() {
+    const visible = activeFilter === 'Todos' ? ALERTAS : ALERTAS.filter(a => a.tipo === activeFilter);
+    alertCount.textContent = visible.length;
+    alertList.innerHTML = visible.map(a => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${a.paciente}</p>
+          <p style="font-size:11px;color:var(--text-muted);">${a.protocolo}</p>
+        </div>
+        ${getAlertBadge(a.tipo)}
+      </div>
+    `).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0;">Nenhum alerta nesta categoria.</p>';
+  }
+
+  tipos.forEach(tipo => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip' + (tipo === 'Todos' ? ' active' : '');
+    btn.textContent = tipo;
+    btn.addEventListener('click', () => {
+      activeFilter = tipo;
+      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAlerts();
+    });
+    filtersEl.appendChild(btn);
+  });
+  renderAlerts();
+
+  // Próximos contatos
+  const contactsList = document.getElementById('contacts-list');
+  PROXIMOS_CONTATOS.forEach((c, i) => {
+    const isLast = i === PROXIMOS_CONTATOS.length - 1;
+    contactsList.innerHTML += `
+      <div style="display:flex;align-items:flex-start;gap:12px;${!isLast ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);' : ''}">
+        <div style="font-size:12px;font-weight:600;color:var(--dourado);width:40px;text-align:right;flex-shrink:0;padding-top:2px;">${c.horario}</div>
+        <div>
+          <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${c.paciente}</p>
+          <p style="font-size:11px;color:var(--text-muted);">${c.motivo}</p>
+        </div>
+      </div>`;
+  });
+
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(() => {
+      drawDonutChart(document.getElementById('donut-chart'), PROTO_DIST.map(p => ({ label:p.nome, value:p.valor, color:p.cor })));
+      drawBarChart(document.getElementById('bar-chart'), CONSULTAS_SEMANA.map(d => ({ label:d.dia, value:d.n })));
+    });
+  });
+</script>
+<style>
+  @media (max-width: 900px) {
+    .charts-row { grid-template-columns: 1fr !important; }
+  }
+</style>
+</body>
+</html>

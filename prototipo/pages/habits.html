@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diário Lapidar — Check-in Diário</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .habits-container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .hero-diario {
+      background: linear-gradient(135deg, var(--vinho-dark) 0%, var(--vinho) 65%, var(--vinho-light) 100%);
+      color: var(--bege);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-8);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .hero-diario::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(198,161,91,0.12);
+    }
+    .hero-diario h1 {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      margin-bottom: 4px;
+      color: #FFFDF8;
+    }
+    .hero-diario p.motto {
+      font-size: 13.5px;
+      color: rgba(244,239,231,0.85);
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .constancy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(198,161,91,0.4);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--dourado-pale);
+      font-weight: 500;
+    }
+    .section-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .section-card-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: var(--vinho);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    /* Button group selector (Sim / Não / Não estava programado) */
+    .btn-choice-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-choice {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: var(--bege);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+      user-select: none;
+    }
+    .btn-choice:hover {
+      border-color: var(--vinho-light);
+      background: var(--vinho-xlight);
+    }
+    .btn-choice.active {
+      background: var(--vinho);
+      color: var(--white);
+      border-color: var(--vinho);
+      box-shadow: 0 2px 8px rgba(91,35,51,0.25);
+    }
+
+    /* 0-10 Visual Scale */
+    .scale-container {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .scale-btn {
+      flex: 1;
+      aspect-ratio: 1;
+      max-width: 44px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--bege);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .scale-btn:hover {
+      border-color: var(--vinho);
+      background: var(--vinho-xlight);
+      color: var(--vinho);
+    }
+    .scale-btn.active {
+      background: var(--vinho);
+      color: var(--white);
+      border-color: var(--vinho);
+      transform: scale(1.08);
+      box-shadow: 0 2px 8px rgba(91,35,51,0.3);
+    }
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Goal progress card */
+    .goal-card {
+      border: 1.5px solid var(--border);
+      background: var(--bege);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    .goal-card.completed {
+      border-color: var(--oliva);
+      background: #F1F4EA;
+    }
+    .goal-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .goal-card-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .goal-card-feedback {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--oliva);
+    }
+    .goal-card-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* Success toast */
+    .success-banner {
+      display: none;
+      background: #EEF4E8;
+      border: 1.5px solid var(--oliva);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      color: #384620;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* History filters */
+    .period-filter-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .period-filter-btn.active {
+      background: var(--vinho);
+      color: var(--white);
+      border-color: var(--vinho);
+    }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="habits-container">
+    
+    <!-- Top switcher: Check-in Diário vs Minha Evolução -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+      <button class="btn btn-subtle btn-sm" onclick="Router.navigate(Router.getRole()==='patient'?'portal':'patient-detail')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span id="back-label">Voltar para Ficha</span>
+      </button>
+
+      <div class="tabs" style="margin-bottom:0;" id="view-mode-tabs">
+        <button class="tab-item active" data-view="checkin">Check-in de Hoje</button>
+        <button class="tab-item" data-view="evolucao">Minha Evolução</button>
+      </div>
+    </div>
+
+    <!-- Hero Card -->
+    <div class="hero-diario">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1>Diário Lapidar</h1>
+          <p class="motto">"A consulta direciona. O acompanhamento continua. A constância constrói o resultado."</p>
+        </div>
+        <div class="constancy-badge">
+          ✦ Constância > perfeição
+        </div>
+      </div>
+      <div style="font-size:12px;color:rgba(244,239,231,0.7);margin-top:8px;" id="checkin-date-indicator">
+        Preenchimento rápido · Associado à data e hora de registro
+      </div>
+    </div>
+
+    <!-- Success Banner -->
+    <div class="success-banner" id="success-banner">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--oliva)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--oliva);">Check-in de hoje concluído com sucesso ✓</div>
+          <div style="font-size:12.5px;color:#4F5E33;">Parabéns pela constância! Cada passo diário fortalece a sua transformação.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 1: CHECK-IN DIÁRIO ================= -->
+    <div id="view-checkin">
+      
+      <!-- 1. MOVIMENTO -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>🏃‍♀️</span> Movimento
+        </div>
+        <div class="section-card-sub">Musculação e cardio fazem parte do Método Lapidar. Não estava programado não é falta de adesão.</div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div>
+            <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Fez musculação hoje?</label>
+            <div class="btn-choice-group" data-group="musculacao">
+              <button type="button" class="btn-choice" data-val="sim">Sim ✓</button>
+              <button type="button" class="btn-choice" data-val="nao">Não</button>
+              <button type="button" class="btn-choice" data-val="nao_programado">Não estava programado</button>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Fez cardio hoje?</label>
+            <div class="btn-choice-group" data-group="cardio">
+              <button type="button" class="btn-choice" data-val="sim">Sim ✓</button>
+              <button type="button" class="btn-choice" data-val="nao">Não</button>
+              <button type="button" class="btn-choice" data-val="nao_programado">Não estava programado</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. NUTRIÇÃO E HIDRATAÇÃO -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>🥗</span> Nutrição e Hidratação
+        </div>
+        <div class="section-card-sub">Suas metas individuais prescritas para nutrição ótima e saciedade.</div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;" id="nutri-group">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13.5px;font-weight:600;">Proteína</span>
+              <span class="badge badge-vinho" id="meta-prot-badge">Meta: 100 g/dia</span>
+            </div>
+            <div class="btn-choice-group" data-group="proteina">
+              <button type="button" class="btn-choice" data-val="atingi">Atingi ✓</button>
+              <button type="button" class="btn-choice" data-val="parcialmente">Parcialmente</button>
+              <button type="button" class="btn-choice" data-val="nao_atingi">Não atingi</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13.5px;font-weight:600;">Fibras</span>
+              <span class="badge badge-vinho" id="meta-fibras-badge">Meta: 25 g/dia</span>
+            </div>
+            <div class="btn-choice-group" data-group="fibras">
+              <button type="button" class="btn-choice" data-val="atingi">Atingi ✓</button>
+              <button type="button" class="btn-choice" data-val="parcialmente">Parcialmente</button>
+              <button type="button" class="btn-choice" data-val="nao_atingi">Não atingi</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13.5px;font-weight:600;">Água</span>
+              <span class="badge badge-vinho" id="meta-agua-badge">Meta: 2,5 L/dia</span>
+            </div>
+            <div class="btn-choice-group" data-group="agua">
+              <button type="button" class="btn-choice" data-val="atingi">Atingi ✓</button>
+              <button type="button" class="btn-choice" data-val="parcialmente">Parcialmente</button>
+              <button type="button" class="btn-choice" data-val="nao_atingi">Não atingi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. SONO -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>🌙</span> Sono & Descanso
+        </div>
+        <div class="section-card-sub">Horários, interrupções e qualidade percebida da noite de sono.</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div>
+            <label class="form-label">Que horas você dormiu?</label>
+            <input type="time" class="form-input" id="sleep-start" value="23:00">
+          </div>
+          <div>
+            <label class="form-label">Que horas você acordou?</label>
+            <input type="time" class="form-input" id="sleep-end" value="06:30">
+          </div>
+        </div>
+        <div id="sleep-calc" style="font-size:12px;color:var(--oliva);font-weight:600;margin-top:-8px;margin-bottom:16px;">
+          Duração estimada: 7h30min
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Quantos despertares noturnos teve?</label>
+          <div class="btn-choice-group" data-group="despertares">
+            <button type="button" class="btn-choice" data-val="0">0 (Nenhum)</button>
+            <button type="button" class="btn-choice" data-val="1">1 despertar</button>
+            <button type="button" class="btn-choice" data-val="2">2 despertares</button>
+            <button type="button" class="btn-choice" data-val="3+">3 ou mais</button>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:4px;">Qualidade do sono (0 a 10):</label>
+          <div class="scale-container" id="scale-sono"></div>
+          <div class="scale-labels">
+            <span>0 = Péssima</span>
+            <span>5 = Moderada</span>
+            <span>10 = Excelente</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. BEM-ESTAR -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>✨</span> Bem-Estar & Disposição
+        </div>
+        <div class="section-card-sub">Avaliação diária dos seus níveis de energia física e estresse.</div>
+
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:4px;">Energia hoje (0 a 10):</label>
+          <div class="scale-container" id="scale-energia"></div>
+          <div class="scale-labels">
+            <span>0 = Sem energia</span>
+            <span>10 = Cheia de energia</span>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:4px;">Estresse hoje (0 a 10):</label>
+          <div class="scale-container" id="scale-estresse"></div>
+          <div class="scale-labels">
+            <span>0 = Nenhum estresse</span>
+            <span>10 = Muito alto</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. METAS PERSONALIZADAS -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>🎯</span> Minhas Metas Personalizadas
+        </div>
+        <div class="section-card-sub">Hábitos prescritos em consulta para sua fase atual da jornada.</div>
+
+        <div id="metas-personalizadas-container"></div>
+      </div>
+
+      <!-- 6. BLOCO EXCLUSIVO - LAPIDAR 40+ -->
+      <div class="section-card" id="bloco-40-container" style="display:none;border-left:4px solid var(--vinho);">
+        <div class="section-card-title">
+          <span>🌸</span> Acompanhamento Lapidar 40+
+        </div>
+        <div class="section-card-sub">Monitoramento exclusivo de sintomas da transição menopausal e hormonal.</div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Fogachos / Ondas de calor (0 a 10):</label>
+            <div class="scale-container" id="scale-fogachos"></div>
+            <div class="scale-labels"><span>0 = Nenhum</span><span>10 = Muito intenso</span></div>
+          </div>
+
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Ressecamento vaginal (0 a 10):</label>
+            <div class="scale-container" id="scale-ressecamento"></div>
+            <div class="scale-labels"><span>0 = Nenhum</span><span>10 = Muito intenso</span></div>
+          </div>
+
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Irritabilidade (0 a 10):</label>
+            <div class="scale-container" id="scale-irritabilidade"></div>
+            <div class="scale-labels"><span>0 = Nenhuma</span><span>10 = Muito intensa</span></div>
+          </div>
+
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Névoa mental / Dificuldade de concentração (0 a 10):</label>
+            <div class="scale-container" id="scale-nevoa"></div>
+            <div class="scale-labels"><span>0 = Nenhuma</span><span>10 = Muito intensa</span></div>
+          </div>
+
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Como está sua libido hoje? (0 a 10):</label>
+            <div class="scale-container" id="scale-libido"></div>
+            <div class="scale-labels"><span>0 = Muito baixa</span><span>10 = Excelente</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. OBSERVAÇÕES -->
+      <div class="section-card">
+        <div class="section-card-title">
+          <span>📝</span> Observações do Dia
+        </div>
+        <div class="section-card-sub">Quer registrar alguma coisa sobre o seu dia?</div>
+        <textarea class="form-textarea" id="observacoes-input" rows="3" placeholder="Observações, sintomas, acontecimentos ou algo que queira lembrar..."></textarea>
+      </div>
+
+      <!-- Botão Salvar Check-in -->
+      <div style="text-align:center;margin-top:28px;margin-bottom:60px;">
+        <button class="btn btn-primary btn-lg" id="btn-salvar-checkin" style="min-width:280px;font-size:16px;">
+          SALVAR CHECK-IN
+        </button>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+          "A constância constrói o resultado."
+        </p>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: MINHA EVOLUÇÃO ================= -->
+    <div id="view-evolucao" style="display:none;">
+      
+      <!-- Period selector -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2 style="font-family:var(--font-serif);font-size:22px;color:var(--vinho);">Histórico de Constância</h2>
+          <p style="font-size:12px;color:var(--text-muted);">Veja seu progresso consolidado ao longo do tempo</p>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="period-filter-btn active" data-period="7">7 dias</button>
+          <button class="period-filter-btn" data-period="30">30 dias</button>
+          <button class="period-filter-btn" data-period="90">90 dias</button>
+          <button class="period-filter-btn" data-period="all">Todo o período</button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid-responsive-3" style="gap:14px;margin-bottom:24px;">
+        <div class="card-stat">
+          <span class="card-stat-label">Constância de Treinos</span>
+          <span class="card-stat-value" style="color:var(--oliva);" id="evo-treinos-pct">92%</span>
+          <span class="card-stat-sub">Meta semanal atingida</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-label">Média de Sono</span>
+          <span class="card-stat-value" style="color:var(--vinho);" id="evo-sono-avg">7h40</span>
+          <span class="card-stat-sub">Qualidade média: 8.2 / 10</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-label">Adesão Nutricional</span>
+          <span class="card-stat-value" style="color:var(--dourado);" id="evo-nutri-pct">88%</span>
+          <span class="card-stat-sub">Proteína, fibras e água</span>
+        </div>
+      </div>
+
+      <!-- Weekly Habit Tracker Cards -->
+      <div class="section-card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Progresso das Metas na Semana</h3>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Contabilizado automaticamente em relação à meta vigente</p>
+        <div id="weekly-goals-progress"></div>
+      </div>
+
+      <!-- Recent Log table -->
+      <div class="section-card">
+        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Últimos Registros Diários</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="recent-logs-list"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('habits');
+
+  const p = Router.getSelectedPatient() || PACIENTES[0];
+  const role = Router.getRole();
+  const STORAGE_KEY = 'lapidar-diario-' + p.id;
+
+  // Header and back button
+  document.getElementById('back-label').textContent = role === 'patient' ? 'Voltar para Minha Ficha' : 'Voltar para ' + p.nome;
+  document.getElementById('checkin-date-indicator').textContent = 
+    'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+
+  // Protocol 40+ block visibility rule from spec:
+  if (p.protocolo === 'Lapidar 40+') {
+    document.getElementById('bloco-40-container').style.display = 'block';
+  }
+
+  // Nutrition badges
+  if (p.nutricaoMetas) {
+    document.getElementById('meta-prot-badge').textContent = 'Meta: ' + p.nutricaoMetas.proteina;
+    document.getElementById('meta-fibras-badge').textContent = 'Meta: ' + p.nutricaoMetas.fibras;
+    document.getElementById('meta-agua-badge').textContent = 'Meta: ' + p.nutricaoMetas.agua;
+  }
+
+  // Load saved daily state
+  function loadDailyData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return p.diarioHoje || {
+      preenchido: false,
+      movimento: { musculacao: 'sim', cardio: 'nao_programado' },
+      nutricao: { proteina: 'atingi', fibras: 'atingi', agua: 'atingi' },
+      sono: { dormiu: '23:00', acordou: '06:30', duracao: '7h30', despertares: '1', qualidade: 8 },
+      bemEstar: { energia: 8, estresse: 3 },
+      metas: {},
+      sintomas40: { fogachos: 3, ressecamento: 2, irritabilidade: 2, nevoa: 2, libido: 7 },
+      observacoes: ''
+    };
+  }
+
+  let currentData = loadDailyData();
+
+  // Helper to build 0-10 interactive scales
+  function buildScale(containerId, activeVal, onChange) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '';
+    for (let i = 0; i <= 10; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'scale-btn' + (activeVal === i ? ' active' : '');
+      btn.textContent = i;
+      btn.addEventListener('click', () => {
+        el.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onChange(i);
+      });
+      el.appendChild(btn);
+    }
+  }
+
+  // Render choice groups
+  function initChoiceGroups() {
+    document.querySelectorAll('.btn-choice-group').forEach(grp => {
+      const groupName = grp.dataset.group;
+      grp.querySelectorAll('.btn-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          grp.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const val = btn.dataset.val;
+
+          if (groupName === 'musculacao' || groupName === 'cardio') {
+            currentData.movimento[groupName] = val;
+          } else if (groupName === 'proteina' || groupName === 'fibras' || groupName === 'agua') {
+            currentData.nutricao[groupName] = val;
+          } else if (groupName === 'despertares') {
+            currentData.sono.despertares = val;
+          }
+        });
+      });
+    });
+  }
+
+  // Render personalized goals
+  function renderPersonalizedGoals() {
+    const container = document.getElementById('metas-personalizadas-container');
+    const goals = p.metasPersonalizadas || [
+      { id:'musc', nome:'Musculação', freqDesejada:'3x/semana', meta:3, realizado:2, unidade:'treinos', desc:'Foco em força' },
+      { id:'cardio', nome:'Cardio', freqDesejada:'2x/semana', meta:2, realizado:2, unidade:'sessões', desc:'Zona 2' },
+      { id:'resp', nome:'Respiração / Mindfulness', freqDesejada:'5x/semana', meta:5, realizado:5, unidade:'práticas', desc:'Ao acordar' }
+    ];
+
+    container.innerHTML = goals.map(g => {
+      let feedback = '';
+      if (g.realizado > g.meta) {
+        feedback = 'Você superou sua meta ✦';
+      } else if (g.realizado === g.meta) {
+        feedback = 'Meta da semana concluída ✓';
+      } else {
+        const falta = g.meta - g.realizado;
+        feedback = 'Falta só ' + falta + ' para completar sua meta da semana.';
+      }
+
+      const activeChoice = currentData.metas && currentData.metas[g.id] ? currentData.metas[g.id] : 'sim';
+
+      return `
+        <div class="goal-card ${g.realizado >= g.meta ? 'completed' : ''}">
+          <div class="goal-card-header">
+            <span class="goal-card-name">${g.nome} · <small style="font-weight:400;color:var(--text-muted);">${g.freqDesejada}</small></span>
+            <span class="goal-card-feedback">${feedback}</span>
+          </div>
+          <div class="goal-card-sub">${g.realizado} de ${g.meta} ${g.unidade} esta semana</div>
+          <div>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--text-secondary);">Realizou hoje?</label>
+            <div class="btn-choice-group" data-goal-id="${g.id}">
+              <button type="button" class="btn-choice ${activeChoice==='sim'?'active':''}" data-val="sim">Sim ✓</button>
+              <button type="button" class="btn-choice ${activeChoice==='nao'?'active':''}" data-val="nao">Não</button>
+              <button type="button" class="btn-choice ${activeChoice==='nao_programado'?'active':''}" data-val="nao_programado">Não estava programado</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Attach listeners
+    container.querySelectorAll('.btn-choice-group[data-goal-id]').forEach(grp => {
+      const gid = grp.dataset.goalId;
+      grp.querySelectorAll('.btn-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          grp.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (!currentData.metas) currentData.metas = {};
+          currentData.metas[gid] = btn.dataset.val;
+        });
+      });
+    });
+  }
+
+  // Populate active choices in check-in form
+  function syncUIWithData() {
+    // Movimento
+    if (currentData.movimento) {
+      ['musculacao', 'cardio'].forEach(key => {
+        const val = currentData.movimento[key];
+        const btn = document.querySelector(`.btn-choice-group[data-group="${key}"] .btn-choice[data-val="${val}"]`);
+        if (btn) btn.classList.add('active');
+      });
+    }
+
+    // Nutrição
+    if (currentData.nutricao) {
+      ['proteina', 'fibras', 'agua'].forEach(key => {
+        const val = currentData.nutricao[key];
+        const btn = document.querySelector(`.btn-choice-group[data-group="${key}"] .btn-choice[data-val="${val}"]`);
+        if (btn) btn.classList.add('active');
+      });
+    }
+
+    // Sono
+    if (currentData.sono) {
+      if (currentData.sono.dormiu) document.getElementById('sleep-start').value = currentData.sono.dormiu;
+      if (currentData.sono.acordou) document.getElementById('sleep-end').value = currentData.sono.acordou;
+      const despBtn = document.querySelector(`.btn-choice-group[data-group="despertares"] .btn-choice[data-val="${currentData.sono.despertares}"]`);
+      if (despBtn) despBtn.classList.add('active');
+    }
+
+    // Scales
+    buildScale('scale-sono', currentData.sono?.qualidade ?? 8, v => { currentData.sono.qualidade = v; });
+    buildScale('scale-energia', currentData.bemEstar?.energia ?? 8, v => { currentData.bemEstar.energia = v; });
+    buildScale('scale-estresse', currentData.bemEstar?.estresse ?? 3, v => { currentData.bemEstar.estresse = v; });
+
+    // 40+ scales
+    if (p.protocolo === 'Lapidar 40+') {
+      const s40 = currentData.sintomas40 || {};
+      buildScale('scale-fogachos', s40.fogachos ?? 3, v => { currentData.sintomas40.fogachos = v; });
+      buildScale('scale-ressecamento', s40.ressecamento ?? 2, v => { currentData.sintomas40.ressecamento = v; });
+      buildScale('scale-irritabilidade', s40.irritabilidade ?? 2, v => { currentData.sintomas40.irritabilidade = v; });
+      buildScale('scale-nevoa', s40.nevoa ?? 2, v => { currentData.sintomas40.nevoa = v; });
+      buildScale('scale-libido', s40.libido ?? 7, v => { currentData.sintomas40.libido = v; });
+    }
+
+    // Observações
+    if (currentData.observacoes) {
+      document.getElementById('observacoes-input').value = currentData.observacoes;
+    }
+  }
+
+  // Calculate sleep duration live
+  function updateSleepCalc() {
+    const s = document.getElementById('sleep-start').value;
+    const e = document.getElementById('sleep-end').value;
+    if (s && e) {
+      const [sh, sm] = s.split(':').map(Number);
+      const [eh, em] = e.split(':').map(Number);
+      let diffMins = (eh * 60 + em) - (sh * 60 + sm);
+      if (diffMins < 0) diffMins += 24 * 60;
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      document.getElementById('sleep-calc').textContent = `Duração calculada: ${h}h${m > 0 ? m + 'min' : ''}`;
+    }
+  }
+  document.getElementById('sleep-start').addEventListener('change', updateSleepCalc);
+  document.getElementById('sleep-end').addEventListener('change', updateSleepCalc);
+
+  // Save check-in
+  document.getElementById('btn-salvar-checkin').addEventListener('click', () => {
+    currentData.preenchido = true;
+    currentData.data = new Date().toLocaleDateString('pt-BR');
+    currentData.horario = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    currentData.sono.dormiu = document.getElementById('sleep-start').value;
+    currentData.sono.acordou = document.getElementById('sleep-end').value;
+    currentData.observacoes = document.getElementById('observacoes-input').value;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+    } catch(e) {}
+
+    // Show success banner
+    const banner = document.getElementById('success-banner');
+    banner.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Switch between Check-in and Evolução
+  document.querySelectorAll('#view-mode-tabs .tab-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#view-mode-tabs .tab-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.view;
+      if (v === 'checkin') {
+        document.getElementById('view-checkin').style.display = 'block';
+        document.getElementById('view-evolucao').style.display = 'none';
+      } else {
+        document.getElementById('view-checkin').style.display = 'none';
+        document.getElementById('view-evolucao').style.display = 'block';
+        renderEvolucaoView();
+      }
+    });
+  });
+
+  // Render Evolução
+  function renderEvolucaoView() {
+    const goals = p.metasPersonalizadas || [];
+    const container = document.getElementById('weekly-goals-progress');
+    container.innerHTML = goals.map(g => {
+      const pct = Math.min(100, Math.round((g.realizado / g.meta) * 100));
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span style="font-weight:600;color:var(--vinho);">${g.nome}</span>
+            <span style="font-weight:600;color:var(--oliva);">${g.realizado} de ${g.meta} ${g.unidade} (${pct}%)</span>
+          </div>
+          <div class="progress-bar" style="height:8px;">
+            <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--oliva)':'linear-gradient(90deg,var(--vinho),var(--dourado))'};"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const list = document.getElementById('recent-logs-list');
+    const logs = [
+      { data: 'Hoje (29/09)', treinos: 'Musculação ✓', sono: '7h30 (Nota 8/10)', nutri: '100% das metas batidas', obs: currentData.observacoes || 'Excelente adesão.' },
+      { data: 'Ontem (28/09)', treinos: 'Cardio zona 2 ✓', sono: '8h00 (Nota 9/10)', nutri: 'Proteína e água atingidas', obs: 'Caminhada matinal ao ar livre.' },
+      { data: '27/09/2026', treinos: 'Musculação ✓', sono: '7h15 (Nota 7/10)', nutri: 'Parcial (refeição livre)', obs: 'Jantar comemorativo em família.' },
+      { data: '26/09/2026', treinos: 'Descanso programado', sono: '7h45 (Nota 8/10)', nutri: '100% das metas batidas', obs: 'Dia tranquilo, boa energia.' }
+    ];
+
+    list.innerHTML = logs.map(l => `
+      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bege);">
+        <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;color:var(--vinho);margin-bottom:4px;">
+          <span>${l.data}</span>
+          <span style="color:var(--oliva);font-size:12px;">${l.treinos}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px;">
+          <span>🌙 Sono: ${l.sono}</span>
+          <span>🥗 Nutrição: ${l.nutri}</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text-muted);font-style:italic;">"${l.obs}"</div>
+      </div>
+    `).join('');
+  }
+
+  // Init
+  initChoiceGroups();
+  renderPersonalizedGoals();
+  syncUIWithData();
+  updateSleepCalc();
+</script>
+</body>
+</html>

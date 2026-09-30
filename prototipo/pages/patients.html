@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacientes — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h1 class="page-title">Pacientes</h1>
+      <p class="page-subtitle">Gerencie e acompanhe todas as pacientes</p>
+    </div>
+    <button class="btn btn-primary" id="btn-nova-paciente">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova Paciente
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
+    <div class="search-bar" style="flex:1;min-width:200px;max-width:360px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Buscar por nome...">
+    </div>
+    <div class="filter-chips" id="proto-filters">
+      <button class="filter-chip active" data-proto="Todos">Todos</button>
+      <button class="filter-chip" data-proto="Lapidar 40+">Lapidar 40+</button>
+      <button class="filter-chip" data-proto="Lapidar SOP">Lapidar SOP</button>
+      <button class="filter-chip" data-proto="Lapidar Fertilidade">Lapidar Fertilidade</button>
+      <button class="filter-chip" data-proto="Pocket">Pocket</button>
+    </div>
+  </div>
+
+  <!-- Grid de cards -->
+  <div class="grid-responsive-3" id="patients-grid" style="gap:16px;"></div>
+  <div id="empty-state" class="hidden">
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <p>Nenhuma paciente encontrada com esses filtros.</p>
+    </div>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+
+<!-- Modal nova paciente -->
+<div class="modal-overlay" id="modal-paciente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nova Paciente</span>
+      <button class="modal-close" id="close-modal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nome completo *</label>
+          <input type="text" class="form-input" id="new-p-nome" placeholder="Nome da paciente">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone *</label>
+          <input type="tel" class="form-input" id="new-p-tel" placeholder="(00) 00000-0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF</label>
+          <input type="text" class="form-input" id="new-p-cpf" placeholder="000.000.000-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de nascimento *</label>
+          <input type="date" class="form-input" id="new-p-nasc">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Objetivo</label>
+          <input type="text" class="form-input" id="new-p-obj" placeholder="Ex: perda de peso, equilíbrio hormonal...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Protocolo *</label>
+          <select class="form-select" id="new-p-proto">
+            <option value="">Selecionar...</option>
+            <option>Lapidar 40+</option>
+            <option>Lapidar SOP</option>
+            <option>Lapidar Fertilidade</option>
+            <option>Pocket</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Peso inicial (kg) *</label>
+          <input type="number" class="form-input" id="new-p-peso" placeholder="Ex: 75.5" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meta de peso (kg)</label>
+          <input type="number" class="form-input" id="new-p-meta" placeholder="Ex: 65.0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TRH</label>
+          <select class="form-select" id="new-p-trh">
+            <option>Não</option>
+            <option>Sim</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraceptivo</label>
+          <input type="text" class="form-input" id="new-p-contra" placeholder="Ex: DIU, pílula...">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Origem do lead</label>
+          <select class="form-select" id="new-p-lead">
+            <option value="">Selecionar...</option>
+            <option>Indicação</option>
+            <option>Instagram</option>
+            <option>Google</option>
+            <option>TikTok</option>
+            <option>Podcast</option>
+            <option>Indicação médica</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Observações</label>
+          <textarea class="form-textarea" id="new-p-obs" placeholder="Observações relevantes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-subtle" id="cancel-modal">Cancelar</button>
+      <button class="btn btn-primary" id="save-paciente">Cadastrar Paciente</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('patients');
+
+  let searchTerm = '';
+  let activeProto = 'Todos';
+
+  function filterAndRender() {
+    const filtered = PACIENTES.filter(p => {
+      const matchName  = p.nome.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchProto = activeProto === 'Todos' || p.protocolo === activeProto;
+      return matchName && matchProto;
+    });
+
+    const grid = document.getElementById('patients-grid');
+    const empty = document.getElementById('empty-state');
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+    } else {
+      empty.classList.add('hidden');
+      grid.innerHTML = filtered.map((p, i) => renderPatientCard(p, i)).join('');
+    }
+  }
+
+  // Search
+  document.getElementById('search-input').addEventListener('input', e => {
+    searchTerm = e.target.value;
+    filterAndRender();
+  });
+
+  // Proto filters
+  document.querySelectorAll('#proto-filters .filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeProto = btn.dataset.proto;
+      document.querySelectorAll('#proto-filters .filter-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterAndRender();
+    });
+  });
+
+  // Modal
+  const modal = document.getElementById('modal-paciente');
+  document.getElementById('btn-nova-paciente').addEventListener('click', () => modal.classList.add('open'));
+  document.getElementById('close-modal').addEventListener('click', () => modal.classList.remove('open'));
+  document.getElementById('cancel-modal').addEventListener('click', () => modal.classList.remove('open'));
+  
+  document.getElementById('save-paciente').addEventListener('click', () => {
+    const nome = document.getElementById('new-p-nome').value.trim();
+    const tel = document.getElementById('new-p-tel').value.trim();
+    const proto = document.getElementById('new-p-proto').value;
+    const peso = parseFloat(document.getElementById('new-p-peso').value);
+
+    if (!nome || !proto || isNaN(peso)) {
+      alert('Por favor, preencha os campos obrigatórios (Nome, Protocolo e Peso Inicial).');
+      return;
+    }
+
+    const initials = nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const nasc = document.getElementById('new-p-nasc').value;
+    let idade = 40;
+    if (nasc) {
+      const birth = new Date(nasc);
+      idade = new Date().getFullYear() - birth.getFullYear();
+    }
+
+    const metaPeso = parseFloat(document.getElementById('new-p-meta').value) || (peso - 6);
+
+    const newPatient = {
+      id: PACIENTES.length + 1,
+      nome: nome,
+      iniciais: initials,
+      idade: idade,
+      nascimento: nasc ? formatDate(nasc) : '01/01/1985',
+      telefone: tel || '(11) 99999-9999',
+      objetivo: document.getElementById('new-p-obj').value || 'Equilíbrio metabólico e saúde feminina',
+      protocolo: proto,
+      consultaAtual: '1ª Consulta',
+      pesoInicial: peso,
+      pesoAtual: peso,
+      meta: metaPeso,
+      trh: document.getElementById('new-p-trh').value,
+      contraceptivo: document.getElementById('new-p-contra').value || 'Não',
+      circunferenciaAbdominal: '82 cm',
+      pressao: '120/80 mmHg',
+      metas: ['Atingir peso meta', 'Melhora da constância diária'],
+      metasConcluidas: 0,
+      origemLead: document.getElementById('new-p-lead').value || 'Indicação',
+      observacoes: document.getElementById('new-p-obs').value || 'Paciente recém-cadastrada no sistema.',
+      ultimaConsulta: new Date().toLocaleDateString('pt-BR'),
+      proximaConsulta: dateOffset(14),
+      bioimpedancia: [
+        { data: new Date().toLocaleDateString('pt-BR'), peso: peso, musculo: Math.round(peso*0.38*10)/10, gordura: Math.round(peso*0.42*10)/10, imc: parseFloat((peso/2.6).toFixed(1)), txGordura: 42.0, aguaCorporal: 44.0, gorduraVisceral: 10, tmb: 1500, nota: 6.0 }
+      ],
+      scoreLabels: ['Saciedade','Fome','Energia','Sono','Humor','Libido','Fogachos','Perda urinária','Constipação','Atividade física','Adesão'],
+      scoreAtual:   [6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
+      scoreAnterior:[6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
+      riscoCV: { nivel:'Baixo', ldl: 110, metaLdl: 130, naoHdl: 130, metaNaoHdl: 160, reducaoLdl: 0, has: 'Não', dm: 'Não', tabagismo: 'Não fumante', historiaFamiliar: 'Não', fatores: [], sugestoes: ['Manter hábitos saudáveis'], preventScore: '1.2% risco 10a', metaAtingida: true },
+      medicamentos: [],
+      metasPersonalizadas: [
+        { id: 'm_musc', nome: 'Musculação', freqDesejada: '3x/semana', meta: 3, realizado: 0, unidade: 'treinos' },
+        { id: 'm_cardio', nome: 'Cardio', freqDesejada: '2x/semana', meta: 2, realizado: 0, unidade: 'sessões' }
+      ],
+      arquivos: [],
+      timeline: [
+        { tipo: 'Consulta', data: new Date().toLocaleDateString('pt-BR'), icone: '🩺', titulo: 'Cadastro e Marco Zero', desc: 'Paciente cadastrada no Método Lapidar.' }
+      ]
+    };
+
+    PACIENTES.unshift(newPatient);
+    modal.classList.remove('open');
+    filterAndRender();
+    showPatientQuickModal(newPatient.id);
+  });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+  filterAndRender();
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+/* ============================================================
+   LAPIDAR — Animações e Micro-interações
+   ============================================================ */
+
+/* ── Keyframes ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Entradas de página ── */
+.page-enter {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.card-enter {
+  animation: scaleIn 0.25s ease forwards;
+}
+
+/* Delay escalonado para listas de cards */
+.stagger-1  { animation-delay: 0.05s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+.stagger-2  { animation-delay: 0.10s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+.stagger-3  { animation-delay: 0.15s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+.stagger-4  { animation-delay: 0.20s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+.stagger-5  { animation-delay: 0.25s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+.stagger-6  { animation-delay: 0.30s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeIn; animation-duration: 0.3s; }
+
+/* ── Hover: botões ── */
+.btn {
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+/* ── Hover: cards de paciente ── */
+.card-patient {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* ── Sidebar items ── */
+.sidebar-nav-item {
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* ── Notificação badge pulsa ── */
+.notif-badge-pulse {
+  animation: pulse 2s ease infinite;
+}
+
+/* ── Skeleton shimmer (loading) ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bege-dark) 25%, var(--bege) 50%, var(--bege-dark) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+/* ── Transição suave de tabs ── */
+.tab-content {
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Hover: items da timeline ── */
+.timeline-item:hover .timeline-body {
+  background: var(--vinho-xlight);
+  transition: background 0.2s ease;
+}
+
+/* ── Hover: itens de consulta na agenda ── */
+.consult-item {
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.consult-item:hover {
+  transform: translateX(3px);
+}
+
+/* ── Modal overlay fade ── */
+.modal-overlay {
+  animation: none;
+}
+.modal-overlay.open {
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Notif dropdown ── */
+.notif-dropdown.open {
+  animation: slideUp 0.2s ease;
+}
+
+/* ── Calendar day hover ── */
+.cal-day {
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+/* ── Progress bars ── */
+.progress-fill {
+  animation: slideInLeft 0.6s ease;
+}
+
+/* ── Canvas chart fade in ── */
+canvas {
+  animation: fadeIn 0.4s ease;
+}
+
+/* ── Sidebar overlay ── */
+.sidebar-overlay.open {
+  animation: fadeIn 0.2s ease;
+}
