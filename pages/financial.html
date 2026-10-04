@@ -24,22 +24,22 @@
   <div class="grid-responsive-4" style="gap:12px;margin-bottom:24px;">
     <div class="card-stat stagger-1" style="border-left:3px solid var(--oliva);">
       <span class="card-stat-label">Receita do Mês</span>
-      <span class="card-stat-value" style="color:var(--oliva);">R$ 7.230</span>
+      <span class="card-stat-value" id="month-revenue" style="color:var(--oliva);">R$ 7.900</span>
       <span class="card-stat-sub">Setembro 2026</span>
     </div>
     <div class="card-stat stagger-2" style="border-left:3px solid var(--vinho);">
       <span class="card-stat-label">Total Recebido</span>
-      <span class="card-stat-value">R$ 6.480</span>
+      <span class="card-stat-value" id="received-total">R$ 6.300</span>
       <span class="card-stat-sub">8 pagamentos</span>
     </div>
     <div class="card-stat stagger-3" style="border-left:3px solid var(--yellow-text);">
       <span class="card-stat-label">Pendente</span>
-      <span class="card-stat-value" style="color:var(--yellow-text);">R$ 1.600</span>
+      <span class="card-stat-value" id="pending-total" style="color:var(--yellow-text);">R$ 1.600</span>
       <span class="card-stat-sub">2 pagamentos</span>
     </div>
     <div class="card-stat stagger-4" style="border-left:3px solid var(--dourado);">
       <span class="card-stat-label">Receita Anual</span>
-      <span class="card-stat-value" style="color:var(--dourado);">R$ 58.400</span>
+      <span class="card-stat-value" id="annual-revenue" style="color:var(--dourado);">R$ 59.500</span>
       <span class="card-stat-sub">Jan–Set 2026</span>
     </div>
   </div>
@@ -61,15 +61,26 @@
         <button class="filter-chip" data-status="pendente">Pendentes</button>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
+      <select class="form-select" id="filter-type" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option></select>
+      <select class="form-select" id="filter-origin" aria-label="Filtrar por origem"><option value="">Todas as origens</option></select>
+      <select class="form-select" id="filter-destination" aria-label="Filtrar por destino"><option value="">Todos os destinos</option></select>
+      <select class="form-select" id="filter-user" aria-label="Filtrar por usuário"><option value="">Todos os responsáveis</option></select>
+      <label class="form-group" style="margin:0;"><span class="form-label">De</span><input class="form-input" type="date" id="filter-date-from"></label>
+      <label class="form-group" style="margin:0;"><span class="form-label">Até</span><input class="form-input" type="date" id="filter-date-to"></label>
+    </div>
     <div class="table-wrapper">
       <table class="data-table">
         <thead>
           <tr>
             <th>Data</th>
-            <th>Paciente</th>
+            <th>Origem</th>
+            <th>Destino</th>
+            <th>Tipo</th>
             <th>Plano</th>
             <th>Valor</th>
             <th>Parcela</th>
+            <th>Responsável</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -98,8 +109,27 @@
     { label:'Jun', value:7100 },
     { label:'Jul', value:6400 },
     { label:'Ago', value:6900 },
-    { label:'Set', value:7230 },
+    { label:'Set', value:7900 },
   ];
+
+  function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
+  }
+
+  const monthlyRevenue = TRANSACOES
+    .filter(transaction => transaction.tipo === 'Receita' && transaction.data.endsWith('/09/2026'))
+    .reduce((sum, transaction) => sum + transaction.valor, 0);
+  const receivedRevenue = TRANSACOES
+    .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pago')
+    .reduce((sum, transaction) => sum + transaction.valor, 0);
+  const pendingRevenue = TRANSACOES
+    .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pendente')
+    .reduce((sum, transaction) => sum + transaction.valor, 0);
+  const annualRevenue = receitaMensal.reduce((sum, month) => sum + month.value, 0);
+  document.getElementById('month-revenue').textContent = formatCurrency(monthlyRevenue);
+  document.getElementById('received-total').textContent = formatCurrency(receivedRevenue);
+  document.getElementById('pending-total').textContent = formatCurrency(pendingRevenue);
+  document.getElementById('annual-revenue').textContent = formatCurrency(annualRevenue);
 
   requestAnimationFrame(() => {
     drawBarChart(document.getElementById('receita-chart'), receitaMensal, { color:'#66724A' });
@@ -110,22 +140,56 @@
 
   // Transactions
   let activeStatus = 'Todos';
+  const filterFields = [
+    ['filter-type', 'tipo'],
+    ['filter-origin', 'origem'],
+    ['filter-destination', 'destino'],
+    ['filter-user', 'usuario'],
+  ];
+
+  filterFields.forEach(([elementId, field]) => {
+    const select = document.getElementById(elementId);
+    const values = [...new Set(TRANSACOES.map(transaction => transaction[field]))].sort();
+    values.forEach(value => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+  });
+
+  function getIsoDate(date) {
+    const [day, month, year] = date.split('/');
+    return `${year}-${month}-${day}`;
+  }
 
   function renderTransactions() {
-    const filtered = activeStatus === 'Todos'
-      ? TRANSACOES
-      : TRANSACOES.filter(t => t.status === activeStatus);
+    const filters = Object.fromEntries(filterFields.map(([elementId, field]) => [
+      field,
+      document.getElementById(elementId).value,
+    ]));
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+    const filtered = TRANSACOES.filter(transaction => {
+      const date = getIsoDate(transaction.data);
+      return (activeStatus === 'Todos' || transaction.status === activeStatus) &&
+        Object.entries(filters).every(([field, value]) => !value || transaction[field] === value) &&
+        (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
+    });
 
     document.getElementById('transactions-body').innerHTML = filtered.map(t => `
       <tr>
         <td style="color:var(--text-muted);font-size:12px;">${t.data}</td>
-        <td style="font-weight:500;">${t.paciente}</td>
+        <td>${t.origem}</td>
+        <td>${t.destino}</td>
+        <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${t.tipo}</span></td>
         <td>${getProtocolBadge(t.plano)}</td>
         <td style="font-weight:600;color:var(--vinho);">R$ ${t.valor.toLocaleString('pt-BR')}</td>
         <td style="color:var(--text-muted);font-size:12px;">${t.parcelas}</td>
+        <td>${t.usuario}</td>
         <td>${getStatusBadge(t.status)}</td>
       </tr>
-    `).join('');
+    `).join('') || '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>';
   }
 
   document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
@@ -136,6 +200,12 @@
       renderTransactions();
     });
   });
+
+  filterFields.forEach(([elementId]) => {
+    document.getElementById(elementId).addEventListener('change', renderTransactions);
+  });
+  document.getElementById('filter-date-from').addEventListener('change', renderTransactions);
+  document.getElementById('filter-date-to').addEventListener('change', renderTransactions);
 
   renderTransactions();
 </script>

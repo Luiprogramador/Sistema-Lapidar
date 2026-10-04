@@ -30,6 +30,7 @@ const ROLE_MENU = {
     { page:'dashboard', label:'Dashboard', icon:'dashboard' },
     { page:'patients',  label:'Pacientes', icon:'patients' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
+    { page:'consultations', label:'Consultas', icon:'agenda' },
     { page:'financial', label:'Financeiro',icon:'financial' },
     { page:'settings',  label:'Configurações', icon:'settings' },
   ],
@@ -41,7 +42,7 @@ const ROLE_MENU = {
     { page:'settings',  label:'Configurações', icon:'settings' },
   ],
   patient: [
-    { page:'portal',    label:'Minha Ficha',    icon:'portal' },
+    { page:'patient-detail', label:'Minha Ficha', icon:'portal' },
     { page:'habits',    label:'Diário Lapidar', icon:'dashboard' },
     { page:'agenda',    label:'Consultas',      icon:'agenda' },
   ],

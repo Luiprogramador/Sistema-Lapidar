@@ -28,6 +28,11 @@ const EXAMES_CATALOGO = [
   { id: 'shbg',          nome: 'SHBG',                 unidade: 'nmol/L', meta: '40–90',   anterior: '88',  atual: '72',  refMin: 40,  refMax: 90,   dir: 'range' }
 ];
 
+EXAMES_CATALOGO.forEach(exam => {
+  exam.dataAnterior = '01/07/2026';
+  exam.dataAtual = '02/09/2026';
+});
+
 const PACIENTES = [
   {
     id: 1,
@@ -709,6 +714,13 @@ const PACIENTES = [
   },
 ];
 
+try {
+  const savedPatients = JSON.parse(localStorage.getItem('lapidar-pacientes'));
+  if (Array.isArray(savedPatients) && savedPatients.length) {
+    PACIENTES.splice(0, PACIENTES.length, ...savedPatients);
+  }
+} catch(e) {}
+
 const CONSULTAS = [
   { id:1, data: dateOffset(0), horario:"09:00", paciente:"Ana Paula Ferreira", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
   { id:2, data: dateOffset(0), horario:"10:30", paciente:"Beatriz Lima", tipo:"Retorno", protocolo:"Lapidar SOP", status:"agendada" },
@@ -754,20 +766,49 @@ const TRANSACOES = [
   { data:"25/09/2026", paciente:"Beatriz Lima",       plano:"Lapidar SOP", valor:750, parcelas:"2/3",  status:"pago" },
 ];
 
-const PROTO_DIST = [
-  { nome:"Lapidar 40+",       valor:34, cor:"#5B2333" },
-  { nome:"Lapidar SOP",       valor:22, cor:"#C6A15B" },
-  { nome:"Lapidar Fertilidade", valor:18, cor:"#66724A" },
-  { nome:"Pocket",             valor:14, cor:"#7A3047" },
-];
+TRANSACOES.forEach((transaction, index) => {
+  transaction.tipo = 'Receita';
+  transaction.origem = 'Paciente';
+  transaction.destino = 'Clínica Lapidar';
+  transaction.usuario = index % 2 === 0 ? 'Dra. Andressa Gomide' : 'Secretaria';
+});
 
-const CONSULTAS_SEMANA = [
-  { dia:"Seg", n:5 },
-  { dia:"Ter", n:8 },
-  { dia:"Qua", n:6 },
-  { dia:"Qui", n:9 },
-  { dia:"Sex", n:4 },
-];
+TRANSACOES.push(
+  { data:"04/09/2026", paciente:"Clínica Lapidar", plano:"Despesas operacionais", valor:420, parcelas:"—", status:"pago", tipo:"Despesa", origem:"Clínica Lapidar", destino:"Laboratório parceiro", usuario:"Secretaria" },
+  { data:"19/09/2026", paciente:"Clínica Lapidar", plano:"Materiais clínicos", valor:280, parcelas:"—", status:"pendente", tipo:"Despesa", origem:"Clínica Lapidar", destino:"Fornecedor", usuario:"Dra. Andressa Gomide" }
+);
+
+const PROTO_DIST = (() => {
+  const protocolColors = {
+    "Lapidar 40+": "#5B2333",
+    "Lapidar SOP": "#C6A15B",
+    "Lapidar Fertilidade": "#66724A",
+    Pocket: "#7A3047",
+  };
+  const fallbackColors = ["#3F6B73", "#A84A35", "#786A9B"];
+  const protocolNames = [...new Set(PACIENTES.map(patient => patient.protocolo).filter(Boolean))];
+  return protocolNames.map((nome, index) => ({
+    nome,
+    valor: PACIENTES.filter(patient => patient.protocolo === nome).length,
+    cor: protocolColors[nome] || fallbackColors[index % fallbackColors.length],
+  }));
+})();
+
+const CONSULTAS_SEMANA = (() => {
+  const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex"];
+  const currentDate = new Date();
+  const daysToMonday = currentDate.getDay() === 0 ? 1 : 1 - currentDate.getDay();
+  const monday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + daysToMonday);
+  return weekdays.map((dia, index) => {
+    const weekday = new Date(monday);
+    weekday.setDate(monday.getDate() + index);
+    const date = `${weekday.getFullYear()}-${String(weekday.getMonth() + 1).padStart(2, "0")}-${String(weekday.getDate()).padStart(2, "0")}`;
+    return {
+      dia,
+      n: CONSULTAS.filter(consultation => consultation.data === date && consultation.status === "agendada").length,
+    };
+  });
+})();
 
 function dateOffset(offset) {
   const d = new Date();

@@ -25,6 +25,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+[hidden] { display: none !important; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

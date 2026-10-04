@@ -49,8 +49,8 @@
 <main class="main-content page-enter">
   <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
     <div>
-      <h1 class="page-title">Agenda</h1>
-      <p class="page-subtitle">Visualize e gerencie as consultas</p>
+      <h1 class="page-title" id="agenda-title">Agenda</h1>
+      <p class="page-subtitle" id="agenda-subtitle">Visualize e gerencie as consultas</p>
     </div>
     <button class="btn btn-primary" id="btn-nova-consulta">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -97,7 +97,7 @@
       </div>
 
       <!-- Alertas da agenda -->
-      <div class="card">
+      <div class="card" id="attention-panel">
         <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Atenção e Contatos Operacionais</h3>
         <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Pacientes que precisam de acompanhamento prioritário</p>
         <div style="display:flex;flex-direction:column;gap:10px;" id="attention-list"></div>
@@ -157,6 +157,17 @@
 <script>
   initShell('agenda');
 
+  const role = Router.getRole();
+  const selectedPatient = Router.getSelectedPatient() || PACIENTES[0];
+  const isPatientView = role === 'patient';
+
+  if (isPatientView) {
+    document.getElementById('agenda-title').textContent = 'Minhas Consultas';
+    document.getElementById('agenda-subtitle').textContent = 'Consulte seus próximos atendimentos e o histórico';
+    document.getElementById('btn-nova-consulta').hidden = true;
+    document.getElementById('attention-panel').hidden = true;
+  }
+
   const DAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -172,6 +183,12 @@
     'Exames':           { bg:'#E0F2FE', text:'#075985' },
   };
 
+  function getVisibleConsultations() {
+    return isPatientView
+      ? CONSULTAS.filter(c => c.paciente === selectedPatient.nome)
+      : CONSULTAS;
+  }
+
   // Populate patient select in modal
   function populatePatientSelect() {
     const sel = document.querySelector('#modal-consulta select');
@@ -182,7 +199,7 @@
 
   function getDaysWithConsults(year, month) {
     return new Set(
-      CONSULTAS.filter(c => {
+      getVisibleConsultations().filter(c => {
         const d = new Date(c.data + 'T00:00:00');
         return d.getFullYear() === year && d.getMonth() === month;
       }).map(c => parseInt(c.data.split('-')[2]))
@@ -229,7 +246,7 @@
     const [y,m,d] = selectedDate.split('-');
     titleEl.textContent = `${parseInt(d)} de ${MONTHS_PT[parseInt(m)-1]} de ${y}`;
 
-    const day = CONSULTAS
+    const day = getVisibleConsultations()
       .filter(c => c.data === selectedDate)
       .sort((a,b) => a.horario.localeCompare(b.horario));
 
@@ -245,7 +262,7 @@
       const foundP = PACIENTES.find(p => p.nome === c.paciente);
       const pid = foundP ? foundP.id : 1;
       return `
-        <div class="consult-item" onclick="Router.navigate('consultation', { patientId: ${pid} })" style="cursor:pointer;" title="Clique para abrir a consulta">
+        <div class="consult-item" onclick="Router.navigate('consultation', { patientId: ${pid}, consultationId: ${c.id} })" style="cursor:pointer;" title="Clique para abrir a consulta">
           <div class="consult-time">${c.horario}</div>
           <div style="flex:1;min-width:0;">
             <div class="consult-name">${c.paciente}</div>
@@ -344,7 +361,7 @@
   populatePatientSelect();
   renderCalendar();
   renderConsults();
-  renderAttention();
+  if (!isPatientView) renderAttention();
 </script>
 </body>
 </html>

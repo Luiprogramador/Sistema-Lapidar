@@ -24,18 +24,18 @@
   <div class="grid-responsive-3" style="gap:12px;margin-bottom:20px;">
     <div class="card-stat stagger-1">
       <span class="card-stat-label">Total de Pacientes</span>
-      <span class="card-stat-value">88</span>
-      <span class="card-stat-sub">todas as ativas e inativas</span>
+      <span class="card-stat-value" id="total-patients-count">0</span>
+      <span class="card-stat-sub">cadastros de demonstração</span>
     </div>
     <div class="card-stat stagger-2">
-      <span class="card-stat-label">Pacientes Ativas</span>
-      <span class="card-stat-value" style="color:var(--oliva);">72</span>
-      <span class="card-stat-sub">em protocolo ativo</span>
+      <span class="card-stat-label">Pacientes com Protocolo</span>
+      <span class="card-stat-value" id="protocol-patients-count" style="color:var(--oliva);">0</span>
+      <span class="card-stat-sub">com protocolo definido</span>
     </div>
     <div class="card-stat stagger-3">
       <span class="card-stat-label">Consultas na Semana</span>
-      <span class="card-stat-value">32</span>
-      <span class="card-stat-sub">segunda a sexta</span>
+      <span class="card-stat-value" id="weekly-consultations-count">0</span>
+      <span class="card-stat-sub">agendadas de segunda a sexta</span>
     </div>
   </div>
 
@@ -91,7 +91,10 @@
 
   // Date
   document.getElementById('today-date').textContent =
-    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' · Dados demonstrativos';
+  document.getElementById('total-patients-count').textContent = PACIENTES.length;
+  document.getElementById('protocol-patients-count').textContent = PACIENTES.filter(patient => patient.protocolo).length;
+  document.getElementById('weekly-consultations-count').textContent = CONSULTAS_SEMANA.reduce((total, weekday) => total + weekday.n, 0);
 
   // Próximos contatos date
   const nextTue = new Date();

@@ -132,9 +132,9 @@
 
   <!-- Back button + top actions bar -->
   <div class="top-actions-bar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-    <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patients')">
+    <button class="btn btn-subtle btn-sm" id="btn-back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Voltar para Pacientes
+      <span id="back-label">Voltar para Pacientes</span>
     </button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-subtle btn-sm" id="btn-print" onclick="window.print()">
@@ -235,6 +235,10 @@
           <input type="number" step="0.1" class="form-input" id="bio-in-agua" placeholder="Ex: 45.8">
         </div>
         <div class="form-group">
+          <label class="form-label">Taxa Metabólica Basal (kcal)</label>
+          <input type="number" class="form-input" id="bio-in-tmb" placeholder="Ex: 1620">
+        </div>
+        <div class="form-group">
           <label class="form-label">Gordura Visceral (nível)</label>
           <input type="number" class="form-input" id="bio-in-visceral" placeholder="Ex: 8">
         </div>
@@ -256,17 +260,39 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  initShell('patients');
+  initShell('patient-detail');
 
   // Load patient
   const p = Router.getSelectedPatient() || PACIENTES[0];
+  const isDoctorView = Router.getRole() === 'doctor';
+  const isPatientView = Router.getRole() === 'patient';
+  try {
+    const savedBio = localStorage.getItem('lapidar-bio-' + p.id);
+    if (savedBio) {
+      const parsedBio = JSON.parse(savedBio);
+      if (Array.isArray(parsedBio) && parsedBio.length) {
+        p.bioimpedancia = parsedBio;
+        p.pesoAtual = parsedBio[parsedBio.length - 1].peso;
+      }
+    }
+  } catch(e) {}
   const bio = p.bioimpedancia;
   const latestBio = bio[bio.length - 1];
   const prevBio   = bio[bio.length - 2] || null;
 
   // Buttons navigation
+  if (isPatientView) {
+    document.getElementById('btn-back').hidden = true;
+    document.getElementById('btn-jornada').hidden = true;
+    document.getElementById('btn-consulta').hidden = true;
+  } else {
+    document.getElementById('back-label').textContent = 'Voltar para Pacientes';
+    document.getElementById('btn-back').addEventListener('click', () => {
+      Router.navigate('patients', { patientId: p.id });
+    });
+  }
   document.getElementById('btn-consulta').addEventListener('click', () => {
-    Router.navigate('consultation', { patientId: p.id });
+    Router.navigate('consultation', { patientId: p.id, consultationId: null });
   });
   document.getElementById('btn-jornada').addEventListener('click', () => {
     Router.navigate('journey', { patientId: p.id });
@@ -287,7 +313,7 @@
           <span>${p.telefone}</span>
           <span>${p.consultaAtual}</span>
           <span>${getProtocolBadge(p.protocolo)}</span>
-          <span style="color:var(--text-muted);">Lead: ${p.origemLead || 'Indicação'}</span>
+          <span id="patient-lead" style="color:var(--text-muted);" ${isPatientView ? 'hidden' : ''}>Lead: ${p.origemLead || 'Indicação'}</span>
         </div>
         <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">
           <strong>Objetivo:</strong> ${p.objetivo}
@@ -391,6 +417,16 @@
           <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div></div>
         </div>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Medicamentos e Suplementos Atuais</h4>
+      <div class="grid-responsive-2" style="gap:16px;">
+        ${['Medicamento','Suplemento'].map(type => `
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">${type === 'Medicamento' ? 'Medicamentos' : 'Suplementos'}</div>
+            ${(p.medicamentos || []).filter(item => item.tipo === type && !item.fim).map(item => `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);"><strong>${item.nome}</strong> · ${item.dose} · ${item.freq}</div>`).join('') || '<div style="font-size:12px;color:var(--text-muted);">Nenhum registro vigente.</div>'}
+          </div>`).join('')}
+      </div>
     </div>`;
 
   // ── TAB 2: BIOIMPEDÂNCIA ──
@@ -405,13 +441,14 @@
     { key:'nota',            label:'Nota InBody / Score', unit:'/10',  inv:false },
   ];
 
+  const bioReport = (p.arquivos || []).find(file => /bioimped|inbody/i.test(file.titulo + ' ' + file.desc));
   let bioHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
         <h3 style="font-size:15px;font-weight:600;color:var(--vinho);">Evolução Segmental de Bioimpedância</h3>
         <p style="font-size:12px;color:var(--text-muted);">Data da última avaliação: <strong>${latestBio.data}</strong> (${bio.length} medições registradas)</p>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openModalBio()">
+      <button class="btn btn-primary btn-sm" id="btn-new-bio" onclick="openModalBio()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nova Bioimpedância
       </button>
@@ -437,7 +474,12 @@
       </div>`;
   });
   bioHTML += `</div>`;
+  bioHTML += `<div class="card" style="margin-top:16px;">
+    <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Arquivo de Bioimpedância</h4>
+    ${bioReport ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--text-secondary);">${bioReport.titulo} · ${bioReport.data}</span><button class="btn btn-subtle btn-sm" onclick="alert('Visualizando arquivo: ${bioReport.titulo}');">Visualizar</button></div>` : '<p style="font-size:12px;color:var(--text-muted);">Nenhum arquivo associado às medições.</p>'}
+  </div>`;
   document.getElementById('tab-bio').innerHTML = bioHTML;
+  if (!isDoctorView) document.getElementById('btn-new-bio').hidden = true;
 
   // ── TAB 3: SCORE LAPIDAR (11 Dimensões) ──
   document.getElementById('tab-score').innerHTML = `
@@ -449,7 +491,7 @@
             <p style="font-size:11px;color:var(--text-muted);">Avaliação integrada: atual (vinho) vs anterior (dourado tracejado)</p>
           </div>
           <button class="btn btn-subtle btn-sm" onclick="Router.navigate('habits',{patientId:${p.id}})">
-            Novo Score Diário
+            Ver Diário
           </button>
         </div>
         <canvas id="radar-chart" style="width:340px;height:340px;max-width:100%;"></canvas>
@@ -480,6 +522,28 @@
 
   // ── TAB 4: RISCO CARDIOVASCULAR ──
   const rv = p.riscoCV;
+  const cvRequiredFields = {
+    nivel: 'Classificação de risco',
+    ldl: 'LDL',
+    metaLdl: 'Meta de LDL',
+    naoHdl: 'Não-HDL',
+    metaNaoHdl: 'Meta de não-HDL',
+    reducaoLdl: 'Redução de LDL',
+    has: 'HAS',
+    dm: 'Diabetes',
+    tabagismo: 'Tabagismo',
+    historiaFamiliar: 'História familiar',
+    apob: 'ApoB',
+    metaApob: 'Meta de ApoB',
+    lpa: 'Lp(a)',
+    metaLpa: 'Meta de Lp(a)',
+    pcrUs: 'PCR-us',
+    metaPcrUs: 'Meta de PCR-us',
+    preventScore: 'Escore PREVENT'
+  };
+  const missingCvData = Object.entries(cvRequiredFields)
+    .filter(([key]) => rv[key] === undefined || rv[key] === null || rv[key] === '')
+    .map(([, label]) => label);
   const riscoClass = { 'Baixo':'risco-baixo','Intermediário':'risco-inter','Alto':'risco-alto','Muito Alto':'risco-muito','Extremo':'risco-extremo' };
   document.getElementById('tab-risco').innerHTML = `
     <div class="grid-responsive-2" style="gap:20px;margin-bottom:20px;">
@@ -487,16 +551,18 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Estratificação de Risco Cardiovascular</h4>
-            <p style="font-size:11px;color:var(--text-muted);">${rv.preventScore || 'Calculadora AHA PREVENT'}</p>
+              <p style="font-size:11px;color:var(--text-muted);">${rv.preventScore || 'Escore PREVENT não calculado'}</p>
           </div>
-          <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel}</span>
+            <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel || 'Não calculado'}</span>
         </div>
+
+          ${missingCvData.length ? `<div role="note" style="margin-bottom:14px;padding:10px 12px;border-left:3px solid var(--yellow-text);background:var(--yellow-bg);font-size:12px;color:var(--text-secondary);"><strong style="color:var(--yellow-text);">Dados cardiovasculares faltantes:</strong> ${missingCvData.join(', ')}.</div>` : ''}
 
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
               <span style="font-weight:600;">Colesterol LDL</span>
-              <span style="color:${rv.ldl<=rv.metaLdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.ldl} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaLdl})</span></span>
+              <span style="color:${rv.ldl<=rv.metaLdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.ldl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaLdl ?? '—'})</span></span>
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.ldl/rv.metaLdl)*100,100)}%;background:${rv.ldl<=rv.metaLdl?'var(--oliva)':'#DC2626'};"></div></div>
           </div>
@@ -504,7 +570,7 @@
           <div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
               <span style="font-weight:600;">Colesterol Não-HDL</span>
-              <span style="color:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.naoHdl} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaNaoHdl})</span></span>
+              <span style="color:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.naoHdl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaNaoHdl ?? '—'})</span></span>
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.naoHdl/rv.metaNaoHdl)*100,100)}%;background:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'#DC2626'};"></div></div>
           </div>
@@ -512,18 +578,18 @@
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;">
             <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">ApoB</div>
-              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.apob || '—'} <small style="font-size:10px;">mg/dL</small></div>
-              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaApob || 90}</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.apob ?? '—'} <small style="font-size:10px;">mg/dL</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaApob ?? '—'}</div>
             </div>
             <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Lp(a)</div>
-              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.lpa || '—'} <small style="font-size:10px;">nmol/L</small></div>
-              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaLpa || 50}</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.lpa ?? '—'} <small style="font-size:10px;">nmol/L</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaLpa ?? '—'}</div>
             </div>
             <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">PCR-us</div>
-              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.pcrUs || '—'} <small style="font-size:10px;">mg/L</small></div>
-              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; 1.0</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.pcrUs ?? '—'} <small style="font-size:10px;">mg/L</small></div>
+              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaPcrUs ?? '—'}</div>
             </div>
           </div>
         </div>
@@ -534,19 +600,19 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Hipertensão (HAS)</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.has || 'Não'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.has ?? 'Não informado'}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Diabetes (DM)</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.dm || 'Não'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.dm ?? 'Não informado'}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Tabagismo</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.tabagismo || 'Não fumante'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.tabagismo ?? 'Não informado'}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">História Familiar</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.historiaFamiliar || 'Sem histórico precoce'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.historiaFamiliar ?? 'Não informado'}</div>
           </div>
         </div>
 
@@ -585,8 +651,10 @@
               <th>Dose</th>
               <th>Frequência</th>
               <th>Início</th>
+              <th>Fim</th>
               <th>Motivo / Indicação</th>
               <th>Receita Anexa</th>
+              <th>Observações</th>
             </tr>
           </thead>
           <tbody>
@@ -597,10 +665,12 @@
                 <td>${m.dose}</td>
                 <td>${m.freq}</td>
                 <td>${m.inicio}</td>
+                <td>${m.fim || 'Em uso'}</td>
                 <td style="color:var(--text-secondary);">${m.motivo}</td>
                 <td>
                   ${m.receita ? `<a href="#" onclick="alert('Baixando receita: ${m.receita}');return false;" style="font-size:12px;color:var(--vinho);font-weight:600;">📥 Baixar</a>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}
                 </td>
+                <td style="color:var(--text-secondary);">${m.observacoes || '—'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -638,13 +708,15 @@
         <h3 style="font-size:15px;font-weight:600;color:var(--vinho);">Biblioteca de Arquivos da Paciente</h3>
         <p style="font-size:12px;color:var(--text-muted);">Visualização compactada estilo revista de tudo que foi enviado e recebido</p>
       </div>
-      <div class="filter-chips" id="files-filter-chips">
-        <button class="filter-chip active" data-file-filter="all">Todos (${arquivos.length})</button>
-        <button class="filter-chip" data-file-filter="Receitas">Receitas</button>
-        <button class="filter-chip" data-file-filter="Pedidos">Pedidos</button>
-        <button class="filter-chip" data-file-filter="Exames">Exames</button>
-        <button class="filter-chip" data-file-filter="Enviado">Enviados</button>
-        <button class="filter-chip" data-file-filter="Recebido">Recebidos</button>
+      <div id="files-filter-chips" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select class="form-select" id="file-type-filter" aria-label="Filtrar arquivos por tipo">
+          <option value="">Todos os tipos (${arquivos.length})</option>
+          <option value="Receitas">Receitas</option><option value="Pedidos">Pedidos</option><option value="Exames">Exames</option>
+        </select>
+        <select class="form-select" id="file-origin-filter" aria-label="Filtrar arquivos por origem">
+          <option value="">Enviados e recebidos</option>
+          <option value="Enviado">Enviados</option><option value="Recebido">Recebidos</option>
+        </select>
       </div>
     </div>
 
@@ -672,21 +744,18 @@
       `).join('')}
     </div>`;
 
-  // Filter files
-  document.querySelectorAll('#files-filter-chips .filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('#files-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const filter = chip.dataset.fileFilter;
-      document.querySelectorAll('#files-grid .file-card').forEach(card => {
-        if (filter === 'all' || card.dataset.tipo === filter || card.dataset.origem === filter) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+  // Filter files by type and direction together.
+  function filterFiles() {
+    const type = document.getElementById('file-type-filter').value;
+    const origin = document.getElementById('file-origin-filter').value;
+    document.querySelectorAll('#files-grid .file-card').forEach(card => {
+      const matchesType = !type || card.dataset.tipo === type;
+      const matchesOrigin = !origin || card.dataset.origem === origin;
+      card.style.display = matchesType && matchesOrigin ? 'flex' : 'none';
     });
-  });
+  }
+  document.getElementById('file-type-filter').addEventListener('change', filterFiles);
+  document.getElementById('file-origin-filter').addEventListener('change', filterFiles);
 
   // ── TAB 7: DIÁRIO & HÁBITOS ──
   const d = p.diarioHoje || {};
@@ -743,9 +812,14 @@
 
   // ── TAB 8: TIMELINE ──
   const tlColors = { 'Consulta':'#5B2333','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B' };
+  function timelineDateValue(date) {
+    const [day, month, year] = date.split('/').map(Number);
+    return new Date(year, month - 1, day).getTime();
+  }
+  const sortedTimeline = (p.timeline || []).slice().sort((a, b) => timelineDateValue(b.data) - timelineDateValue(a.data));
   document.getElementById('tab-timeline').innerHTML = `
     <div class="timeline">
-      ${p.timeline.map(ev => `
+      ${sortedTimeline.map(ev => `
         <div class="timeline-item">
           <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#9B8B7A'}22;color:${tlColors[ev.tipo]||'#9B8B7A'};">
             <span style="font-size:18px;">${ev.icone}</span>
@@ -799,32 +873,41 @@
 
   // Modal Bioimpedância
   function openModalBio() {
+    if (!isDoctorView) return;
     document.getElementById('bio-in-data').value = new Date().toISOString().split('T')[0];
+    document.getElementById('bio-in-tmb').value = latestBio.tmb || '';
     document.getElementById('modal-bio').classList.add('open');
   }
   function closeModalBio() {
     document.getElementById('modal-bio').classList.remove('open');
   }
   function saveNewBio() {
+    if (!isDoctorView) return;
     const dataVal = document.getElementById('bio-in-data').value;
     const pesoVal = parseFloat(document.getElementById('bio-in-peso').value);
     if (!pesoVal) { alert('Informe ao menos o peso.'); return; }
 
+    const baselineBio = p.bioimpedancia[0];
+    const heightSquared = baselineBio && baselineBio.imc ? baselineBio.peso / baselineBio.imc : 2.6;
     const entry = {
       data: formatDate(dataVal),
       peso: pesoVal,
       musculo: parseFloat(document.getElementById('bio-in-musculo').value) || latestBio.musculo,
       gordura: parseFloat(document.getElementById('bio-in-gordura').value) || latestBio.gordura,
-      imc: parseFloat((pesoVal / 2.6).toFixed(1)),
+      imc: parseFloat((pesoVal / heightSquared).toFixed(1)),
       txGordura: parseFloat(document.getElementById('bio-in-tx').value) || latestBio.txGordura,
       aguaCorporal: parseFloat(document.getElementById('bio-in-agua').value) || latestBio.aguaCorporal,
       gorduraVisceral: parseInt(document.getElementById('bio-in-visceral').value) || latestBio.gorduraVisceral,
-      tmb: 1600,
+      tmb: parseFloat(document.getElementById('bio-in-tmb').value) || latestBio.tmb,
       nota: parseFloat(document.getElementById('bio-in-nota').value) || 8.0
     };
 
     p.bioimpedancia.push(entry);
     p.pesoAtual = pesoVal;
+    try {
+      localStorage.setItem('lapidar-bio-' + p.id, JSON.stringify(p.bioimpedancia));
+      localStorage.setItem('lapidar-pacientes', JSON.stringify(PACIENTES));
+    } catch(e) {}
     closeModalBio();
     alert('Nova bioimpedância registrada com sucesso!');
     location.reload();

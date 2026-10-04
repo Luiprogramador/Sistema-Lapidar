@@ -99,29 +99,23 @@ function drawDonutChart(canvas, data) {
 
   const total = data.reduce((s, d) => s + d.value, 0);
   let startAngle = -Math.PI / 2;
+  const gapAngle = 0.025;
 
   ctx.clearRect(0, 0, W, H);
 
   data.forEach((d, i) => {
     const slice = (d.value / total) * 2 * Math.PI;
-    const endAngle = startAngle + slice;
+    const sliceStart = startAngle + gapAngle / 2;
+    const sliceEnd = startAngle + slice - gapAngle / 2;
 
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, outerR, startAngle, endAngle);
+    ctx.arc(cx, cy, outerR, sliceStart, sliceEnd);
+    ctx.arc(cx, cy, innerR, sliceEnd, sliceStart, true);
     ctx.closePath();
     ctx.fillStyle = d.color;
     ctx.fill();
 
-    // Gap between slices
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR + 1, startAngle, endAngle);
-    ctx.arc(cx, cy, innerR - 1, endAngle, startAngle, true);
-    ctx.closePath();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-
-    startAngle = endAngle;
+    startAngle += slice;
   });
 
   // Donut hole

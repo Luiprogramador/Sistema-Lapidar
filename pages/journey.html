@@ -271,7 +271,7 @@
         <p class="page-subtitle">Mapa Operacional · Uso interno da equipe médica e administrativa</p>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:p.id})">
+        <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:p.id,consultationId:null})">
           Iniciar Consulta
         </button>
       </div>
@@ -387,7 +387,7 @@
   initShell('patients');
 
   const p = Router.getSelectedPatient() || PACIENTES[0];
-  const STORAGE_KEY = 'lapidar-journey-' + p.id;
+  const journeyStorageKey = 'lapidar-journey-' + p.id;
 
   document.getElementById('back-name').textContent = p.nome;
   document.getElementById('journey-page-title').textContent = 'Jornada — ' + p.nome;
@@ -550,7 +550,7 @@
   // State management
   function loadState() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(journeyStorageKey);
       if (raw) return JSON.parse(raw);
     } catch(e) {}
     return { checked:{}, postPhase:'alta' };
@@ -559,7 +559,7 @@
 
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(journeyStorageKey, JSON.stringify(state));
       const ind = document.getElementById('save-indicator');
       if (ind) {
         ind.textContent = 'Progresso salvo ✓';

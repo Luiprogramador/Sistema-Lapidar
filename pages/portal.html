@@ -166,7 +166,7 @@
 <script>
   initShell('portal');
 
-  const p = PACIENTES[0];
+  const p = Router.getSelectedPatient() || PACIENTES[0];
 
   // ── Boas vindas ──
   document.getElementById('welcome-title').textContent = 'Olá, ' + p.nome.split(' ')[0] + '! 👋';
@@ -222,27 +222,29 @@
 
   // ── Consultas ──
   var consultasList = document.getElementById('consultas-list');
-  var consultas = [
-    { data: p.proximaConsulta, tipo: 'Retorno', status: 'agendada' },
-    { data: p.ultimaConsulta,  tipo: 'Retorno', status: 'realizada' },
-  ];
-  if (p.bioimpedancia.length >= 2) {
-    consultas.push({ data: p.bioimpedancia[p.bioimpedancia.length - 2].data, tipo: 'Bioimpedância', status: 'realizada' });
-  }
+  var consultas = CONSULTAS
+    .filter(function(consultation) { return consultation.paciente === p.nome; })
+    .sort(function(a, b) { return (a.data + a.horario).localeCompare(b.data + b.horario); });
   consultas.forEach(function(c, i) {
     var badgeClass = c.status === 'agendada' ? 'badge-vinho' : 'badge-green';
-    var isLast = i === consultas.length - 1;
-    var div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:12px;' +
-      (!isLast ? 'border-bottom:1px solid var(--border);' : '');
-    div.innerHTML =
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'consult-item';
+    button.style.cssText = 'width:100%;text-align:left;cursor:pointer;';
+    button.innerHTML =
       '<div>' +
         '<span style="font-weight:500;">' + c.tipo + '</span>' +
-        '<span style="color:var(--text-muted);margin-left:8px;">' + c.data + '</span>' +
+        '<span style="color:var(--text-muted);margin-left:8px;">' + formatDate(c.data) + ' · ' + c.horario + '</span>' +
       '</div>' +
       '<span class="badge ' + badgeClass + '">' + c.status + '</span>';
-    consultasList.appendChild(div);
+    button.addEventListener('click', function() {
+      Router.navigate('consultation', { patientId: p.id, consultationId: c.id });
+    });
+    consultasList.appendChild(button);
   });
+  if (consultas.length === 0) {
+    consultasList.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Nenhuma consulta agendada.</p>';
+  }
 
   // ── Radar chart ──
   requestAnimationFrame(function() {
