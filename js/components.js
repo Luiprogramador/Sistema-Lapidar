@@ -21,7 +21,7 @@ const Icons = {
 
 const ROLE_LABELS = {
   doctor:    'Dra. Andressa Gomide',
-  secretary: 'Secretaria',
+  secretary: 'Gabi',
   patient:   'Paciente',
 };
 
@@ -109,6 +109,11 @@ function renderSidebar(activePage) {
   const role = Router.getRole();
   const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
   const userName = ROLE_LABELS[role];
+  const userDetails = {
+    doctor: 'CRM 12345/MG · Medicina Integrativa',
+    secretary: 'Secretária · Clínica Lapidar',
+    patient: 'Paciente · Acompanhamento Lapidar',
+  }[role] || 'Perfil Lapidar';
 
   return `
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -124,11 +129,20 @@ function renderSidebar(activePage) {
       `).join('')}
     </div>
     <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="avatar">${userName[0]}</div>
-        <div class="sidebar-user-info">
-          <div class="sidebar-user-name">${userName}</div>
-          <div class="sidebar-user-role">${role === 'doctor' ? 'CRM 12345/MG' : role === 'secretary' ? 'Secretária' : 'Paciente'}</div>
+      <div class="sidebar-profile">
+        <button class="sidebar-user sidebar-profile-trigger" id="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="profile-card">
+          <span class="avatar">${userName[0]}</span>
+          <span class="sidebar-user-info">
+            <span class="sidebar-user-name">${userName}</span>
+            <span class="sidebar-user-role">${role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : 'Paciente'}</span>
+          </span>
+          <span class="sidebar-profile-chevron" aria-hidden="true">⌃</span>
+        </button>
+        <div class="sidebar-profile-card" id="profile-card" role="group" aria-label="Perfil de ${userName}" hidden>
+          <span class="avatar avatar-lg">${userName[0]}</span>
+          <div class="sidebar-profile-card-name">${userName}</div>
+          <div class="sidebar-profile-card-role">${userDetails}</div>
+          <div class="sidebar-profile-card-note">Perfil de demonstração</div>
         </div>
       </div>
       <button class="btn btn-subtle btn-sm btn-full" style="margin-top:12px;" id="logout-btn">
@@ -279,6 +293,30 @@ function initShell(activePage) {
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => Router.navigate('login'));
+  }
+
+  // Profile card
+  const profileTrigger = document.getElementById('profile-trigger');
+  const profileCard = document.getElementById('profile-card');
+  if (profileTrigger && profileCard) {
+    profileTrigger.addEventListener('click', () => {
+      const isOpen = profileTrigger.getAttribute('aria-expanded') === 'true';
+      profileTrigger.setAttribute('aria-expanded', String(!isOpen));
+      profileCard.hidden = isOpen;
+    });
+    document.addEventListener('click', e => {
+      if (!profileTrigger.contains(e.target) && !profileCard.contains(e.target)) {
+        profileTrigger.setAttribute('aria-expanded', 'false');
+        profileCard.hidden = true;
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !profileCard.hidden) {
+        profileTrigger.setAttribute('aria-expanded', 'false');
+        profileCard.hidden = true;
+        profileTrigger.focus();
+      }
+    });
   }
 
   // Notifications

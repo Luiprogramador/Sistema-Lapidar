@@ -257,18 +257,84 @@
   align-items: center;
   gap: var(--space-3);
 }
+.sidebar-profile { position: relative; }
+.sidebar-profile-trigger {
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-profile-trigger:hover .sidebar-user-name { color: var(--vinho); }
+.sidebar-profile-trigger:focus-visible {
+  outline: 2px solid var(--dourado);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
 .sidebar-user-info { flex: 1; min-width: 0; }
 .sidebar-user-name {
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .sidebar-user-role {
   font-size: var(--text-xs);
   color: var(--text-muted);
+}
+.sidebar-profile-chevron {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.sidebar-profile-trigger[aria-expanded="true"] .sidebar-profile-chevron {
+  transform: rotate(180deg);
+}
+.sidebar-profile-card {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: calc(100% + 12px);
+  left: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.sidebar-profile-card[hidden] { display: none; }
+.sidebar-profile-card .avatar {
+  margin-bottom: var(--space-2);
+  background: var(--vinho);
+  color: var(--bege);
+}
+.sidebar-profile-card-name {
+  color: var(--vinho);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.sidebar-profile-card-role {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+.sidebar-profile-card-note {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  width: 100%;
 }
 
 /* Overlay mobile */
@@ -329,6 +395,7 @@
 /* ── Responsividade ── */
 @media (max-width: 1023px) {
   .sidebar {
+    bottom: calc(var(--bottombar-height) + 8px);
     transform: translateX(-100%);
   }
   .sidebar.open {
@@ -417,4 +484,3 @@
   font-size: 13px;
   color: var(--text-muted);
 }
-
