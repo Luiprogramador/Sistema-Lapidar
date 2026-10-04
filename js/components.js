@@ -37,6 +37,7 @@ const ROLE_MENU = {
   secretary: [
     { page:'patients',  label:'Pacientes', icon:'patients' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
+    { page:'journey',   label:'Jornada',   icon:'agenda' },
     { page:'financial', label:'Financeiro',icon:'financial' },
   ],
   patient: [

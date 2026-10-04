@@ -370,7 +370,8 @@
 
 #### Componentes:
 
-- Lista de checklists separados por blocos.
+- Lista de checklists por paciente, separados por blocos e com progresso salvo individualmente.
+- Médica acompanha o método completo; secretaria acompanha as tarefas administrativas de contato, agendamento, onboarding e follow-up.
 
 ---
 

@@ -263,28 +263,38 @@
     <!-- Top Action / Back -->
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <div>
-        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:Router.getState().patientId || 1})" style="margin-bottom:8px;">
+        <button class="btn btn-subtle btn-sm" id="btn-back-journey" onclick="Router.navigate('patient-detail',{patientId:Router.getState().patientId || 1})" style="margin-bottom:8px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           Voltar para Ficha de <span id="back-name"></span>
         </button>
         <h1 class="page-title" id="journey-page-title">Jornada da Paciente</h1>
-        <p class="page-subtitle">Mapa Operacional · Uso interno da equipe médica e administrativa</p>
+        <p class="page-subtitle" id="journey-page-subtitle">Mapa Operacional · Uso interno da equipe médica e administrativa</p>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div id="doctor-journey-actions" style="display:flex;gap:8px;">
         <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:Router.getState().patientId || 1,consultationId:null})">
           Iniciar Consulta
         </button>
       </div>
+      <div id="secretary-journey-actions" style="display:none;gap:8px;">
+        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patients')">Pacientes</button>
+        <button class="btn btn-primary btn-sm" onclick="Router.navigate('agenda')">Abrir agenda</button>
+      </div>
+    </div>
+
+    <div id="secretary-patient-picker" class="card" style="display:none;margin-bottom:18px;padding:14px 18px;">
+      <label for="secretary-patient-select" style="display:block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--dourado);text-transform:uppercase;margin-bottom:6px;">Jornada da paciente</label>
+      <select class="form-select" id="secretary-patient-select" style="max-width:420px;"></select>
+      <div id="secretary-patient-contact" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--text-secondary);"></div>
     </div>
 
     <!-- Mode Tabs: Visão Geral vs Checklist Operacional -->
-    <div class="tabs" style="margin-bottom:20px;">
+    <div class="tabs" id="doctor-journey-tabs" style="margin-bottom:20px;">
       <button class="tab-item active" data-view="overview" id="tab-overview">Visão Geral do Método</button>
       <button class="tab-item" data-view="checklist" id="tab-checklist">Checklist Operacional</button>
     </div>
 
     <!-- Legend -->
-    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;font-size:12.5px;color:var(--text-secondary);background:var(--white);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);">
+    <div id="doctor-journey-legend" style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;font-size:12.5px;color:var(--text-secondary);background:var(--white);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);">
       <span style="display:inline-flex;align-items:center;gap:6px;">
         <i style="width:10px;height:10px;border-radius:50%;background:var(--vinho);display:inline-block;"></i>
         <strong>Andressa</strong> — Clínico e presencial
@@ -337,6 +347,23 @@
       </div>
     </div>
 
+    <div id="secretary-journey-view" style="display:none;">
+      <div class="card" style="margin-bottom:16px;background:var(--white);">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px;">
+          <div>
+            <span style="font-size:11px;font-weight:700;color:var(--dourado);letter-spacing:.05em;text-transform:uppercase;">Acompanhamento administrativo</span>
+            <div style="font-size:13px;color:var(--text-secondary);" id="secretary-progress-summary"></div>
+          </div>
+          <div style="font-family:var(--font-serif);font-size:26px;font-weight:700;color:var(--vinho);" id="secretary-progress-pct">0%</div>
+        </div>
+        <div class="progress-bar" style="height:10px;">
+          <div class="progress-fill" id="secretary-progress-bar" style="width:0%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div>
+        </div>
+      </div>
+      <div id="secretary-stages"></div>
+      <div id="secretary-save-status" role="status" aria-live="polite" style="min-height:20px;text-align:center;font-size:12px;margin:14px 0 30px;"></div>
+    </div>
+
     <!-- ================= VIEW 2: CHECKLIST OPERACIONAL ================= -->
     <div id="view-checklist" style="display:none;">
       
@@ -384,16 +411,37 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() !== 'doctor') {
-    Router.navigate(Router.getRole() === 'patient' ? 'patient-detail' : 'agenda');
+  if (Router.getRole() === 'patient') {
+    Router.navigate('patient-detail');
   } else {
-  initShell('patients');
+  initShell('journey');
 
-  const p = Router.getSelectedPatient() || PACIENTES[0];
-  const journeyStorageKey = 'lapidar-journey-' + p.id;
+  const isSecretary = Router.getRole() === 'secretary';
+  let p = Router.getSelectedPatient() || PACIENTES[0];
+  let journeyStorageKey = 'lapidar-journey-' + p.id;
 
-  document.getElementById('back-name').textContent = p.nome;
-  document.getElementById('journey-page-title').textContent = 'Jornada — ' + p.nome;
+  function updateJourneyHeader() {
+    document.getElementById('back-name').textContent = p.nome;
+    document.getElementById('journey-page-title').textContent = isSecretary ? 'Jornada Operacional' : 'Jornada — ' + p.nome;
+    document.title = isSecretary ? 'Jornada Operacional — Lapidar' : 'Jornada da Paciente — Lapidar';
+    if (isSecretary) {
+      document.getElementById('journey-page-subtitle').textContent = 'Pendências administrativas e próximos passos por paciente.';
+    }
+  }
+
+  updateJourneyHeader();
+  if (isSecretary) {
+    document.getElementById('btn-back-journey').textContent = '‹ Voltar para Pacientes';
+    document.getElementById('btn-back-journey').onclick = () => Router.navigate('patients');
+    document.getElementById('doctor-journey-actions').style.display = 'none';
+    document.getElementById('secretary-journey-actions').style.display = 'flex';
+    document.getElementById('secretary-patient-picker').style.display = 'block';
+    document.getElementById('doctor-journey-tabs').style.display = 'none';
+    document.getElementById('doctor-journey-legend').style.display = 'none';
+    document.getElementById('view-overview').style.display = 'none';
+    document.getElementById('view-checklist').style.display = 'none';
+    document.getElementById('secretary-journey-view').style.display = 'block';
+  }
 
   const COLORS = { andressa: '#591B1C', gabi: '#59633D', paciente: '#C6A15B' };
   const WHO_LABEL = { andressa: 'Andressa', gabi: 'Gabi', paciente: 'Paciente' };
@@ -549,6 +597,185 @@
     { id:'media', title:'Evolução — Média Intensidade', desc:'Consulta e bioimpedância bimestrais.' },
     { id:'manutencao', title:'Manutenção Trimestral', desc:'Consulta e bioimpedância a cada 3 meses para sustentação de longo prazo.' }
   ];
+
+  const secretaryStages = [
+    {
+      id:'lead', title:'Primeiro contato',
+      items:[
+        'Registrar a origem do contato e o motivo da procura',
+        'Explicar o formato da consulta particular e o processo de reembolso',
+        'Agendar a primeira consulta presencial',
+        'Enviar orientações pré-consulta e formulário de anamnese',
+        'Confirmar presença e registrar o retorno da paciente'
+      ]
+    },
+    {
+      id:'enrollment', title:'Após a primeira consulta',
+      items:[
+        'Confirmar com a médica se a paciente seguirá para o Método Lapidar',
+        'Registrar a duração do programa e as condições combinadas com a paciente',
+        'Confirmar pagamento e parcelas contratadas',
+        'Atualizar o cadastro e agendar o Marco Zero'
+      ]
+    },
+    {
+      id:'onboarding', title:'Preparação do Marco Zero',
+      items:[
+        'Enviar data, horário e orientações para a consulta inaugural',
+        'Confirmar com a equipe a disponibilidade do Kit Lapidar e do Diário Metabólico',
+        'Alinhar com a equipe os materiais e documentos que serão entregues',
+        'Enviar o contato da nutricionista parceira quando estiver incluída no plano'
+      ]
+    },
+    {
+      id:'follow-up', title:'Acompanhamento da jornada',
+      items:[
+        'Apoiar o agendamento mensal da consulta e da bioimpedância',
+        'Realizar o check-in mensal e registrar o contato com a paciente',
+        'Enviar lembrete de exames laboratoriais a cada três meses',
+        'Acompanhar pendências e solicitar à equipe clínica os dados necessários para o relatório',
+        'Retomar contato com pacientes sem resposta e registrar o desfecho'
+      ]
+    },
+    {
+      id:'continuity', title:'Fechamento e continuidade',
+      items:[
+        'Agendar a consulta de fechamento antes do fim do ciclo',
+        'Confirmar com a equipe clínica os exames e avaliações necessários',
+        'Registrar a fase de continuidade definida pela médica',
+        'Agendar os próximos retornos conforme a orientação clínica'
+      ]
+    }
+  ];
+
+  let secretaryState = { checked:{} };
+
+  function secretaryStorageKey(patientId) {
+    return 'lapidar-secretary-journey-' + patientId;
+  }
+
+  function loadSecretaryState() {
+    try {
+      const raw = localStorage.getItem(secretaryStorageKey(p.id));
+      if (!raw) return { checked:{} };
+      const saved = JSON.parse(raw);
+      if (saved && saved.checked && typeof saved.checked === 'object' && !Array.isArray(saved.checked)) {
+        return { checked:saved.checked };
+      }
+      throw new Error('Formato de progresso inválido.');
+    } catch (error) {
+      console.error('Não foi possível ler o progresso da jornada da secretaria.', error);
+      showSecretarySaveError('Não foi possível carregar o progresso salvo desta paciente.');
+      return { checked:{} };
+    }
+  }
+
+  function showSecretarySaveError(message) {
+    const status = document.getElementById('secretary-save-status');
+    if (status) {
+      status.textContent = message;
+      status.style.color = 'var(--red, #B42318)';
+    }
+  }
+
+  function saveSecretaryState() {
+    try {
+      localStorage.setItem(secretaryStorageKey(p.id), JSON.stringify(secretaryState));
+      const status = document.getElementById('secretary-save-status');
+      status.textContent = 'Progresso salvo.';
+      status.style.color = 'var(--oliva)';
+    } catch (error) {
+      console.error('Não foi possível salvar o progresso da jornada da secretaria.', error);
+      showSecretarySaveError('Erro ao salvar o progresso. Verifique o armazenamento do navegador.');
+    }
+  }
+
+  function renderSecretaryJourney() {
+    const total = secretaryStages.reduce((count, stage) => count + stage.items.length, 0);
+    const done = secretaryStages.reduce((count, stage) =>
+      count + stage.items.filter((_, index) => secretaryState.checked[`${stage.id}::${index}`]).length, 0);
+    const pct = total ? Math.round(done / total * 100) : 0;
+    document.getElementById('secretary-progress-summary').textContent = `${done} de ${total} tarefas concluídas para ${p.nome}`;
+    document.getElementById('secretary-progress-pct').textContent = pct + '%';
+    document.getElementById('secretary-progress-bar').style.width = pct + '%';
+
+    const container = document.getElementById('secretary-stages');
+    container.innerHTML = secretaryStages.map((stage, stageIndex) => {
+      const stageDone = stage.items.filter((_, index) => secretaryState.checked[`${stage.id}::${index}`]).length;
+      return `
+        <section class="stage-card ${stageIndex === 0 || stageDone > 0 ? 'open' : ''}">
+          <button class="stage-header-row" type="button" aria-expanded="${stageIndex === 0 || stageDone > 0}" style="width:100%;border:0;text-align:left;" data-secretary-stage="${stage.id}">
+            <span class="stage-badge-num" style="background:var(--oliva);">${stageIndex + 1}</span>
+            <span class="stage-header-info">
+              <span class="stage-header-title">${stage.title}</span>
+              <span class="stage-header-count">${stageDone} de ${stage.items.length} concluídas</span>
+            </span>
+            <span class="stage-chev"></span>
+          </button>
+          <div class="stage-body">
+            ${stage.items.map((item, index) => {
+              const key = `${stage.id}::${index}`;
+              const checked = !!secretaryState.checked[key];
+              return `<label class="chk-item ${checked ? 'checked' : ''}">
+                <input type="checkbox" data-secretary-task="${key}" ${checked ? 'checked' : ''} style="margin-top:3px;accent-color:var(--vinho);">
+                <span class="chk-text">${item}</span>
+              </label>`;
+            }).join('')}
+          </div>
+        </section>`;
+    }).join('');
+
+    container.querySelectorAll('[data-secretary-stage]').forEach(button => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.stage-card');
+        const isOpen = card.classList.toggle('open');
+        button.setAttribute('aria-expanded', String(isOpen));
+      });
+    });
+    container.querySelectorAll('[data-secretary-task]').forEach(input => {
+      input.addEventListener('change', () => {
+        secretaryState.checked[input.dataset.secretaryTask] = input.checked;
+        saveSecretaryState();
+        renderSecretaryJourney();
+      });
+    });
+  }
+
+  function renderSecretaryPatientPicker() {
+    const select = document.getElementById('secretary-patient-select');
+    select.replaceChildren();
+    PACIENTES.forEach(patient => {
+      const option = document.createElement('option');
+      option.value = String(patient.id);
+      option.textContent = patient.nome;
+      option.selected = patient.id === p.id;
+      select.appendChild(option);
+    });
+    select.addEventListener('change', () => {
+      Router.navigate('journey', { patientId:Number(select.value) });
+    });
+
+    const contact = document.getElementById('secretary-patient-contact');
+    const phone = document.createElement('span');
+    phone.textContent = p.telefone;
+    contact.replaceChildren(phone);
+    const phoneDigits = p.telefone.replace(/\D/g, '');
+    if (phoneDigits) {
+      const whatsapp = document.createElement('a');
+      whatsapp.href = `https://wa.me/55${phoneDigits}`;
+      whatsapp.target = '_blank';
+      whatsapp.rel = 'noopener noreferrer';
+      whatsapp.className = 'btn btn-subtle btn-sm';
+      whatsapp.textContent = 'Abrir WhatsApp';
+      contact.appendChild(whatsapp);
+    }
+  }
+
+  if (isSecretary) {
+    renderSecretaryPatientPicker();
+    secretaryState = loadSecretaryState();
+    renderSecretaryJourney();
+  }
 
   // State management
   function loadState() {

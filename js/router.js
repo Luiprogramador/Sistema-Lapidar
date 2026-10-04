@@ -48,7 +48,7 @@ const Router = {
     }
     if (role === 'secretary') {
       if (page === 'patient-detail') page = 'patient-registration';
-      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial'];
+      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey'];
       if (!allowedPages.includes(page)) page = 'patients';
     }
     return { page, params };
