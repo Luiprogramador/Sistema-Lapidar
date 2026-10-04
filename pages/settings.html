@@ -124,6 +124,9 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() !== 'doctor') {
+    Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
+  } else {
   initShell('settings');
 
   var SETTINGS_KEY = 'lapidar-settings-v1';
@@ -222,6 +225,7 @@
       alert('Não foi possível salvar. Verifique o armazenamento do navegador.');
     }
   });
+  }
 </script>
 </body>
 </html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha Cadastral — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .registration-header { display:flex;align-items:center;gap:14px;margin-bottom:20px; }
+    .registration-avatar { width:48px;height:48px;display:grid;place-items:center;border-radius:50%;background:var(--vinho);color:var(--bege);font-family:var(--font-serif);font-size:18px; }
+    .registration-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px; }
+    .registration-field { padding:14px 0;border-bottom:1px solid var(--border);min-width:0; }
+    .registration-label { color:var(--text-muted);font-size:11px;text-transform:uppercase; }
+    .registration-value { color:var(--text-primary);font-size:13px;font-weight:500;margin-top:4px;overflow-wrap:anywhere; }
+    @media (max-width:600px) { .registration-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div>
+      <h1 class="page-title">Ficha cadastral</h1>
+      <p class="page-subtitle">Dados administrativos da paciente</p>
+    </div>
+    <button class="btn btn-subtle btn-sm" id="btn-back">Voltar para Pacientes</button>
+  </div>
+  <section class="card" style="margin-top:20px;">
+    <div class="registration-header">
+      <div class="registration-avatar" id="patient-initials"></div>
+      <div>
+        <h2 class="section-title" id="patient-name"></h2>
+        <p class="page-subtitle" id="patient-meta"></p>
+      </div>
+    </div>
+    <div class="registration-grid" id="registration-fields"></div>
+  </section>
+</main>
+
+<div id="bottombar-container"></div>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  if (Router.getRole() !== 'secretary') {
+    Router.navigate(Router.getRole() === 'patient' ? 'patient-detail' : 'patients', { patientId: Router.getSelectedPatient()?.id || 1 });
+  } else {
+    initShell('patients');
+    const patient = Router.getSelectedPatient() || PACIENTES[0];
+    document.getElementById('patient-initials').textContent = patient.iniciais;
+    document.getElementById('patient-name').textContent = patient.nome;
+    document.getElementById('patient-meta').textContent = `${patient.idade} anos · ${patient.nascimento}`;
+
+    const fields = [
+      ['Telefone', patient.telefone],
+      ['CPF', patient.cpf || 'Não informado'],
+      ['Objetivo', patient.objetivo],
+      ['Protocolo', patient.protocolo],
+      ['Consulta atual', patient.consultaAtual],
+      ['Próxima consulta', patient.proximaConsulta],
+      ['Peso inicial', `${patient.pesoInicial} kg`],
+      ['Meta de peso', `${patient.meta} kg`],
+      ['TRH', patient.trh],
+      ['Contraceptivo', patient.contraceptivo],
+      ['Origem', patient.origemLead || 'Não informada'],
+    ];
+    document.getElementById('registration-fields').innerHTML = fields.map(([label, value]) => `
+      <div class="registration-field">
+        <div class="registration-label">${label}</div>
+        <div class="registration-value">${value || 'Não informado'}</div>
+      </div>
+    `).join('');
+    document.getElementById('btn-back').addEventListener('click', () => Router.navigate('patients'));
+  }
+</script>
+</body>
+</html>

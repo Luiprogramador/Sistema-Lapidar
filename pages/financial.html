@@ -17,11 +17,11 @@
 <main class="main-content page-enter">
   <div class="page-header">
     <h1 class="page-title">Financeiro</h1>
-    <p class="page-subtitle">Receitas, pagamentos e pendências</p>
+    <p class="page-subtitle" id="financial-subtitle">Receitas, pagamentos e pendências</p>
   </div>
 
   <!-- Cards de resumo -->
-  <div class="grid-responsive-4" style="gap:12px;margin-bottom:24px;">
+  <div class="grid-responsive-4" id="finance-summary" style="gap:12px;margin-bottom:24px;">
     <div class="card-stat stagger-1" style="border-left:3px solid var(--oliva);">
       <span class="card-stat-label">Receita do Mês</span>
       <span class="card-stat-value" id="month-revenue" style="color:var(--oliva);">R$ 7.900</span>
@@ -45,7 +45,7 @@
   </div>
 
   <!-- Gráfico de receita mensal -->
-  <div class="card" style="margin-bottom:24px;">
+  <div class="card" id="finance-chart" style="margin-bottom:24px;">
     <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Receita Mensal — 2026</h3>
     <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Valores acumulados por mês</p>
     <canvas id="receita-chart" style="width:100%;height:160px;display:block;"></canvas>
@@ -74,6 +74,7 @@
         <thead>
           <tr>
             <th>Data</th>
+            <th>Paciente / Referência</th>
             <th>Origem</th>
             <th>Destino</th>
             <th>Tipo</th>
@@ -97,7 +98,16 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() === 'patient') {
+    Router.navigate('portal');
+  } else {
   initShell('financial');
+  const isSecretaryView = Router.getRole() === 'secretary';
+  if (isSecretaryView) {
+    document.getElementById('financial-subtitle').textContent = 'Financeiro operacional · pagamentos e pendências';
+    document.getElementById('finance-summary').hidden = true;
+    document.getElementById('finance-chart').hidden = true;
+  }
 
   // Receita mensal data
   const receitaMensal = [
@@ -180,6 +190,7 @@
     document.getElementById('transactions-body').innerHTML = filtered.map(t => `
       <tr>
         <td style="color:var(--text-muted);font-size:12px;">${t.data}</td>
+        <td>${t.paciente}</td>
         <td>${t.origem}</td>
         <td>${t.destino}</td>
         <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${t.tipo}</span></td>
@@ -189,7 +200,7 @@
         <td>${t.usuario}</td>
         <td>${getStatusBadge(t.status)}</td>
       </tr>
-    `).join('') || '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>';
+    `).join('') || '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>';
   }
 
   document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
@@ -208,6 +219,7 @@
   document.getElementById('filter-date-to').addEventListener('change', renderTransactions);
 
   renderTransactions();
+  }
 </script>
 </body>
 </html>

@@ -263,7 +263,7 @@
     <!-- Top Action / Back -->
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <div>
-        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:p.id})" style="margin-bottom:8px;">
+        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:Router.getState().patientId || 1})" style="margin-bottom:8px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           Voltar para Ficha de <span id="back-name"></span>
         </button>
@@ -271,7 +271,7 @@
         <p class="page-subtitle">Mapa Operacional · Uso interno da equipe médica e administrativa</p>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:p.id,consultationId:null})">
+        <button class="btn btn-primary btn-sm" onclick="Router.navigate('consultation',{patientId:Router.getState().patientId || 1,consultationId:null})">
           Iniciar Consulta
         </button>
       </div>
@@ -384,6 +384,9 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() !== 'doctor') {
+    Router.navigate(Router.getRole() === 'patient' ? 'patient-detail' : 'agenda');
+  } else {
   initShell('patients');
 
   const p = Router.getSelectedPatient() || PACIENTES[0];
@@ -761,6 +764,7 @@
 
   renderOverview();
   renderChecklist();
+  }
 </script>
 </body>
 </html>

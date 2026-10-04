@@ -146,6 +146,9 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() === 'patient') {
+    Router.navigate('patient-detail');
+  } else {
   initShell('patients');
 
   let searchTerm = '';
@@ -263,6 +266,7 @@
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 
   filterAndRender();
+  }
 </script>
 </body>
 </html>

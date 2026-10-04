@@ -35,11 +35,9 @@ const ROLE_MENU = {
     { page:'settings',  label:'Configurações', icon:'settings' },
   ],
   secretary: [
-    { page:'dashboard', label:'Dashboard', icon:'dashboard' },
     { page:'patients',  label:'Pacientes', icon:'patients' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
     { page:'financial', label:'Financeiro',icon:'financial' },
-    { page:'settings',  label:'Configurações', icon:'settings' },
   ],
   patient: [
     { page:'patient-detail', label:'Minha Ficha', icon:'portal' },
@@ -59,7 +57,7 @@ function renderTopbar() {
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
-      <div class="topbar-logo" onclick="Router.navigate(Router.getRole()==='patient'?'portal':'dashboard')" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+      <div class="topbar-logo" onclick="Router.navigate(Router.getRole()==='patient'?'patient-detail':'dashboard')" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
         <img src="../assets/logo_lapidar_tp.png" alt="Lapidar" style="height:32px;width:auto;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
         <svg style="display:none;" width="24" height="24" viewBox="0 0 40 40" fill="none">
           <polygon points="20,4 36,32 4,32" fill="none" stroke="#C6A15B" stroke-width="2.5"/>
@@ -183,6 +181,22 @@ function getStatusBadge(status) {
 }
 
 function renderPatientCard(p, index = 0) {
+  if (Router.getRole() === 'secretary') {
+    return `
+    <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
+      <div class="card-patient-header">
+        <div class="avatar avatar-lg">${p.iniciais}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="card-patient-name">${p.nome}</div>
+          <div class="card-patient-meta">${p.idade} anos · ${p.consultaAtual}</div>
+          <div style="margin-top:4px;">${getProtocolBadge(p.protocolo)}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);">${p.telefone}</div>
+      <div style="font-size:12px;color:var(--text-muted);">Próxima consulta: ${p.proximaConsulta}</div>
+    </div>`;
+  }
+
   const pct = p.metas.length > 0 ? Math.round((p.metasConcluidas / p.metas.length) * 100) : 0;
   const pesoLoss = (p.pesoInicial - p.pesoAtual).toFixed(1);
   return `
@@ -228,15 +242,13 @@ function initShell(activePage) {
   document.getElementById('bottombar-container').innerHTML = renderBottomBar(activePage);
 
   // Role selector
-  document.getElementById('role-select').addEventListener('change', e => {
-    Router.setRole(e.target.value);
-    // Redirect based on new role
-    if (e.target.value === 'patient') {
-      Router.navigate('portal');
-    } else {
-      Router.navigate('dashboard');
-    }
-  });
+  const roleSelect = document.getElementById('role-select');
+  if (roleSelect) {
+    roleSelect.addEventListener('change', e => {
+      Router.setRole(e.target.value);
+      Router.navigate(e.target.value === 'patient' ? 'patient-detail' : e.target.value === 'secretary' ? 'patients' : 'dashboard');
+    });
+  }
 
   // Hamburger
   const hamburger = document.getElementById('hamburger-btn');
@@ -305,6 +317,40 @@ function showPatientQuickModal(id) {
     modal.id = 'patient-quick-modal';
     modal.className = 'modal-overlay';
     document.body.appendChild(modal);
+  }
+
+  if (Router.getRole() === 'secretary') {
+    modal.innerHTML = `
+      <div class="modal" style="max-width:540px;">
+        <div class="modal-header" style="background:var(--vinho-xlight);border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar avatar-lg" style="background:var(--vinho);color:var(--bege);font-family:var(--font-serif);font-size:18px;">${p.iniciais}</div>
+            <div>
+              <div style="font-family:var(--font-serif);font-size:18px;font-weight:600;color:var(--vinho);">${p.nome}</div>
+              <div style="font-size:12px;color:var(--text-muted);">${p.idade} anos · ${p.nascimento}</div>
+            </div>
+          </div>
+          <button class="modal-close" onclick="closePatientQuickModal()">${Icons.close}</button>
+        </div>
+        <div class="modal-body" style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">
+          <div><strong>Telefone:</strong> ${p.telefone}</div>
+          <div><strong>Protocolo:</strong> ${p.protocolo}</div>
+          <div><strong>Consulta atual:</strong> ${p.consultaAtual}</div>
+          <div><strong>Próxima consulta:</strong> ${p.proximaConsulta}</div>
+          <div><strong>Peso inicial:</strong> ${p.pesoInicial} kg</div>
+          <div><strong>Meta:</strong> ${p.meta} kg</div>
+          <div><strong>TRH:</strong> ${p.trh}</div>
+          <div><strong>Contraceptivo:</strong> ${p.contraceptivo}</div>
+          <div style="grid-column:1/-1;"><strong>Objetivo:</strong> ${p.objetivo}</div>
+          <div style="grid-column:1/-1;"><strong>Origem:</strong> ${p.origemLead || 'Não informada'}</div>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-subtle btn-sm" onclick="closePatientQuickModal()">Fechar</button>
+          <button class="btn btn-primary btn-sm" onclick="closePatientQuickModal();Router.navigate('patient-registration',{patientId:${p.id}})">Ficha cadastral</button>
+        </div>
+      </div>`;
+    modal.classList.add('open');
+    return;
   }
   
   const pct = p.metas.length > 0 ? Math.round((p.metasConcluidas / p.metas.length) * 100) : 0;

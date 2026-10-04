@@ -149,6 +149,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Novo Exame
         </button>
+        <button class="btn btn-ghost btn-sm" id="btn-publish-exams">Liberar exames para paciente</button>
       </div>
       <div class="exam-header">
         <div>Exame</div>
@@ -211,6 +212,9 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() === 'secretary') {
+    Router.navigate('agenda');
+  } else {
   initShell(Router.getRole() === 'patient' ? 'agenda' : 'patients');
 
   var state = Router.getState();
@@ -248,12 +252,24 @@
     privateNotes: 'DEMO — Relata melhora percebida na disposição. Conversamos sobre rotina e pontos que deseja acompanhar.',
     publicDraft: 'Neste encontro, revisamos seus objetivos e os dados disponíveis para acompanhar sua jornada. Vamos continuar observando sua evolução em conjunto.',
     analysis: '',
-    publishedAt: ''
+    publishedAt: '',
+    examsPublished: false
   };
+
+  if (isDoctorView) {
+    var publishExamsButton = document.getElementById('btn-publish-exams');
+    publishExamsButton.textContent = saved.examsPublished ? 'Revogar acesso aos exames' : 'Liberar exames para paciente';
+    publishExamsButton.addEventListener('click', function() {
+      saved.examsPublished = !saved.examsPublished;
+      saveState(saved);
+      location.reload();
+    });
+  }
 
   if (!isDoctorView) {
     document.getElementById('btn-finalizar').hidden = true;
     document.getElementById('btn-novo-exame').hidden = true;
+    document.getElementById('btn-publish-exams').hidden = true;
     document.querySelector('[data-tab="checklist"]').classList.remove('active');
     document.getElementById('tab-checklist').classList.remove('active');
     if (!isPatientView) {
@@ -262,13 +278,20 @@
       document.getElementById('tab-checklist').hidden = true;
       document.getElementById('tab-anotacoes').hidden = true;
     }
-    document.querySelector('[data-tab="exames"]').classList.add('active');
-    document.getElementById('tab-exames').classList.add('active');
+    if (isPatientView && !saved.examsPublished) {
+      document.querySelector('[data-tab="exames"]').hidden = true;
+      document.getElementById('tab-exames').hidden = true;
+      document.querySelector('[data-tab="analises"]').classList.add('active');
+      document.getElementById('tab-analises').classList.add('active');
+    } else {
+      document.querySelector('[data-tab="exames"]').classList.add('active');
+      document.getElementById('tab-exames').classList.add('active');
+    }
     document.getElementById('analysis-actions').hidden = true;
     var analysisDraft = document.getElementById('analysis-draft');
     analysisDraft.value = saved.publishedAt && saved.analysis
       ? saved.analysis
-      : saved.publicDraft;
+      : 'A médica ainda não compartilhou informações desta consulta.';
     analysisDraft.readOnly = true;
   }
   if (isPatientView) {
@@ -362,6 +385,7 @@
 
   var examList = document.getElementById('exam-list');
   examList.innerHTML = '';
+  if (!isPatientView || saved.examsPublished) {
   exams.forEach(function(ex) {
     var st = getStatus(ex);
     var delta = getDelta(ex.anterior, ex.atual);
@@ -381,11 +405,12 @@
       '<div style="text-align:center;"><span class="' + st.cls + '" style="font-size:11.5px;padding:3px 8px;border-radius:999px;background:' + (st.cls==='status-ok'?'var(--green-bg)':st.cls==='status-warn'?'var(--yellow-bg)':'var(--red-bg)') + ';">' + st.text + '</span></div>';
     examList.appendChild(row);
   });
+  }
 
   // ── ANOTAÇÕES ──
   document.getElementById('private-notes').value = saved.privateNotes;
   document.getElementById('public-draft').value = isPatientView
-    ? (saved.publishedAt && saved.analysis ? saved.analysis : saved.publicDraft)
+    ? (saved.publishedAt && saved.analysis ? saved.analysis : 'A médica ainda não compartilhou informações desta consulta.')
     : saved.publicDraft;
   document.getElementById('public-draft').readOnly = isPatientView;
 
@@ -406,7 +431,7 @@
 
   // ── ANÁLISES ──
   document.getElementById('analysis-draft').value = isPatientView
-    ? (saved.publishedAt && saved.analysis ? saved.analysis : saved.publicDraft)
+    ? (saved.publishedAt && saved.analysis ? saved.analysis : 'A médica ainda não compartilhou informações desta consulta.')
     : (saved.analysis || '');
   if (saved.publishedAt) {
     var info = document.getElementById('published-info');
@@ -442,6 +467,7 @@
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     });
   });
+  }
 </script>
 </body>
 </html>

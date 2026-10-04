@@ -105,6 +105,7 @@
       .main-content { margin: 0 !important; padding: 0 !important; }
       .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #5B2333; padding-bottom: 12px; }
       .tab-content { display: block !important; margin-bottom: 24px; page-break-inside: avoid; }
+      .tab-content[hidden] { display: none !important; }
       .card, .section-card, .bio-card { border: 1px solid #ccc !important; box-shadow: none !important; }
     }
     .print-header { display: none; }
@@ -260,12 +261,21 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
+  if (Router.getRole() === 'secretary') {
+    Router.navigate('patient-registration', { patientId: Router.getState().patientId || 1 });
+  } else {
   initShell('patient-detail');
 
   // Load patient
   const p = Router.getSelectedPatient() || PACIENTES[0];
   const isDoctorView = Router.getRole() === 'doctor';
   const isPatientView = Router.getRole() === 'patient';
+  const patientReleasesKey = 'lapidar-patient-releases-' + p.id;
+  let patientReleases = {};
+  try {
+    patientReleases = JSON.parse(localStorage.getItem(patientReleasesKey)) || {};
+  } catch(e) {}
+  const riskReleased = patientReleases.riskCV === true;
   try {
     const savedBio = localStorage.getItem('lapidar-bio-' + p.id);
     if (savedBio) {
@@ -391,10 +401,10 @@
             <span style="color:var(--text-muted);">Próxima Consulta Agendada</span>
             <span style="font-weight:600;color:var(--vinho);">${p.proximaConsulta}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;">
+          ${isPatientView ? '' : `<div style="display:flex;justify-content:space-between;">
             <span style="color:var(--text-muted);">Observações Clínicas</span>
             <span style="font-size:12px;color:var(--text-secondary);text-align:right;max-width:260px;">${p.observacoes}</span>
-          </div>
+          </div>`}
         </div>
       </div>
 
@@ -545,6 +555,10 @@
     .filter(([key]) => rv[key] === undefined || rv[key] === null || rv[key] === '')
     .map(([, label]) => label);
   const riscoClass = { 'Baixo':'risco-baixo','Intermediário':'risco-inter','Alto':'risco-alto','Muito Alto':'risco-muito','Extremo':'risco-extremo' };
+  if (isPatientView && !riskReleased) {
+    document.querySelector('[data-tab="risco"]').hidden = true;
+    document.getElementById('tab-risco').hidden = true;
+  } else {
   document.getElementById('tab-risco').innerHTML = `
     <div class="grid-responsive-2" style="gap:20px;margin-bottom:20px;">
       <div class="card">
@@ -554,6 +568,7 @@
               <p style="font-size:11px;color:var(--text-muted);">${rv.preventScore || 'Escore PREVENT não calculado'}</p>
           </div>
             <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel || 'Não calculado'}</span>
+            ${isDoctorView ? `<button class="btn btn-subtle btn-sm" id="toggle-risk-release">${riskReleased ? 'Revogar acesso da paciente' : 'Liberar para paciente'}</button>` : ''}
         </div>
 
           ${missingCvData.length ? `<div role="note" style="margin-bottom:14px;padding:10px 12px;border-left:3px solid var(--yellow-text);background:var(--yellow-bg);font-size:12px;color:var(--text-secondary);"><strong style="color:var(--yellow-text);">Dados cardiovasculares faltantes:</strong> ${missingCvData.join(', ')}.</div>` : ''}
@@ -626,6 +641,14 @@
         </ul>
       </div>
     </div>`;
+  if (isDoctorView) {
+    document.getElementById('toggle-risk-release').addEventListener('click', () => {
+      patientReleases.riskCV = !riskReleased;
+      localStorage.setItem(patientReleasesKey, JSON.stringify(patientReleases));
+      location.reload();
+    });
+  }
+  }
 
   // ── TAB 5: MEDICAMENTOS & SUPLEMENTOS ──
   document.getElementById('tab-medicamentos').innerHTML = `
@@ -911,6 +934,7 @@
     closeModalBio();
     alert('Nova bioimpedância registrada com sucesso!');
     location.reload();
+  }
   }
 </script>
 </body>

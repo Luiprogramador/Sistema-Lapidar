@@ -22,7 +22,7 @@ const Router = {
   },
 
   setRole(role) {
-    this.setState({ role });
+    this.setState(role === 'patient' ? { role, patientId: 1 } : { role });
   },
 
   getActivePage() {
@@ -31,18 +31,40 @@ const Router = {
 
   getSelectedPatient() {
     const state = this.getState();
-    if (!state.patientId) return null;
-    return PACIENTES.find(p => p.id === state.patientId) || null;
+    const patientId = this.getRole() === 'patient' ? 1 : state.patientId;
+    if (!patientId) return null;
+    return PACIENTES.find(p => p.id === patientId) || null;
+  },
+
+  resolveNavigation(page, params = {}) {
+    const role = this.getRole();
+    if (role === 'patient') {
+      if (page === 'portal') page = 'patient-detail';
+      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation'];
+      return {
+        page: allowedPages.includes(page) ? page : 'patient-detail',
+        params: { ...params, patientId: 1 },
+      };
+    }
+    if (role === 'secretary') {
+      if (page === 'patient-detail') page = 'patient-registration';
+      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial'];
+      if (!allowedPages.includes(page)) page = 'patients';
+    }
+    return { page, params };
   },
 
   navigate(page, params = {}) {
-    this.setState({ page, ...params });
+    const navigation = this.resolveNavigation(page, params);
+    page = navigation.page;
+    this.setState({ page, ...navigation.params });
     const pageFiles = {
       login:            '../pages/login.html',
       dashboard:        '../pages/dashboard.html',
       patients:         '../pages/patients.html',
       consultations:    '../pages/consultations.html',
       'patient-detail': '../pages/patient-detail.html',
+      'patient-registration': '../pages/patient-registration.html',
       agenda:           '../pages/agenda.html',
       financial:        '../pages/financial.html',
       portal:           '../pages/portal.html',
@@ -59,13 +81,16 @@ const Router = {
 
   // Navegação relativa a partir de qualquer pasta
   navigateRelative(page, params = {}) {
-    this.setState({ page, ...params });
+    const navigation = this.resolveNavigation(page, params);
+    page = navigation.page;
+    this.setState({ page, ...navigation.params });
     const pageFiles = {
       login:            'pages/login.html',
       dashboard:        'pages/dashboard.html',
       patients:         'pages/patients.html',
       consultations:    'pages/consultations.html',
       'patient-detail': 'pages/patient-detail.html',
+      'patient-registration': 'pages/patient-registration.html',
       agenda:           'pages/agenda.html',
       financial:        'pages/financial.html',
       portal:           'pages/portal.html',

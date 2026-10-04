@@ -266,13 +266,16 @@
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script>
+  function continueWithCurrentRole() {
+    const role = Router.getRole();
+    Router.navigate(role === 'patient' ? 'patient-detail' : role === 'secretary' ? 'patients' : 'dashboard');
+  }
+
   document.getElementById('btn-entrar').addEventListener('click', () => {
-    Router.setRole('doctor');
-    Router.navigate('dashboard');
+    continueWithCurrentRole();
   });
   document.getElementById('btn-google').addEventListener('click', () => {
-    Router.setRole('doctor');
-    Router.navigate('dashboard');
+    continueWithCurrentRole();
   });
 </script>
 </body>

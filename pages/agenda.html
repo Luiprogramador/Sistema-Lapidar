@@ -294,9 +294,7 @@
                   <div style="font-weight:600;color:var(--vinho);">${ct.paciente}</div>
                   <div style="font-size:10px;color:var(--text-muted);">${ct.motivo}</div>
                 </div>
-                <button class="btn btn-subtle btn-sm" style="padding:4px 8px;font-size:11px;" onclick="Router.navigate('journey',{patientId:${p.id}})">
-                  Jornada
-                </button>
+                ${role === 'doctor' ? `<button class="btn btn-subtle btn-sm" style="padding:4px 8px;font-size:11px;" onclick="Router.navigate('journey',{patientId:${p.id}})">Jornada</button>` : ''}
               </div>`;
           }).join('')}
         </div>
