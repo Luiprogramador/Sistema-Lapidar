@@ -4,34 +4,34 @@
 
 :root {
   /* Cores principais */
-  --vinho:         #5B2333;
-  --vinho-dark:    #3E1623;
-  --vinho-light:   #7A3047;
-  --vinho-xlight:  #F7EEF0;
+  --vinho:         #591B1C;
+  --vinho-dark:    #351013;
+  --vinho-light:   #722B2E;
+  --vinho-xlight:  #F7EEEE;
 
   /* Neutros */
-  --bege:          #F4EFE7;
-  --bege-dark:     #E8E0D0;
-  --bege-darker:   #D9CFC0;
+  --bege:          #F2EBDF;
+  --bege-dark:     #E8DDCD;
+  --bege-darker:   #D8C9B5;
   --white:         #FFFFFF;
 
   /* Acentos */
   --dourado:       #C6A15B;
-  --dourado-light: #D4B578;
+  --dourado-light: #D2AF71;
   --dourado-pale:  #FBF5E8;
-  --oliva:         #66724A;
-  --oliva-light:   #7A8A58;
+  --oliva:         #59633D;
+  --oliva-light:   #6F7C4D;
   --oliva-pale:    #EEF1E8;
 
   /* Texto */
-  --text-primary:  #1A1008;
-  --text-secondary:#5A4A3A;
-  --text-muted:    #9B8B7A;
-  --text-inverted: #F4EFE7;
+  --text-primary:  #2F201B;
+  --text-secondary:#5F4B42;
+  --text-muted:    #78685A;
+  --text-inverted: #F2EBDF;
 
   /* Bordas */
-  --border:        #E8E0D0;
-  --border-dark:   #D9CFC0;
+  --border:        #E3D8C8;
+  --border-dark:   #CDBDA8;
 
   /* Status / Alertas */
   --red-bg:        #FEE2E2;
@@ -52,8 +52,8 @@
   --font-sans:     'Montserrat', system-ui, sans-serif;
 
   /* Escala tipográfica */
-  --text-xs:       0.75rem;    /* 12px */
-  --text-sm:       0.875rem;   /* 14px */
+  --text-xs:       0.875rem;   /* 14px */
+  --text-sm:       1rem;       /* 16px */
   --text-base:     1rem;       /* 16px */
   --text-lg:       1.125rem;   /* 18px */
   --text-xl:       1.25rem;    /* 20px */
@@ -80,10 +80,10 @@
   --radius-full:   9999px;
 
   /* Sombras */
-  --shadow-sm:     0 1px 4px rgba(91,35,51,0.06);
-  --shadow:        0 2px 12px rgba(91,35,51,0.08);
-  --shadow-md:     0 4px 20px rgba(91,35,51,0.12);
-  --shadow-lg:     0 8px 40px rgba(91,35,51,0.16);
+  --shadow-sm:     0 1px 4px rgba(53,16,19,0.07);
+  --shadow:        0 2px 12px rgba(53,16,19,0.09);
+  --shadow-md:     0 4px 20px rgba(53,16,19,0.13);
+  --shadow-lg:     0 8px 40px rgba(53,16,19,0.18);
 
   /* Layout */
   --sidebar-width: 228px;

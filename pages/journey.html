@@ -395,7 +395,7 @@
   document.getElementById('back-name').textContent = p.nome;
   document.getElementById('journey-page-title').textContent = 'Jornada — ' + p.nome;
 
-  const COLORS = { andressa: '#5B2333', gabi: '#66724A', paciente: '#C6A15B' };
+  const COLORS = { andressa: '#591B1C', gabi: '#59633D', paciente: '#C6A15B' };
   const WHO_LABEL = { andressa: 'Andressa', gabi: 'Gabi', paciente: 'Paciente' };
 
   const overviewData = [
@@ -575,7 +575,7 @@
   function renderOverview() {
     const el = document.getElementById('overview-timeline');
     el.innerHTML = overviewData.map(s => {
-      const color = COLORS[s.who] || '#5B2333';
+      const color = COLORS[s.who] || '#591B1C';
       const whoClass = 'who-' + s.who;
       let inner = `<div class="tl-explain">${s.explain}</div>`;
       inner += `<ul class="tl-list">${s.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
@@ -634,7 +634,7 @@
 
     const container = document.getElementById('stages-accordion-list');
     container.innerHTML = checklistData.map((st, sIdx) => {
-      const color = COLORS[st.who] || '#5B2333';
+      const color = COLORS[st.who] || '#591B1C';
       const whoClass = 'who-' + st.who;
 
       let itemsHTML = '';

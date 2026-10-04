@@ -73,7 +73,7 @@
       font-size: 32px;
       margin-bottom: 12px;
       color: var(--vinho);
-      border: 1px dashed rgba(91,35,51,0.2);
+      border: 1px dashed rgba(89,27,28,0.2);
     }
     .file-card-title {
       font-weight: 600;
@@ -103,7 +103,7 @@
       #topbar-container, #sidebar-container, #bottombar-container,
       .top-actions-bar, .tabs, .no-print { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; }
-      .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #5B2333; padding-bottom: 12px; }
+      .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #591B1C; padding-bottom: 12px; }
       .tab-content { display: block !important; margin-bottom: 24px; page-break-inside: avoid; }
       .tab-content[hidden] { display: none !important; }
       .card, .section-card, .bio-card { border: 1px solid #ccc !important; box-shadow: none !important; }
@@ -834,7 +834,7 @@
     </div>`;
 
   // ── TAB 8: TIMELINE ──
-  const tlColors = { 'Consulta':'#5B2333','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B' };
+  const tlColors = { 'Consulta':'#591B1C','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B' };
   function timelineDateValue(date) {
     const [day, month, year] = date.split('/').map(Number);
     return new Date(year, month - 1, day).getTime();
@@ -844,7 +844,7 @@
     <div class="timeline">
       ${sortedTimeline.map(ev => `
         <div class="timeline-item">
-          <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#9B8B7A'}22;color:${tlColors[ev.tipo]||'#9B8B7A'};">
+          <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#78685A'}22;color:${tlColors[ev.tipo]||'#78685A'};">
             <span style="font-size:18px;">${ev.icone}</span>
           </div>
           <div class="timeline-content">
@@ -863,7 +863,7 @@
   setTimeout(() => {
     bioFields.forEach(f => {
       const c = document.getElementById(`spark-${f.key}`);
-      if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
+      if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#591B1C' : '#59633D');
     });
     const rc = document.getElementById('radar-chart');
     if (rc) drawRadarChart(rc, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
@@ -881,7 +881,7 @@
         setTimeout(() => {
           bioFields.forEach(f => {
             const c = document.getElementById(`spark-${f.key}`);
-            if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
+            if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#591B1C' : '#59633D');
           });
         }, 50);
       }

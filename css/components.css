@@ -86,7 +86,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .card-stat-value {
   font-family: var(--font-serif);
@@ -233,14 +233,13 @@
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-  outline: none;
   border-color: var(--vinho);
-  box-shadow: 0 0 0 3px rgba(91,35,51,0.1);
+  box-shadow: 0 0 0 3px rgba(89,27,28,0.12);
 }
 .form-select {
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235B2333' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23591B1C' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
@@ -365,9 +364,8 @@
   font-family: var(--font-sans);
 }
 .search-input:focus {
-  outline: none;
   border-color: var(--vinho);
-  box-shadow: 0 0 0 3px rgba(91,35,51,0.1);
+  box-shadow: 0 0 0 3px rgba(89,27,28,0.12);
 }
 
 /* ── Tabela ── */
@@ -383,7 +381,7 @@ table.data-table {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   padding: var(--space-3) var(--space-4);
   border-bottom: 2px solid var(--border);
   text-align: left;

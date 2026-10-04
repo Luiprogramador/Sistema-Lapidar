@@ -18,7 +18,7 @@ function drawBarChart(canvas, data, opts = {}) {
 
   const W = rect.width;
   const H = rect.height;
-  const color   = opts.color   || '#5B2333';
+  const color   = opts.color   || '#591B1C';
   const padding = { top: 16, right: 8, bottom: 32, left: 32 };
 
   const chartW = W - padding.left - padding.right;
@@ -32,7 +32,7 @@ function drawBarChart(canvas, data, opts = {}) {
 
   // Grid lines
   const gridLines = 4;
-  ctx.strokeStyle = '#F0EAE0';
+  ctx.strokeStyle = '#E3D8C8';
   ctx.lineWidth = 1;
   for (let i = 0; i <= gridLines; i++) {
     const y = padding.top + (chartH / gridLines) * i;
@@ -43,8 +43,8 @@ function drawBarChart(canvas, data, opts = {}) {
 
     // Y labels
     const val = Math.round(maxVal - (maxVal / gridLines) * i);
-    ctx.fillStyle = '#9B8B7A';
-    ctx.font = `500 10px Montserrat, sans-serif`;
+    ctx.fillStyle = '#78685A';
+    ctx.font = `500 11px Montserrat, sans-serif`;
     ctx.textAlign = 'right';
     ctx.fillText(val, padding.left - 4, y + 4);
   }
@@ -65,14 +65,14 @@ function drawBarChart(canvas, data, opts = {}) {
     ctx.fill();
 
     // X label
-    ctx.fillStyle = '#9B8B7A';
-    ctx.font = `500 11px Montserrat, sans-serif`;
+    ctx.fillStyle = '#78685A';
+    ctx.font = `500 12px Montserrat, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText(d.label, x + barW / 2, H - padding.bottom + 14);
 
     // Value on top
     ctx.fillStyle = color;
-    ctx.font = `600 11px Montserrat, sans-serif`;
+    ctx.font = `600 12px Montserrat, sans-serif`;
     ctx.fillText(d.value, x + barW / 2, y - 4);
   });
 }
@@ -125,13 +125,13 @@ function drawDonutChart(canvas, data) {
   ctx.fill();
 
   // Center label
-  ctx.fillStyle = '#5B2333';
+  ctx.fillStyle = '#591B1C';
   ctx.font = `600 20px 'Playfair Display', serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(total, cx, cy - 6);
-  ctx.font = `400 10px Montserrat, sans-serif`;
-  ctx.fillStyle = '#9B8B7A';
+  ctx.font = `400 12px Montserrat, sans-serif`;
+  ctx.fillStyle = '#78685A';
   ctx.fillText('pacientes', cx, cy + 10);
   ctx.textBaseline = 'alphabetic';
 }
@@ -215,9 +215,9 @@ function drawRadarChart(canvas, labels, values, prev = null) {
             : ctx.lineTo(px(i, r), py(i, r));
   });
   ctx.closePath();
-  ctx.fillStyle = 'rgba(91,35,51,0.15)';
+  ctx.fillStyle = 'rgba(89,27,28,0.15)';
   ctx.fill();
-  ctx.strokeStyle = '#5B2333';
+  ctx.strokeStyle = '#591B1C';
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -226,7 +226,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
     const r = (v / max) * R;
     ctx.beginPath();
     ctx.arc(px(i, r), py(i, r), 4, 0, 2 * Math.PI);
-    ctx.fillStyle = '#5B2333';
+    ctx.fillStyle = '#591B1C';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
@@ -234,8 +234,8 @@ function drawRadarChart(canvas, labels, values, prev = null) {
   });
 
   // Labels
-  ctx.fillStyle = '#5A4A3A';
-  ctx.font = `500 10px Montserrat, sans-serif`;
+  ctx.fillStyle = '#5F4B42';
+  ctx.font = `500 11px Montserrat, sans-serif`;
   ctx.textBaseline = 'middle';
   labels.forEach((lbl, i) => {
     const r = R + 14;
@@ -255,7 +255,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
  * @param {number[]} values
  * @param {string} color
  */
-function drawSparkline(canvas, values, color = '#5B2333') {
+function drawSparkline(canvas, values, color = '#591B1C') {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();

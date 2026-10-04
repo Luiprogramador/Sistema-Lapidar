@@ -18,7 +18,7 @@ html {
 body {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: 1.55;
   background-color: var(--bege);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -30,8 +30,8 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(91,35,51,0.2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(91,35,51,0.4); }
+::-webkit-scrollbar-thumb { background: rgba(89,27,28,0.24); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(89,27,28,0.46); }
 
 /* Links */
 a {
@@ -52,6 +52,15 @@ button {
   background: none;
   font-family: inherit;
   font-size: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--vinho);
+  outline-offset: 2px;
 }
 
 /* Inputs reset */
