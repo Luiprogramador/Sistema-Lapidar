@@ -226,7 +226,7 @@
     
     <!-- Top switcher: Check-in Diário vs Minha Evolução -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
-      <button class="btn btn-subtle btn-sm" onclick="Router.navigate('patient-detail',{patientId:p.id})">
+      <button class="btn btn-subtle btn-sm" id="btn-back-patient">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         <span id="back-label">Voltar para Ficha</span>
       </button>
@@ -548,6 +548,9 @@
   const diaryStorageKey = 'lapidar-diario-' + p.id;
 
   // Header and back button
+  document.getElementById('btn-back-patient').addEventListener('click', function() {
+    Router.navigate('patient-detail', { patientId: p.id });
+  });
   document.getElementById('back-label').textContent = role === 'patient' ? 'Voltar para Minha Ficha' : 'Voltar para ' + p.nome;
   document.getElementById('checkin-date-indicator').textContent = 
     'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
