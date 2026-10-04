@@ -86,6 +86,8 @@
     }
     .toggle-switch input:checked + .toggle-track { background: var(--vinho); }
     .toggle-switch input:checked + .toggle-track::after { left: 23px; }
+    .exam-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width: 560px) { .exam-form-grid { grid-template-columns:1fr; } }
     @media (max-width: 768px) {
       .exam-row, .exam-header { grid-template-columns: minmax(90px, 1fr) 54px 54px 80px; }
       .exam-row .exam-goal, .exam-header .exam-goal-h,
@@ -208,6 +210,50 @@
 
 <div id="bottombar-container"></div>
 
+<div class="modal-overlay" id="modal-novo-exame">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">Adicionar exame à consulta</span>
+      <button class="modal-close" type="button" id="close-modal-exame" aria-label="Fechar">×</button>
+    </div>
+    <form id="form-novo-exame">
+      <div class="modal-body">
+        <div class="exam-form-grid">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="new-exam-name">Nome do exame *</label>
+            <input class="form-input" id="new-exam-name" required maxlength="100" placeholder="Ex.: Eletrocardiograma">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-exam-current">Resultado atual *</label>
+            <input class="form-input" id="new-exam-current" required maxlength="40" placeholder="Ex.: Laudo anexado">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-exam-unit">Unidade</label>
+            <input class="form-input" id="new-exam-unit" maxlength="30" placeholder="Ex.: bpm">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-exam-previous">Resultado anterior</label>
+            <input class="form-input" id="new-exam-previous" maxlength="40">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-exam-goal">Meta / referência</label>
+            <input class="form-input" id="new-exam-goal" maxlength="40">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-exam-date">Data do resultado *</label>
+            <input class="form-input" id="new-exam-date" type="date" required>
+          </div>
+        </div>
+        <p id="new-exam-error" role="alert" style="display:none;color:var(--red-text);font-size:12px;margin-top:12px;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-subtle" type="button" id="cancel-modal-exame">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Adicionar exame</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
@@ -253,8 +299,10 @@
     publicDraft: 'Neste encontro, revisamos seus objetivos e os dados disponíveis para acompanhar sua jornada. Vamos continuar observando sua evolução em conjunto.',
     analysis: '',
     publishedAt: '',
-    examsPublished: false
+    examsPublished: false,
+    customExams: []
   };
+  saved.customExams = Array.isArray(saved.customExams) ? saved.customExams : [];
 
   if (isDoctorView) {
     var publishExamsButton = document.getElementById('btn-publish-exams');
@@ -383,28 +431,78 @@
     return sign + d.toFixed(1);
   }
 
+  function escapeExamText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function(char) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char];
+    });
+  }
+
   var examList = document.getElementById('exam-list');
-  examList.innerHTML = '';
-  if (!isPatientView || saved.examsPublished) {
-  exams.forEach(function(ex) {
+  function renderExams() {
+    examList.innerHTML = '';
+    if (isPatientView && !saved.examsPublished) return;
+    exams.concat(saved.customExams).forEach(function(ex) {
+    var isCustom = ex.custom === true;
     var st = getStatus(ex);
-    var delta = getDelta(ex.anterior, ex.atual);
+    var delta = isCustom ? '' : getDelta(ex.anterior, ex.atual);
     var deltaColor = delta.startsWith('-') ? 'var(--oliva)' : (delta.startsWith('+') ? 'var(--red-text)' : '');
     var row = document.createElement('div');
     row.className = 'exam-row';
     row.innerHTML =
-      '<div><span style="font-weight:600;color:var(--vinho);">' + ex.nome + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:4px;">' + ex.unidade + '</span>' +
+      '<div><span style="font-weight:600;color:var(--vinho);">' + escapeExamText(ex.nome) + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:4px;">' + escapeExamText(ex.unidade) + '</span>' +
         (delta ? '<span style="font-size:11px;color:' + deltaColor + ';margin-left:6px;">(' + delta + ')</span>' : '') +
       '</div>' +
-      '<div style="text-align:right;color:var(--text-muted);">' + ex.anterior + '</div>' +
-      '<div style="text-align:right;font-weight:700;color:var(--text-primary);">' + ex.atual + '</div>' +
-      '<div class="exam-goal" style="text-align:right;color:var(--text-secondary);font-size:12px;font-weight:500;">' + ex.meta + '</div>' +
+      '<div style="text-align:right;color:var(--text-muted);">' + escapeExamText(ex.anterior || '—') + '</div>' +
+      '<div style="text-align:right;font-weight:700;color:var(--text-primary);">' + escapeExamText(ex.atual || '—') + '</div>' +
+      '<div class="exam-goal" style="text-align:right;color:var(--text-secondary);font-size:12px;font-weight:500;">' + escapeExamText(ex.meta || '—') + '</div>' +
       '<div style="text-align:right;color:var(--text-muted);font-size:10px;">' +
-        '<span>Atual ' + (ex.dataAtual || '—') + '</span><br><span>Ant. ' + (ex.dataAnterior || '—') + '</span>' +
+        '<span>Atual ' + escapeExamText(ex.dataAtual || '—') + '</span><br><span>Ant. ' + escapeExamText(ex.dataAnterior || '—') + '</span>' +
       '</div>' +
-      '<div style="text-align:center;"><span class="' + st.cls + '" style="font-size:11.5px;padding:3px 8px;border-radius:999px;background:' + (st.cls==='status-ok'?'var(--green-bg)':st.cls==='status-warn'?'var(--yellow-bg)':'var(--red-bg)') + ';">' + st.text + '</span></div>';
+      '<div style="text-align:center;"><span class="' + (isCustom ? '' : st.cls) + '" style="font-size:11.5px;padding:3px 8px;border-radius:999px;background:' + (isCustom ? 'var(--blue-bg)' : st.cls==='status-ok'?'var(--green-bg)':st.cls==='status-warn'?'var(--yellow-bg)':'var(--red-bg)') + ';">' + (isCustom ? 'Registrado' : st.text) + '</span></div>';
     examList.appendChild(row);
   });
+  }
+  renderExams();
+
+  if (isDoctorView) {
+    var examModal = document.getElementById('modal-novo-exame');
+    var examForm = document.getElementById('form-novo-exame');
+    var examError = document.getElementById('new-exam-error');
+    function closeExamModal() { examModal.classList.remove('open'); }
+    document.getElementById('btn-novo-exame').addEventListener('click', function() {
+      examForm.reset();
+      document.getElementById('new-exam-date').value = new Date().toISOString().slice(0, 10);
+      examError.style.display = 'none';
+      examModal.classList.add('open');
+      document.getElementById('new-exam-name').focus();
+    });
+    document.getElementById('close-modal-exame').addEventListener('click', closeExamModal);
+    document.getElementById('cancel-modal-exame').addEventListener('click', closeExamModal);
+    examForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      var dateValue = document.getElementById('new-exam-date').value;
+      var newExam = {
+        custom: true,
+        nome: document.getElementById('new-exam-name').value.trim(),
+        atual: document.getElementById('new-exam-current').value.trim(),
+        unidade: document.getElementById('new-exam-unit').value.trim(),
+        anterior: document.getElementById('new-exam-previous').value.trim(),
+        meta: document.getElementById('new-exam-goal').value.trim(),
+        dataAtual: dateValue ? new Date(dateValue + 'T12:00:00').toLocaleDateString('pt-BR') : ''
+      };
+      if (!newExam.nome || !newExam.atual || !dateValue) return;
+      saved.customExams.push(newExam);
+      try {
+        localStorage.setItem(consultationStorageKey, JSON.stringify(saved));
+      } catch (error) {
+        saved.customExams.pop();
+        examError.textContent = 'Não foi possível salvar o exame neste navegador. Libere espaço no armazenamento e tente novamente.';
+        examError.style.display = 'block';
+        return;
+      }
+      renderExams();
+      closeExamModal();
+    });
   }
 
   // ── ANOTAÇÕES ──
