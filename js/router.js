@@ -40,7 +40,7 @@ const Router = {
     const role = this.getRole();
     if (role === 'patient') {
       if (page === 'portal') page = 'patient-detail';
-      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation', 'contents', 'profile'];
+      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation', 'contents', 'settings', 'profile'];
       return {
         page: allowedPages.includes(page) ? page : 'patient-detail',
         params: { ...params, patientId: 1 },
@@ -48,7 +48,7 @@ const Router = {
     }
     if (role === 'secretary') {
       if (page === 'patient-detail') page = 'patient-registration';
-      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey', 'contents', 'profile'];
+      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey', 'contents', 'settings', 'profile'];
       if (!allowedPages.includes(page)) page = 'patients';
     }
     if (role === 'admin') {

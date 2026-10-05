@@ -45,6 +45,7 @@ const ROLE_MENU = {
     { page:'journey',   label:'Jornada',   icon:'agenda' },
     { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'settings',  label:'Configurações', icon:'settings' },
     { page:'profile',   label:'Meu perfil', icon:'portal' },
   ],
   admin: [
@@ -61,6 +62,7 @@ const ROLE_MENU = {
     { page:'habits',    label:'Diário Lapidar', icon:'dashboard' },
     { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'agenda',    label:'Consultas',      icon:'agenda' },
+    { page:'settings',  label:'Configurações', icon:'settings' },
     { page:'profile',   label:'Meu perfil', icon:'portal' },
   ],
 };

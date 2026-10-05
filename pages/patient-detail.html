@@ -1165,69 +1165,17 @@
     { id:3, titulo:'Laudo Fleury — Bioquímica e Hormônios', tipo:'Exames', data:'02/09/2026', origem:'Recebido', tamanho:'1.8 MB', icon:'🔬', desc:'Resultado de exames laboratoriais' },
     { id:4, titulo:'Relatório de Bioimpedância InBody', tipo:'Exames', data:'15/09/2026', origem:'Recebido', tamanho:'920 KB', icon:'📊', desc:'Composição corporal comparativa' }
   ];
-  const externalFilesKey = 'lapidar-exames-externos-' + p.id;
-  let externalFiles = [];
-  try {
-    const storedFiles = JSON.parse(localStorage.getItem(externalFilesKey) || '[]');
-    if (Array.isArray(storedFiles)) externalFiles = storedFiles;
-  } catch (error) {
-    console.error('Não foi possível carregar os exames externos salvos.', error);
-  }
-
   function escapeFileText(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
     })[char]);
   }
 
-  function formatFileSize(size) {
-    return size < 1024 * 1024
-      ? Math.max(1, Math.round(size / 1024)) + ' KB'
-      : (size / (1024 * 1024)).toFixed(1) + ' MB';
-  }
-
   document.getElementById('tab-arquivos').innerHTML = `
-    ${isPatientView ? `
-      <div class="card" style="margin-bottom:20px;">
-        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Enviar exames externos</h3>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Envie cardiograma (ECG), laudos e resultados feitos fora da clínica para a equipe consultar.</p>
-        <form id="external-exam-form">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label" for="external-exam-type">Tipo de exame *</label>
-              <select class="form-select" id="external-exam-type" required>
-                <option value="Cardiograma / ECG">Cardiograma / ECG</option>
-                <option value="Exame laboratorial">Exame laboratorial</option>
-                <option value="Laudo ou relatório">Laudo ou relatório</option>
-                <option value="Outro exame">Outro exame</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="external-exam-date">Data do exame *</label>
-              <input class="form-input" id="external-exam-date" type="date" required>
-            </div>
-            <div class="form-group" style="grid-column:1/-1;">
-              <label class="form-label" for="external-exam-file">Arquivo do exame *</label>
-              <input class="form-input" id="external-exam-file" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" required>
-              <span style="font-size:11px;color:var(--text-muted);margin-top:5px;">PDF, JPG ou PNG · até 2 MB por arquivo</span>
-            </div>
-            <div class="form-group" style="grid-column:1/-1;">
-              <label class="form-label" for="external-exam-notes">Observação (opcional)</label>
-              <input class="form-input" id="external-exam-notes" maxlength="180" placeholder="Ex.: exame solicitado pelo cardiologista">
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;">
-            <button class="btn btn-primary btn-sm" type="submit">Enviar exame</button>
-            <span id="external-exam-feedback" role="status" style="font-size:12px;color:var(--text-muted);"></span>
-          </div>
-        </form>
-        <p style="font-size:11px;color:var(--text-muted);margin-top:14px;">Protótipo: os arquivos ficam salvos apenas neste navegador e dispositivo, não são enviados a um servidor.</p>
-      </div>
-    ` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
       <div>
         <h3 style="font-size:15px;font-weight:600;color:var(--vinho);">Biblioteca de Arquivos da Paciente</h3>
-        <p style="font-size:12px;color:var(--text-muted);">Visualização compactada estilo revista de tudo que foi enviado e recebido</p>
+        <p style="font-size:12px;color:var(--text-muted);">Consulte documentos da paciente. Pedidos e envios de exames são feitos na consulta correspondente.</p>
       </div>
       <div id="files-filter-chips" style="display:flex;gap:8px;flex-wrap:wrap;">
         <select class="form-select" id="file-type-filter" aria-label="Filtrar arquivos por tipo">
@@ -1245,18 +1193,7 @@
 
   const fileGrid = document.getElementById('files-grid');
   function renderFileCards() {
-    const uploadedCards = externalFiles.map(file => ({
-      id:file.id,
-      titulo:file.titulo,
-      tipo:'Exames',
-      data:file.data,
-      origem:isPatientView ? 'Enviado' : 'Recebido',
-      tamanho:formatFileSize(file.size),
-      icon:file.tipo.indexOf('Cardiograma') >= 0 ? '💓' : '📄',
-      desc:file.desc || file.tipo,
-      externalFile:true
-    }));
-    const allFiles = arquivos.concat(uploadedCards);
+    const allFiles = arquivos;
     const typeFilter = document.getElementById('file-type-filter');
     typeFilter.options[0].textContent = 'Todos os tipos (' + allFiles.length + ')';
     fileGrid.innerHTML = allFiles.map(f => `
@@ -1274,26 +1211,10 @@
           </div>
           <div class="file-card-meta">
             <span>${escapeFileText(f.data)} · ${escapeFileText(f.tamanho)}</span>
-            ${f.externalFile
-              ? `<button class="btn btn-subtle btn-sm" style="padding:3px 8px;font-size:11px;" type="button" data-external-file="${escapeFileText(f.id)}">Visualizar</button>`
-              : `<button class="btn btn-subtle btn-sm" style="padding:3px 8px;font-size:11px;" type="button" data-file-title="${escapeFileText(f.titulo)}">Visualizar</button>`}
+            <button class="btn btn-subtle btn-sm" style="padding:3px 8px;font-size:11px;" type="button" data-file-title="${escapeFileText(f.titulo)}">Visualizar</button>
           </div>
         </div>
       `).join('');
-    fileGrid.querySelectorAll('[data-external-file]').forEach(button => {
-      button.addEventListener('click', function() {
-        const file = externalFiles.find(item => String(item.id) === button.dataset.externalFile);
-        if (!file || !file.dataUrl) {
-          alert('O conteúdo deste arquivo não está disponível neste navegador.');
-          return;
-        }
-        const link = document.createElement('a');
-        link.href = file.dataUrl;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.click();
-      });
-    });
     fileGrid.querySelectorAll('[data-file-title]').forEach(button => {
       button.addEventListener('click', function() {
         const fileCard = button.closest('.file-card');
@@ -1324,69 +1245,6 @@
   document.getElementById('file-type-filter').addEventListener('change', filterFiles);
   document.getElementById('file-origin-filter').addEventListener('change', filterFiles);
   renderFileCards();
-
-  if (isPatientView) {
-    const uploadForm = document.getElementById('external-exam-form');
-    const uploadInput = document.getElementById('external-exam-file');
-    const uploadFeedback = document.getElementById('external-exam-feedback');
-    document.getElementById('external-exam-date').value = new Date().toISOString().slice(0, 10);
-    uploadForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      const file = uploadInput.files[0];
-      if (!file) {
-        uploadFeedback.textContent = 'Selecione o arquivo do exame.';
-        uploadFeedback.style.color = 'var(--red-text)';
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        uploadFeedback.textContent = 'O arquivo excede o limite de 2 MB.';
-        uploadFeedback.style.color = 'var(--red-text)';
-        return;
-      }
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        uploadFeedback.textContent = 'Formato não aceito. Envie um PDF, JPG ou PNG.';
-        uploadFeedback.style.color = 'var(--red-text)';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onerror = function() {
-        uploadFeedback.textContent = 'Não foi possível ler o arquivo. Tente selecioná-lo novamente.';
-        uploadFeedback.style.color = 'var(--red-text)';
-      };
-      reader.onload = function() {
-        const dateValue = document.getElementById('external-exam-date').value;
-        const [year, month, day] = dateValue.split('-');
-        const newFile = {
-          id:Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-          titulo:file.name,
-          tipo:document.getElementById('external-exam-type').value,
-          data:day + '/' + month + '/' + year,
-          desc:document.getElementById('external-exam-notes').value.trim(),
-          size:file.size,
-          mimeType:file.type,
-          dataUrl:reader.result
-        };
-        const nextFiles = externalFiles.concat(newFile);
-        try {
-          localStorage.setItem(externalFilesKey, JSON.stringify(nextFiles));
-        } catch (error) {
-          uploadFeedback.textContent = 'Não foi possível salvar. O armazenamento do navegador pode estar cheio.';
-          uploadFeedback.style.color = 'var(--red-text)';
-          return;
-        }
-        externalFiles = nextFiles;
-        renderFileCards();
-        uploadForm.reset();
-        document.getElementById('external-exam-date').value = new Date().toISOString().slice(0, 10);
-        uploadFeedback.textContent = 'Exame enviado e disponível para a equipe clínica.';
-        uploadFeedback.style.color = 'var(--green-text)';
-      };
-      reader.readAsDataURL(file);
-      uploadFeedback.textContent = 'Enviando exame…';
-      uploadFeedback.style.color = 'var(--text-muted)';
-    });
-  }
 
   // ── TAB 7: DIÁRIO & HÁBITOS ──
   const d = p.diarioHoje || {};
@@ -1454,25 +1312,7 @@
     titulo:file.titulo,
     desc:file.desc || file.tipo,
     arquivo:file
-  })).concat(externalFiles.map(file => ({
-    tipo:'Arquivo',
-    data:file.data,
-    icone:file.tipo.indexOf('Cardiograma') >= 0 ? '💓' : '📄',
-    titulo:file.titulo,
-    desc:file.desc || file.tipo,
-    arquivo:{
-      id:file.id,
-      titulo:file.titulo,
-      tipo:'Exames',
-      data:file.data,
-      origem:isPatientView ? 'Enviado' : 'Recebido',
-      tamanho:formatFileSize(file.size),
-      icon:file.tipo.indexOf('Cardiograma') >= 0 ? '💓' : '📄',
-      desc:file.desc || file.tipo,
-      externalFile:true,
-      dataUrl:file.dataUrl
-    }
-  })));
+  }));
   let diaryTimeline = [];
   try {
     const diaryHistory = JSON.parse(localStorage.getItem('lapidar-diario-historico-' + p.id) || '{"events":[]}');
@@ -1540,7 +1380,7 @@
       : '';
     const action = document.getElementById('history-modal-action');
     if (item.fileRecord) {
-      action.textContent = item.file && item.file.externalFile ? 'Abrir arquivo' : 'Abrir biblioteca de arquivos';
+      action.textContent = 'Abrir biblioteca de arquivos';
     } else if (item.type === 'Exame') {
       action.textContent = 'Ver arquivos de exames';
     } else if (item.type === 'Consulta') {
@@ -1566,15 +1406,6 @@
   });
   document.getElementById('history-modal-action').addEventListener('click', function() {
     if (!currentHistoryItem) return;
-    if (currentHistoryItem.fileRecord && currentHistoryItem.file && currentHistoryItem.file.externalFile) {
-      if (!currentHistoryItem.file.dataUrl) {
-        alert('O conteúdo deste arquivo não está disponível neste navegador.');
-        return;
-      }
-      window.open(currentHistoryItem.file.dataUrl, '_blank', 'noopener');
-      closeHistoryDetails();
-      return;
-    }
     if (currentHistoryItem.fileRecord || currentHistoryItem.type === 'Exame') {
       activatePatientTab('arquivos');
       if (currentHistoryItem.fileRecord && currentHistoryItem.file) {

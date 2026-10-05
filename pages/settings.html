@@ -73,7 +73,7 @@
 <main class="main-content page-enter">
   <div class="page-header">
     <h1 class="page-title">Configurações</h1>
-    <p class="page-subtitle">Dados da clínica e preferências do sistema</p>
+    <p class="page-subtitle">Preferências e recursos disponíveis para o seu perfil</p>
   </div>
 
   <div style="max-width:680px;">
@@ -90,6 +90,12 @@
         <button class="btn btn-subtle btn-sm" id="google-connect-btn" type="button">Vincular conta</button>
       </div>
       <p id="google-connection-status" role="status" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></p>
+    </div>
+
+    <div class="settings-section" id="personal-settings-section">
+      <h3>Preferências pessoais</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Estas opções são exclusivas deste perfil e ficam salvas neste navegador.</p>
+      <div id="personal-preferences-list"></div>
     </div>
 
     <div class="settings-section" id="medical-settings-section">
@@ -127,7 +133,7 @@
     <!-- Save -->
     <div style="display:flex;align-items:center;gap:12px;">
       <button class="btn btn-primary" id="btn-save">Salvar Configurações</button>
-      <span style="font-size:12px;color:var(--oliva);display:none;" id="saved-msg">✓ Salvo neste navegador</span>
+      <span style="font-size:12px;color:var(--oliva);display:none;" id="saved-msg">Salvo neste navegador</span>
     </div>
   </div>
 </main>
@@ -138,15 +144,7 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() !== 'doctor') {
-    if (Router.getRole() !== 'admin') {
-      Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
-    } else {
-      initSettings();
-    }
-  } else {
   initSettings();
-  }
 
   function initSettings() {
   initShell('settings');
@@ -162,8 +160,7 @@
     phone:         '(11) 99999-0000',
     habitCheckin:  true,
     ldlAlert:      true,
-    vitDAlert:     true,
-    googleConnected: false,
+    vitDAlert:      true,
     protocols: ['Lapidar 40+', 'Lapidar SOP', 'Lapidar Fertilidade', 'Pocket'],
     consultationTypes: ['Retorno', 'Primeira consulta', 'Bioimpedância', 'Exames'],
     tags: ['Retorno prioritário', 'Exame pendente', 'Acompanhamento semanal'],
@@ -184,29 +181,95 @@
   }
 
   const currentRole = Router.getRole();
+  const GOOGLE_KEY = 'lapidar-google-connected-' + currentRole;
+  const PREFERENCES_KEY = 'lapidar-preferences-' + currentRole;
   document.getElementById('admin-clinic-section').hidden = currentRole !== 'admin';
-  document.getElementById('google-settings-section').hidden = currentRole !== 'admin';
   document.getElementById('user-settings-section').hidden = currentRole !== 'admin';
   document.getElementById('admin-alerts-section').hidden = currentRole !== 'admin';
   document.getElementById('medical-settings-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
   document.getElementById('medical-content-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
-  document.getElementById('btn-save').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
   document.getElementById('setting-protocols').value = settings.protocols.join('\n');
   document.getElementById('setting-consultation-types').value = settings.consultationTypes.join('\n');
   document.getElementById('setting-tags').value = settings.tags.join('\n');
   document.getElementById('setting-checklist').value = settings.checklistTemplate.join('\n');
   document.getElementById('setting-medications').value = settings.medicationCatalog.join('\n');
   document.getElementById('setting-users').value = settings.users.join('\n');
-  document.getElementById('google-connection-status').textContent = settings.googleConnected
-    ? 'Conta vinculada em modo de demonstração.'
-    : 'Nenhuma conta Google vinculada.';
-  document.getElementById('google-connect-btn').textContent = settings.googleConnected ? 'Desvincular conta' : 'Vincular conta';
-  document.getElementById('google-connect-btn').addEventListener('click', function() {
-    settings.googleConnected = !settings.googleConnected;
-    document.getElementById('google-connection-status').textContent = settings.googleConnected
-      ? 'Conta vinculada em modo de demonstração.'
-      : 'Nenhuma conta Google vinculada.';
-    this.textContent = settings.googleConnected ? 'Desvincular conta' : 'Vincular conta';
+
+  var googleConnected = localStorage.getItem(GOOGLE_KEY) === 'true';
+  if (localStorage.getItem(GOOGLE_KEY) === null && currentRole === 'admin') {
+    googleConnected = Boolean(settings.googleConnected);
+  }
+  var googleStatus = document.getElementById('google-connection-status');
+  var googleButton = document.getElementById('google-connect-btn');
+  function renderGoogleStatus() {
+    googleStatus.textContent = googleConnected
+      ? 'Conta vinculada em modo de demonstração neste perfil.'
+      : 'Nenhuma conta Google vinculada neste perfil.';
+    googleButton.textContent = googleConnected ? 'Desvincular conta' : 'Vincular conta';
+  }
+  renderGoogleStatus();
+  googleButton.addEventListener('click', function() {
+    var nextConnectionState = !googleConnected;
+    try {
+      localStorage.setItem(GOOGLE_KEY, String(nextConnectionState));
+      googleConnected = nextConnectionState;
+      renderGoogleStatus();
+    } catch (error) {
+      console.error('Não foi possível atualizar o vínculo com o Google.', error);
+      googleStatus.textContent = 'Não foi possível atualizar o vínculo neste navegador.';
+    }
+  });
+
+  var preferenceDefsByRole = {
+    doctor: [
+      { key:'appointmentReminders', label:'Lembretes de consultas', sub:'Avisos sobre a agenda clínica.', checked:true },
+      { key:'consultationExamUpdates', label:'Atualizações de exames nas consultas', sub:'Avisos sobre arquivos associados aos atendimentos.', checked:true },
+    ],
+    secretary: [
+      { key:'appointmentChanges', label:'Alterações na agenda', sub:'Avisos sobre mudanças nos horários das consultas.', checked:true },
+      { key:'newAppointments', label:'Novas consultas', sub:'Avisos sobre novos agendamentos.', checked:true },
+    ],
+    patient: [
+      { key:'appointmentReminders', label:'Lembretes de consultas', sub:'Receba lembretes dos seus próximos atendimentos.', checked:true },
+      { key:'habitCheckin', label:'Lembrete do Diário Lapidar', sub:'Lembrete para preencher seu check-in diário.', checked:true },
+    ],
+    admin: [
+      { key:'systemAlerts', label:'Alertas do sistema', sub:'Avisos importantes sobre o funcionamento do sistema.', checked:true },
+      { key:'accessUpdates', label:'Atualizações de acesso', sub:'Avisos sobre alterações nos usuários e permissões.', checked:true },
+    ],
+  };
+  var personalPreferences = {};
+  try {
+    var savedPreferences = JSON.parse(localStorage.getItem(PREFERENCES_KEY) || 'null');
+    if (savedPreferences && typeof savedPreferences === 'object') personalPreferences = savedPreferences;
+  } catch (error) {
+    console.error('Não foi possível carregar as preferências pessoais.', error);
+  }
+  var personalPreferenceEls = {};
+  var personalPreferencesList = document.getElementById('personal-preferences-list');
+  preferenceDefsByRole[currentRole].forEach(function(def) {
+    var row = document.createElement('div');
+    row.className = 'toggle-row';
+    var info = document.createElement('div');
+    var label = document.createElement('p');
+    label.style.cssText = 'font-size:13px;color:var(--text-primary);margin-bottom:2px;';
+    label.textContent = def.label;
+    var description = document.createElement('p');
+    description.style.cssText = 'font-size:11px;color:var(--text-muted);';
+    description.textContent = def.sub;
+    info.append(label, description);
+    var switchLabel = document.createElement('label');
+    switchLabel.className = 'toggle-switch';
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = typeof personalPreferences[def.key] === 'boolean' ? personalPreferences[def.key] : def.checked;
+    input.setAttribute('aria-label', def.label);
+    personalPreferenceEls[def.key] = input;
+    var track = document.createElement('div');
+    track.className = 'toggle-track';
+    switchLabel.append(input, track);
+    row.append(info, switchLabel);
+    personalPreferencesList.appendChild(row);
   });
 
   // Clinic fields
@@ -267,24 +330,33 @@
 
   // Save
   document.getElementById('btn-save').addEventListener('click', function() {
-    clinicFieldDefs.forEach(function(def) {
-      settings[def.key] = clinicFieldEls[def.key].value;
-    });
-    alertDefs.forEach(function(def) {
-      settings[def.key] = toggleEls[def.key].checked;
-    });
-    settings.protocols = document.getElementById('setting-protocols').value.split('\n').map(value => value.trim()).filter(Boolean);
-    settings.consultationTypes = document.getElementById('setting-consultation-types').value.split('\n').map(value => value.trim()).filter(Boolean);
-    settings.tags = document.getElementById('setting-tags').value.split('\n').map(value => value.trim()).filter(Boolean);
-    settings.checklistTemplate = document.getElementById('setting-checklist').value.split('\n').map(value => value.trim()).filter(Boolean);
-    settings.medicationCatalog = document.getElementById('setting-medications').value.split('\n').map(value => value.trim()).filter(Boolean);
-    settings.users = document.getElementById('setting-users').value.split('\n').map(value => value.trim()).filter(Boolean);
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      if (currentRole === 'admin' || currentRole === 'doctor') {
+        if (currentRole === 'admin') {
+          clinicFieldDefs.forEach(function(def) {
+            settings[def.key] = clinicFieldEls[def.key].value;
+          });
+          alertDefs.forEach(function(def) {
+            settings[def.key] = toggleEls[def.key].checked;
+          });
+          settings.users = document.getElementById('setting-users').value.split('\n').map(value => value.trim()).filter(Boolean);
+        }
+        settings.protocols = document.getElementById('setting-protocols').value.split('\n').map(value => value.trim()).filter(Boolean);
+        settings.consultationTypes = document.getElementById('setting-consultation-types').value.split('\n').map(value => value.trim()).filter(Boolean);
+        settings.tags = document.getElementById('setting-tags').value.split('\n').map(value => value.trim()).filter(Boolean);
+        settings.checklistTemplate = document.getElementById('setting-checklist').value.split('\n').map(value => value.trim()).filter(Boolean);
+        settings.medicationCatalog = document.getElementById('setting-medications').value.split('\n').map(value => value.trim()).filter(Boolean);
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      }
+      Object.keys(personalPreferenceEls).forEach(function(key) {
+        personalPreferences[key] = personalPreferenceEls[key].checked;
+      });
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(personalPreferences));
       var msg = document.getElementById('saved-msg');
       msg.style.display = 'inline';
       setTimeout(function() { msg.style.display = 'none'; }, 2500);
-    } catch(e) {
+    } catch(error) {
+      console.error('Não foi possível salvar as configurações.', error);
       alert('Não foi possível salvar. Verifique o armazenamento do navegador.');
     }
   });
