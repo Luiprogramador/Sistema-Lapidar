@@ -40,7 +40,7 @@ const Router = {
     const role = this.getRole();
     if (role === 'patient') {
       if (page === 'portal') page = 'patient-detail';
-      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation'];
+      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation', 'contents', 'profile'];
       return {
         page: allowedPages.includes(page) ? page : 'patient-detail',
         params: { ...params, patientId: 1 },
@@ -48,16 +48,35 @@ const Router = {
     }
     if (role === 'secretary') {
       if (page === 'patient-detail') page = 'patient-registration';
-      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey'];
+      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey', 'contents', 'profile'];
       if (!allowedPages.includes(page)) page = 'patients';
+    }
+    if (role === 'admin') {
+      const allowedPages = ['login', 'dashboard', 'patients', 'agenda', 'financial', 'contents', 'settings', 'profile'];
+      if (!allowedPages.includes(page)) page = 'dashboard';
     }
     return { page, params };
   },
 
-  navigate(page, params = {}) {
+  navigate(page, params = {}, options = {}) {
     const navigation = this.resolveNavigation(page, params);
     page = navigation.page;
-    this.setState({ page, ...navigation.params });
+    const current = this.getState();
+    const history = Array.isArray(current.navigationHistory) ? current.navigationHistory : [];
+    if (!options.skipHistory && current.page && current.page !== page) {
+      history.push({
+        page: current.page,
+        params: {
+          patientId: current.patientId,
+          consultationId: current.consultationId,
+        },
+      });
+    }
+    this.setState({
+      page,
+      ...navigation.params,
+      navigationHistory: history.slice(-30),
+    });
     const pageFiles = {
       login:            '../pages/login.html',
       dashboard:        '../pages/dashboard.html',
@@ -69,9 +88,11 @@ const Router = {
       financial:        '../pages/financial.html',
       portal:           '../pages/portal.html',
       consultation:     '../pages/consultation.html',
+      contents:          '../pages/contents.html',
       journey:          '../pages/journey.html',
       settings:         '../pages/settings.html',
       habits:           '../pages/habits.html',
+      profile:          '../pages/profile.html',
     };
     const target = pageFiles[page];
     if (target) {
@@ -79,11 +100,42 @@ const Router = {
     }
   },
 
+  goBack(fallbackPage, fallbackParams = {}) {
+    const state = this.getState();
+    const history = Array.isArray(state.navigationHistory) ? [...state.navigationHistory] : [];
+    while (history.length) {
+      const previous = history.pop();
+      const resolved = this.resolveNavigation(previous.page, previous.params);
+      if (resolved.page === previous.page) {
+        this.setState({ navigationHistory: history });
+        this.navigate(previous.page, previous.params, { skipHistory: true });
+        return;
+      }
+    }
+    this.setState({ navigationHistory: history });
+    this.navigate(fallbackPage, fallbackParams, { skipHistory: true });
+  },
+
   // Navegação relativa a partir de qualquer pasta
-  navigateRelative(page, params = {}) {
+  navigateRelative(page, params = {}, options = {}) {
     const navigation = this.resolveNavigation(page, params);
     page = navigation.page;
-    this.setState({ page, ...navigation.params });
+    const current = this.getState();
+    const history = Array.isArray(current.navigationHistory) ? current.navigationHistory : [];
+    if (!options.skipHistory && current.page && current.page !== page) {
+      history.push({
+        page: current.page,
+        params: {
+          patientId: current.patientId,
+          consultationId: current.consultationId,
+        },
+      });
+    }
+    this.setState({
+      page,
+      ...navigation.params,
+      navigationHistory: history.slice(-30),
+    });
     const pageFiles = {
       login:            'pages/login.html',
       dashboard:        'pages/dashboard.html',
@@ -95,9 +147,11 @@ const Router = {
       financial:        'pages/financial.html',
       portal:           'pages/portal.html',
       consultation:     'pages/consultation.html',
+      contents:          'pages/contents.html',
       journey:          'pages/journey.html',
       settings:         'pages/settings.html',
       habits:           'pages/habits.html',
+      profile:          'pages/profile.html',
     };
     const target = pageFiles[page];
     if (target) {

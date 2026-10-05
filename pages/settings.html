@@ -78,30 +78,44 @@
 
   <div style="max-width:680px;">
     <!-- Dados da Clínica -->
-    <div class="settings-section">
+    <div class="settings-section" id="admin-clinic-section">
       <h3>Dados da Clínica</h3>
       <div style="display:flex;flex-direction:column;gap:12px;" id="clinic-fields"></div>
     </div>
 
-    <!-- Protocolos -->
-    <div class="settings-section">
-      <h3>Protocolos Ativos</h3>
-      <div id="protocols-list">
-        <div class="proto-row"><span>Lapidar 40+</span><span class="badge badge-oliva">Ativo</span></div>
-        <div class="proto-row"><span>Lapidar SOP</span><span class="badge badge-oliva">Ativo</span></div>
-        <div class="proto-row"><span>Lapidar Fertilidade</span><span class="badge badge-oliva">Ativo</span></div>
-        <div class="proto-row"><span>Pocket</span><span class="badge badge-oliva">Ativo</span></div>
+    <div class="settings-section" id="google-settings-section">
+      <h3>Integrações</h3>
+      <div class="toggle-row">
+        <div><p style="font-size:13px;color:var(--text-primary);">Vincular ao Google</p><p style="font-size:11px;color:var(--text-muted);">Demonstração local: não realiza autenticação nem sincronização com uma conta real.</p></div>
+        <button class="btn btn-subtle btn-sm" id="google-connect-btn" type="button">Vincular conta</button>
       </div>
+      <p id="google-connection-status" role="status" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></p>
+    </div>
+
+    <div class="settings-section" id="medical-settings-section">
+      <h3>Configuração médica</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Listas demonstrativas editáveis pela médica e persistidas neste navegador.</p>
+      <label class="form-group"><span class="form-label">Protocolos</span><textarea class="form-textarea" id="setting-protocols" rows="3"></textarea></label>
+      <label class="form-group"><span class="form-label">Tipos de consulta</span><textarea class="form-textarea" id="setting-consultation-types" rows="3"></textarea></label>
+      <label class="form-group"><span class="form-label">Tags de pacientes e equipe</span><textarea class="form-textarea" id="setting-tags" rows="3"></textarea></label>
+      <label class="form-group"><span class="form-label">Templates de checklist (um item por linha)</span><textarea class="form-textarea" id="setting-checklist" rows="5"></textarea></label>
+      <label class="form-group"><span class="form-label">Medicamentos e suplementos (nome | categoria, incluindo anticoncepcionais)</span><textarea class="form-textarea" id="setting-medications" rows="5"></textarea></label>
+    </div>
+
+    <div class="settings-section" id="user-settings-section">
+      <h3>Usuários e vínculos</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Cadastre um usuário por linha no formato: nome | função | médica vinculada | tags. A troca de perfil continua sendo apenas demonstrativa.</p>
+      <textarea class="form-textarea" id="setting-users" rows="5" aria-label="Lista de usuários"></textarea>
     </div>
 
     <!-- Alertas -->
-    <div class="settings-section">
+    <div class="settings-section" id="admin-alerts-section">
       <h3>Alertas e Notificações</h3>
       <div id="alerts-list"></div>
     </div>
 
     <!-- Ebook -->
-    <div class="settings-section">
+    <div class="settings-section" id="medical-content-section">
       <h3>Ebook e Materiais</h3>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Configure o material educativo enviado às pacientes</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -125,8 +139,16 @@
 <script src="../js/components.js"></script>
 <script>
   if (Router.getRole() !== 'doctor') {
-    Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
+    if (Router.getRole() !== 'admin') {
+      Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
+    } else {
+      initSettings();
+    }
   } else {
+  initSettings();
+  }
+
+  function initSettings() {
   initShell('settings');
 
   var SETTINGS_KEY = 'lapidar-settings-v1';
@@ -141,6 +163,13 @@
     habitCheckin:  true,
     ldlAlert:      true,
     vitDAlert:     true,
+    googleConnected: false,
+    protocols: ['Lapidar 40+', 'Lapidar SOP', 'Lapidar Fertilidade', 'Pocket'],
+    consultationTypes: ['Retorno', 'Primeira consulta', 'Bioimpedância', 'Exames'],
+    tags: ['Retorno prioritário', 'Exame pendente', 'Acompanhamento semanal'],
+    checklistTemplate: ['Verificar pressão arterial', 'Registrar peso e medidas', 'Revisar medicamentos e suplementos', 'Analisar histórico desde a última consulta', 'Revisar metas e objetivos da paciente'],
+    medicationCatalog: [],
+    users: ['Dra. Andressa Gomide | médica | — | responsável clínica', 'Gabi | secretária | Dra. Andressa Gomide | atendimento'],
   };
 
   // Load from localStorage
@@ -150,7 +179,35 @@
       var parsed = JSON.parse(raw);
       Object.assign(settings, parsed);
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('Não foi possível carregar as configurações salvas.', e);
+  }
+
+  const currentRole = Router.getRole();
+  document.getElementById('admin-clinic-section').hidden = currentRole !== 'admin';
+  document.getElementById('google-settings-section').hidden = currentRole !== 'admin';
+  document.getElementById('user-settings-section').hidden = currentRole !== 'admin';
+  document.getElementById('admin-alerts-section').hidden = currentRole !== 'admin';
+  document.getElementById('medical-settings-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
+  document.getElementById('medical-content-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
+  document.getElementById('btn-save').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
+  document.getElementById('setting-protocols').value = settings.protocols.join('\n');
+  document.getElementById('setting-consultation-types').value = settings.consultationTypes.join('\n');
+  document.getElementById('setting-tags').value = settings.tags.join('\n');
+  document.getElementById('setting-checklist').value = settings.checklistTemplate.join('\n');
+  document.getElementById('setting-medications').value = settings.medicationCatalog.join('\n');
+  document.getElementById('setting-users').value = settings.users.join('\n');
+  document.getElementById('google-connection-status').textContent = settings.googleConnected
+    ? 'Conta vinculada em modo de demonstração.'
+    : 'Nenhuma conta Google vinculada.';
+  document.getElementById('google-connect-btn').textContent = settings.googleConnected ? 'Desvincular conta' : 'Vincular conta';
+  document.getElementById('google-connect-btn').addEventListener('click', function() {
+    settings.googleConnected = !settings.googleConnected;
+    document.getElementById('google-connection-status').textContent = settings.googleConnected
+      ? 'Conta vinculada em modo de demonstração.'
+      : 'Nenhuma conta Google vinculada.';
+    this.textContent = settings.googleConnected ? 'Desvincular conta' : 'Vincular conta';
+  });
 
   // Clinic fields
   var clinicFieldDefs = [
@@ -216,6 +273,12 @@
     alertDefs.forEach(function(def) {
       settings[def.key] = toggleEls[def.key].checked;
     });
+    settings.protocols = document.getElementById('setting-protocols').value.split('\n').map(value => value.trim()).filter(Boolean);
+    settings.consultationTypes = document.getElementById('setting-consultation-types').value.split('\n').map(value => value.trim()).filter(Boolean);
+    settings.tags = document.getElementById('setting-tags').value.split('\n').map(value => value.trim()).filter(Boolean);
+    settings.checklistTemplate = document.getElementById('setting-checklist').value.split('\n').map(value => value.trim()).filter(Boolean);
+    settings.medicationCatalog = document.getElementById('setting-medications').value.split('\n').map(value => value.trim()).filter(Boolean);
+    settings.users = document.getElementById('setting-users').value.split('\n').map(value => value.trim()).filter(Boolean);
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
       var msg = document.getElementById('saved-msg');

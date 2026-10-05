@@ -432,15 +432,11 @@
   updateJourneyHeader();
   if (isSecretary) {
     document.getElementById('btn-back-journey').textContent = '‹ Voltar para Pacientes';
-    document.getElementById('btn-back-journey').onclick = () => Router.navigate('patients');
+    document.getElementById('btn-back-journey').onclick = () => Router.goBack('patients');
     document.getElementById('doctor-journey-actions').style.display = 'none';
     document.getElementById('secretary-journey-actions').style.display = 'flex';
     document.getElementById('secretary-patient-picker').style.display = 'block';
-    document.getElementById('doctor-journey-tabs').style.display = 'none';
-    document.getElementById('doctor-journey-legend').style.display = 'none';
-    document.getElementById('view-overview').style.display = 'none';
-    document.getElementById('view-checklist').style.display = 'none';
-    document.getElementById('secretary-journey-view').style.display = 'block';
+    document.getElementById('secretary-journey-view').style.display = 'none';
   }
 
   const COLORS = { andressa: '#591B1C', gabi: '#59633D', paciente: '#C6A15B' };

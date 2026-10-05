@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
   <style>
-    .consultations-layout { display:grid; grid-template-columns:minmax(280px, 0.9fr) minmax(380px, 1.3fr); gap:20px; }
+    .consultations-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
     .consultation-list { display:flex; flex-direction:column; gap:8px; }
     .consultation-row { display:flex; align-items:center; gap:12px; width:100%; padding:12px; text-align:left; border:1px solid var(--border); border-radius:var(--radius); background:var(--white); cursor:pointer; transition:var(--transition); }
     .consultation-row:hover, .consultation-row:focus-visible { border-color:var(--vinho); background:var(--vinho-xlight); }
@@ -18,11 +18,6 @@
     .consultation-details { flex:1; min-width:0; }
     .consultation-patient { color:var(--text-primary); font-size:13px; font-weight:600; }
     .consultation-meta { color:var(--text-muted); font-size:11px; margin-top:3px; }
-    .exam-summary-row { display:grid; grid-template-columns:minmax(120px, 1fr) 48px 48px minmax(50px, 65px) minmax(54px, 70px); gap:6px; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); font-size:12px; }
-    .exam-summary-row:last-child { border-bottom:0; }
-    .exam-summary-heading { color:var(--text-muted); font-size:10px; font-weight:600; text-transform:uppercase; }
-    @media (max-width: 900px) { .consultations-layout { grid-template-columns:1fr; } }
-    @media (max-width: 480px) { .exam-summary-row { grid-template-columns:minmax(80px, 1fr) 36px 36px 42px 44px; gap:3px; font-size:10px; } }
   </style>
 </head>
 <body>
@@ -32,13 +27,12 @@
 <main class="main-content page-enter">
   <div class="page-header">
     <h1 class="page-title">Consultas</h1>
-    <p class="page-subtitle">Atendimentos e resultados laboratoriais recentes</p>
+    <p class="page-subtitle">Agenda e histórico de atendimentos por paciente</p>
   </div>
 
-  <div class="grid-responsive-3" style="gap:12px;margin-bottom:20px;">
+  <div class="grid-responsive-2" style="gap:12px;margin-bottom:20px;">
     <div class="card-stat"><span class="card-stat-label">Próximas consultas</span><span class="card-stat-value" id="upcoming-count">0</span><span class="card-stat-sub">Agendadas</span></div>
     <div class="card-stat"><span class="card-stat-label">Pacientes atendidas</span><span class="card-stat-value" id="patient-count">0</span><span class="card-stat-sub">Nesta lista</span></div>
-    <div class="card-stat"><span class="card-stat-label">Exames no painel</span><span class="card-stat-value" id="exam-count">0</span><span class="card-stat-sub">Marcadores acompanhados</span></div>
   </div>
 
   <div class="consultations-layout">
@@ -50,14 +44,6 @@
       <div class="consultation-list" id="consultation-list"></div>
     </section>
 
-    <section class="card" aria-labelledby="exam-summary-title">
-      <div style="margin-bottom:12px;">
-        <h2 id="exam-summary-title" style="font-size:14px;font-weight:600;color:var(--vinho);">Resumo dos exames recentes</h2>
-        <p id="exam-dates" style="font-size:11px;color:var(--text-muted);margin-top:4px;">Valores demonstrativos do painel clínico</p>
-      </div>
-      <div class="exam-summary-row exam-summary-heading"><span>Exame</span><span style="text-align:right;">Ant.</span><span style="text-align:right;">Atual</span><span style="text-align:right;">Meta</span><span style="text-align:right;">Status</span></div>
-      <div id="exam-summary-list"></div>
-    </section>
   </div>
 </main>
 <div id="bottombar-container"></div>
@@ -76,10 +62,6 @@
   const patientNames = new Set(sortedConsultations.map(consultation => consultation.paciente));
   document.getElementById('upcoming-count').textContent = sortedConsultations.filter(consultation => consultation.status === 'agendada').length;
   document.getElementById('patient-count').textContent = patientNames.size;
-  document.getElementById('exam-count').textContent = EXAMES_CATALOGO.length;
-  if (EXAMES_CATALOGO.length) {
-    document.getElementById('exam-dates').textContent = `Atual: ${EXAMES_CATALOGO[0].dataAtual} · Anterior: ${EXAMES_CATALOGO[0].dataAnterior} (dados demonstrativos)`;
-  }
 
   document.getElementById('consultation-list').innerHTML = sortedConsultations.map(consultation => {
     const patient = PACIENTES.find(item => item.nome === consultation.paciente);
@@ -98,36 +80,6 @@
     }));
   });
 
-  function getExamStatus(exam) {
-    const value = parseFloat(String(exam.atual).replace(',', '.'));
-    if (Number.isNaN(value)) return { label: 'Sem dado', color: 'var(--text-muted)' };
-    if (exam.dir === 'max') {
-      if (value <= exam.refMax) return { label: 'Na meta', color: 'var(--oliva)' };
-      if (exam.warnThreshold && value <= exam.warnThreshold) return { label: 'Atenção', color: 'var(--yellow-text)' };
-      return { label: 'Fora', color: 'var(--red-text)' };
-    }
-    if (exam.dir === 'min') {
-      if (value >= exam.refMin) return { label: 'Na meta', color: 'var(--oliva)' };
-      if (exam.warnThreshold && value >= exam.warnThreshold) return { label: 'Atenção', color: 'var(--yellow-text)' };
-      return { label: 'Fora', color: 'var(--red-text)' };
-    }
-    if (exam.dir === 'range') {
-      if (value >= exam.refMin && value <= exam.refMax) return { label: 'Na meta', color: 'var(--oliva)' };
-      return { label: 'Atenção', color: 'var(--yellow-text)' };
-    }
-    return { label: 'Informativo', color: 'var(--text-muted)' };
-  }
-
-  document.getElementById('exam-summary-list').innerHTML = EXAMES_CATALOGO.map(exam => {
-    const status = getExamStatus(exam);
-    return `<div class="exam-summary-row">
-      <span><strong style="color:var(--text-primary);">${exam.nome}</strong><span style="display:block;color:var(--text-muted);font-size:10px;">${exam.unidade}</span></span>
-      <span style="text-align:right;color:var(--text-muted);">${exam.anterior}</span>
-      <span style="text-align:right;font-weight:600;color:${status.color};">${exam.atual}</span>
-      <span style="text-align:right;color:var(--text-secondary);font-size:10px;">${exam.meta}</span>
-      <span style="text-align:right;color:${status.color};font-size:10px;font-weight:600;">${status.label}</span>
-    </div>`;
-  }).join('');
   }
 </script>
 </body>

@@ -5,6 +5,7 @@
 const Icons = {
   dashboard: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
   patients:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  contents:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
   agenda:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
   financial: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
   settings:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
@@ -23,27 +24,44 @@ const ROLE_LABELS = {
   doctor:    'Dra. Andressa Gomide',
   secretary: 'Gabi',
   patient:   'Paciente',
+  admin:     'Administrador',
 };
 
 const ROLE_MENU = {
   doctor: [
     { page:'dashboard', label:'Dashboard', icon:'dashboard' },
     { page:'patients',  label:'Pacientes', icon:'patients' },
+    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
     { page:'consultations', label:'Consultas', icon:'agenda' },
+    { page:'journey',   label:'Jornada', icon:'agenda' },
     { page:'financial', label:'Financeiro',icon:'financial' },
     { page:'settings',  label:'Configurações', icon:'settings' },
+    { page:'profile',   label:'Meu perfil', icon:'portal' },
   ],
   secretary: [
     { page:'patients',  label:'Pacientes', icon:'patients' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
     { page:'journey',   label:'Jornada',   icon:'agenda' },
+    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'profile',   label:'Meu perfil', icon:'portal' },
+  ],
+  admin: [
+    { page:'dashboard', label:'Dashboard', icon:'dashboard' },
+    { page:'patients', label:'Pacientes', icon:'patients' },
+    { page:'contents', label:'Conteúdos', icon:'contents' },
+    { page:'agenda', label:'Agenda', icon:'agenda' },
+    { page:'financial', label:'Financeiro', icon:'financial' },
+    { page:'settings', label:'Configurações', icon:'settings' },
+    { page:'profile', label:'Meu perfil', icon:'portal' },
   ],
   patient: [
     { page:'patient-detail', label:'Minha Ficha', icon:'portal' },
     { page:'habits',    label:'Diário Lapidar', icon:'dashboard' },
+    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'agenda',    label:'Consultas',      icon:'agenda' },
+    { page:'profile',   label:'Meu perfil', icon:'portal' },
   ],
 };
 
@@ -59,11 +77,13 @@ function renderTopbar() {
         </svg>
       </button>
       <div class="topbar-logo" onclick="Router.navigate(Router.getRole()==='patient'?'patient-detail':'dashboard')" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
-        <img src="../assets/logo_lapidar_tp.png" alt="Lapidar" style="height:32px;width:auto;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--vinho);">
+        <img src="../assets/logo_lapidar_tp.png" alt="" style="height:24px;width:24px;object-fit:contain;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
         <svg style="display:none;" width="24" height="24" viewBox="0 0 40 40" fill="none">
-          <polygon points="20,4 36,32 4,32" fill="none" stroke="#C6A15B" stroke-width="2.5"/>
-          <circle cx="20" cy="20" r="3" fill="#C6A15B"/>
+          <polygon points="20,4 36,32 4,32" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+          <circle cx="20" cy="20" r="3" fill="#FFFFFF"/>
         </svg>
+        </span>
         Lapidar
       </div>
     </div>
@@ -73,6 +93,7 @@ function renderTopbar() {
         <select id="role-select" aria-label="Perfil de demonstração">
           <option value="doctor"    ${role==='doctor'   ?'selected':''}>Médica</option>
           <option value="secretary" ${role==='secretary'?'selected':''}>Secretaria</option>
+          <option value="admin"     ${role==='admin'    ?'selected':''}>Administrador</option>
           <option value="patient"   ${role==='patient'  ?'selected':''}>Paciente</option>
         </select>
       </div>
@@ -87,18 +108,15 @@ function renderTopbar() {
             <button id="mark-all-read">Marcar todas como lidas</button>
           </div>
           ${[
-            { text:'Carla Mendes — LDL acima da meta', time:'há 5 min', unread:true },
-            { text:'Beatriz Lima — Vitamina D baixa (18 ng/mL)', time:'há 22 min', unread:true },
-            { text:'4 bioimpedâncias pendentes esta semana', time:'há 1h', unread:true },
-            { text:'Próxima consulta: Ana Paula — amanhã 09:00', time:'há 2h', unread:false },
+            { text:'Carla Mendes — LDL acima da meta', detail:'Resultado de 128 mg/dL. A meta configurada para o acompanhamento é inferior a 100 mg/dL.', time:'há 5 min', unread:true },
+            { text:'Beatriz Lima — Vitamina D baixa (18 ng/mL)', detail:'O exame foi registrado abaixo do valor de referência do protocolo.', time:'há 22 min', unread:true },
+            { text:'4 bioimpedâncias pendentes esta semana', detail:'Ana Paula, Carla, Fernanda e Letícia ainda precisam registrar medidas nesta semana.', time:'há 1h', unread:true },
+            { text:'Próxima consulta: Ana Paula — amanhã 09:00', detail:'Consulta de acompanhamento Lapidar 40+ às 09:00.', time:'há 2h', unread:false },
           ].map(n => `
-            <div class="notif-item ${n.unread ? 'unread' : ''}">
-              <div class="notif-dot"></div>
-              <div>
-                <div class="notif-text">${n.text}</div>
-                <div class="notif-time">${n.time}</div>
-              </div>
-            </div>
+            <details class="notif-item ${n.unread ? 'unread' : ''}">
+              <summary><span class="notif-dot"></span><span><span class="notif-text">${n.text}</span><span class="notif-time">${n.time}</span></span></summary>
+              <p class="notif-detail">${n.detail}</p>
+            </details>
           `).join('')}
         </div>
       </div>
@@ -109,11 +127,27 @@ function renderTopbar() {
 function renderSidebar(activePage) {
   const role = Router.getRole();
   const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
-  const userName = ROLE_LABELS[role];
+  let userName = ROLE_LABELS[role] || 'Perfil Lapidar';
+  let avatarUrl = '';
+  try {
+    const profile = JSON.parse(localStorage.getItem('lapidar-profile-' + role) || 'null');
+    if (profile && typeof profile === 'object') {
+      userName = profile.displayName || profile.name || userName;
+      avatarUrl = typeof profile.avatar === 'string' ? profile.avatar : '';
+    }
+  } catch (error) {
+    console.error('Não foi possível carregar o resumo do perfil.', error);
+  }
+  const safeUserName = String(userName).replace(/[&<>"']/g, character => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[character]));
+  const safeAvatarUrl = /^data:image\/(png|jpeg);base64,/i.test(avatarUrl) ? avatarUrl : '';
+  const avatarLetter = safeUserName.charAt(0) || 'L';
   const userDetails = {
     doctor: 'CRM 12345/MG · Medicina Integrativa',
     secretary: 'Secretária · Clínica Lapidar',
     patient: 'Paciente · Acompanhamento Lapidar',
+    admin: 'Administração · Clínica Lapidar',
   }[role] || 'Perfil Lapidar';
 
   return `
@@ -132,16 +166,16 @@ function renderSidebar(activePage) {
     <div class="sidebar-footer">
       <div class="sidebar-profile">
         <button class="sidebar-user sidebar-profile-trigger" id="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="profile-card">
-          <span class="avatar">${userName[0]}</span>
+          <span class="avatar">${safeAvatarUrl ? `<img src="${safeAvatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : avatarLetter}</span>
           <span class="sidebar-user-info">
-            <span class="sidebar-user-name">${userName}</span>
-            <span class="sidebar-user-role">${role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : 'Paciente'}</span>
+            <span class="sidebar-user-name">${safeUserName}</span>
+            <span class="sidebar-user-role">${role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'admin' ? 'Administrador' : 'Paciente'}</span>
           </span>
           <span class="sidebar-profile-chevron" aria-hidden="true">⌃</span>
         </button>
-        <div class="sidebar-profile-card" id="profile-card" role="group" aria-label="Perfil de ${userName}" hidden>
-          <span class="avatar avatar-lg">${userName[0]}</span>
-          <div class="sidebar-profile-card-name">${userName}</div>
+        <div class="sidebar-profile-card" id="profile-card" role="group" aria-label="Perfil de ${safeUserName}" hidden>
+          <span class="avatar avatar-lg">${safeAvatarUrl ? `<img src="${safeAvatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : avatarLetter}</span>
+          <div class="sidebar-profile-card-name">${safeUserName}</div>
           <div class="sidebar-profile-card-role">${userDetails}</div>
           <div class="sidebar-profile-card-note">Perfil de demonstração</div>
         </div>
@@ -385,6 +419,7 @@ function showPatientQuickModal(id) {
         </div>
         <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn btn-subtle btn-sm" onclick="closePatientQuickModal()">Fechar</button>
+          <button class="btn btn-subtle btn-sm" onclick="closePatientQuickModal();Router.navigate('journey',{patientId:${p.id}})">Jornada</button>
           <button class="btn btn-primary btn-sm" onclick="closePatientQuickModal();Router.navigate('patient-registration',{patientId:${p.id}})">Ficha cadastral</button>
         </div>
       </div>`;

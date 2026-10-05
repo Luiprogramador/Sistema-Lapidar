@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conteúdos — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <style>
+    .contents-page { max-width: 1280px; margin: 0 auto; }
+    .contents-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 220px;
+      margin-bottom: 30px;
+      padding: clamp(24px, 5vw, 48px);
+      border-radius: var(--radius-xl);
+      color: var(--bege);
+      background:
+        radial-gradient(circle at 84% 20%, rgba(198,161,91,.33), transparent 22%),
+        radial-gradient(circle at 75% 100%, rgba(255,255,255,.08), transparent 35%),
+        linear-gradient(120deg, var(--vinho-dark), var(--vinho) 70%, #814448);
+      overflow: hidden;
+    }
+    .contents-hero-copy { max-width: 640px; }
+    .contents-eyebrow { color: var(--dourado-light); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .contents-hero h1 { margin: 8px 0 10px; color: #fffaf2; font-family: var(--font-serif); font-size: clamp(28px, 4vw, 40px); line-height: 1.12; }
+    .contents-hero p { max-width: 570px; color: rgba(255,250,242,.8); font-size: 14px; line-height: 1.7; }
+    .contents-hero-mark { flex: 0 0 auto; color: rgba(244,239,231,.18); font-family: var(--font-serif); font-size: clamp(72px, 12vw, 140px); line-height: 1; }
+    .contents-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    .contents-toolbar p { color:var(--text-muted); font-size:13px; }
+    .content-section { margin: 0 0 34px; }
+    .content-section-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:14px; }
+    .content-section-heading h2 { color:var(--vinho); font-family:var(--font-serif); font-size:22px; }
+    .content-section-heading p { margin-top:4px; color:var(--text-muted); font-size:12px; }
+    .content-see-all { padding:6px 0; color:var(--vinho); font-size:12px; font-weight:600; white-space:nowrap; }
+    .content-see-all:hover { text-decoration:underline; }
+    .content-rail-wrap { position:relative; }
+    .content-rail {
+      display:grid;
+      grid-auto-columns:minmax(220px, 1fr);
+      grid-auto-flow:column;
+      gap:14px;
+      overflow-x:auto;
+      overscroll-behavior-inline:contain;
+      scroll-snap-type:x mandatory;
+      scrollbar-width:thin;
+      scrollbar-color:var(--bege-darker) transparent;
+      padding:2px 2px 12px;
+    }
+    .content-card {
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+      width:100%;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:var(--radius-md);
+      background:var(--white);
+      box-shadow:var(--shadow-sm);
+      scroll-snap-align:start;
+      cursor:pointer;
+      text-align:left;
+      transition:var(--transition);
+    }
+    .content-card:hover, .content-card:focus-visible { transform:translateY(-3px); border-color:var(--dourado); box-shadow:var(--shadow-md); outline:none; }
+    .content-art {
+      position:relative;
+      display:flex;
+      flex:0 0 138px;
+      align-items:flex-end;
+      box-sizing:border-box;
+      width:100%;
+      min-height:0;
+      padding:15px;
+      overflow:hidden;
+      color:white;
+      background:linear-gradient(135deg, #6c3037, #c39a67);
+    }
+    .content-art::before, .content-art::after { position:absolute; content:""; border:1px solid rgba(255,255,255,.24); border-radius:50%; }
+    .content-art::before { width:150px; height:150px; top:-66px; right:-18px; }
+    .content-art::after { width:96px; height:96px; top:-39px; right:9px; }
+    .content-art[data-tone="olive"] { background:linear-gradient(135deg,#3e5747,#9b9f6c); }
+    .content-art[data-tone="blue"] { background:linear-gradient(135deg,#334e61,#84a9a2); }
+    .content-art[data-tone="rose"] { background:linear-gradient(135deg,#794753,#d29a88); }
+    .content-art[data-tone="gold"] { background:linear-gradient(135deg,#755a32,#c8a965); }
+    .content-art[data-tone="plum"] { background:linear-gradient(135deg,#483851,#9c7899); }
+    .content-art-label { position:relative; z-index:1; display:-webkit-box; max-width:95%; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; font-family:var(--font-serif); font-size:19px; line-height:1.15; text-shadow:0 1px 8px rgba(0,0,0,.18); }
+    .content-art-type { position:absolute; z-index:1; top:12px; left:12px; padding:4px 8px; border:1px solid rgba(255,255,255,.25); border-radius:var(--radius-full); background:rgba(32,22,22,.2); font-size:10px; font-weight:600; }
+    .content-card-body { display:flex; flex:1; flex-direction:column; box-sizing:border-box; width:100%; padding:13px 14px 15px; }
+    .content-card-title { display:block; color:var(--text-primary); font-size:13px; font-weight:600; line-height:1.45; }
+    .content-card-meta { display:flex; justify-content:space-between; gap:8px; width:100%; margin-top:auto; padding-top:9px; color:var(--text-muted); font-size:11px; }
+    .rail-arrow {
+      position:absolute; z-index:2; top:62px; display:grid; width:34px; height:34px;
+      place-items:center; border:1px solid var(--border); border-radius:50%;
+      color:var(--vinho); background:var(--white); box-shadow:var(--shadow);
+    }
+    .rail-arrow:hover { background:var(--vinho-xlight); }
+    .rail-arrow-left { left:-12px; }
+    .rail-arrow-right { right:-12px; }
+    .contents-gallery { display:none; }
+    .contents-gallery.active { display:block; }
+    .contents-gallery-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    .contents-empty { padding:40px 20px; border:1px dashed var(--border-dark); border-radius:var(--radius-md); color:var(--text-muted); text-align:center; }
+    .contents-modal { position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(25,15,15,.58); }
+    .contents-modal.open { display:flex; }
+    .contents-modal-panel { width:min(600px,100%); max-height:90vh; overflow:auto; border-radius:var(--radius-lg); background:var(--white); box-shadow:var(--shadow-lg); }
+    .contents-modal-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid var(--border); }
+    .contents-modal-header h2 { color:var(--vinho); font-family:var(--font-serif); font-size:20px; }
+    .contents-modal-body { display:flex; flex-direction:column; gap:14px; padding:22px; }
+    .contents-modal-body p { color:var(--text-secondary); font-size:13px; line-height:1.7; }
+    .contents-modal-art { min-height:170px; border-radius:var(--radius); }
+    .contents-modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:0 22px 22px; }
+    @media (max-width:1000px) { .contents-gallery-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (max-width:700px) {
+      .contents-hero { min-height:190px; }
+      .contents-hero-mark { display:none; }
+      .content-rail { grid-auto-columns:minmax(210px, 72%); }
+      .contents-gallery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .rail-arrow { display:none; }
+    }
+    @media (max-width:420px) { .contents-gallery-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="contents-page">
+    <section class="contents-hero">
+      <div class="contents-hero-copy">
+        <span class="contents-eyebrow">Biblioteca Lapidar</span>
+        <h1>Conhecimento para florescer.</h1>
+        <p>Conteúdos selecionados pela sua médica para apoiar sua jornada de saúde, bem-estar e autocuidado.</p>
+      </div>
+      <div class="contents-hero-mark" aria-hidden="true">L</div>
+    </section>
+
+    <div class="contents-toolbar">
+      <p id="contents-context">Novidades e orientações da sua médica, em um só lugar.</p>
+      <button class="btn btn-primary btn-sm" id="add-content-btn" type="button" hidden>＋ Adicionar conteúdo</button>
+    </div>
+
+    <div id="contents-home"></div>
+    <section class="contents-gallery" id="contents-gallery" aria-live="polite"></section>
+  </div>
+</main>
+
+<div id="bottombar-container"></div>
+<div class="contents-modal" id="contents-modal" role="dialog" aria-modal="true" aria-labelledby="contents-modal-title">
+  <div class="contents-modal-panel">
+    <div class="contents-modal-header">
+      <h2 id="contents-modal-title"></h2>
+      <button class="btn btn-subtle btn-sm" id="close-content-modal" type="button" aria-label="Fechar">Fechar</button>
+    </div>
+    <div class="contents-modal-body" id="contents-modal-body"></div>
+    <div class="contents-modal-actions" id="contents-modal-actions"></div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('contents');
+
+  const CONTENTS_STORAGE_KEY = 'lapidar-conteudos';
+  const canManageContents = Router.getRole() === 'doctor' || Router.getRole() === 'admin';
+  const seededSections = [
+    {
+      name: 'Comece por aqui',
+      description: 'Orientações essenciais para sua jornada de cuidado.',
+      items: [
+        { id:'welcome', title:'Sua jornada Lapidar', type:'Guia', duration:'5 min', tone:'gold', summary:'Entenda como funciona o acompanhamento e como aproveitar cada etapa do seu cuidado.' },
+        { id:'consultation', title:'Como se preparar para a consulta', type:'Dicas', duration:'4 min', tone:'rose', summary:'Pequenos passos que ajudam você a chegar à consulta com suas dúvidas e informações organizadas.' },
+        { id:'questions', title:'Anote suas dúvidas', type:'Ferramenta', duration:'3 min', tone:'olive', summary:'Uma lista simples para registrar sintomas, mudanças e perguntas ao longo da semana.' },
+      ],
+    },
+    {
+      name: 'Saúde e bem-estar',
+      description: 'Conteúdos para apoiar hábitos possíveis no dia a dia.',
+      items: [
+        { id:'sleep', title:'Sono: pequenos hábitos, grandes mudanças', type:'Artigo', duration:'6 min', tone:'blue', summary:'Conheça práticas simples para construir uma rotina noturna mais acolhedora e consistente.' },
+        { id:'movement', title:'Movimento que cabe na sua rotina', type:'Vídeo', duration:'8 min', tone:'olive', summary:'Ideias para incluir movimento com segurança, respeitando seu momento e suas possibilidades.' },
+        { id:'nutrition', title:'Montando um prato equilibrado', type:'Guia', duration:'5 min', tone:'gold', summary:'Uma visão prática para compor refeições variadas sem buscar perfeição.' },
+      ],
+    },
+    {
+      name: 'Cuidado hormonal',
+      description: 'Informação para conversar com sua médica com mais segurança.',
+      items: [
+        { id:'cycle', title:'Conheça os sinais do seu corpo', type:'Artigo', duration:'7 min', tone:'plum', summary:'Observar padrões pode ajudar você e sua médica a entender melhor como está se sentindo.' },
+        { id:'hormones', title:'Terapia hormonal: perguntas frequentes', type:'Perguntas e respostas', duration:'9 min', tone:'rose', summary:'Respostas gerais para apoiar uma conversa individualizada com sua médica.' },
+        { id:'menopause', title:'Transições hormonais e autocuidado', type:'Guia', duration:'6 min', tone:'blue', summary:'Uma introdução acolhedora às mudanças e aos caminhos de cuidado possíveis.' },
+      ],
+    },
+  ];
+
+  const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[char]));
+
+  function loadAddedContents() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CONTENTS_STORAGE_KEY) || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch (error) {
+      console.error('Não foi possível carregar os conteúdos salvos.', error);
+      return [];
+    }
+  }
+
+  function saveAddedContents(items) {
+    try {
+      localStorage.setItem(CONTENTS_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Não foi possível salvar o conteúdo.', error);
+      alert('Não foi possível salvar este conteúdo neste navegador.');
+      return false;
+    }
+    return true;
+  }
+
+  function getSections() {
+    const sections = seededSections.map(section => ({ ...section, items:[...section.items] }));
+    loadAddedContents().forEach(item => {
+      let section = sections.find(candidate => candidate.name === item.section);
+      if (!section) {
+        section = { name:item.section, description:'Conteúdos adicionados pela médica.', items:[] };
+        sections.push(section);
+      }
+      section.items.unshift(item);
+    });
+    return sections;
+  }
+
+  function contentCard(item) {
+    return `
+      <button class="content-card" type="button" data-content-id="${escapeHTML(item.id)}">
+        <span class="content-art" data-tone="${escapeHTML(item.tone || 'gold')}">
+          <span class="content-art-type">${escapeHTML(item.type)}</span>
+          <span class="content-art-label">${escapeHTML(item.title)}</span>
+        </span>
+        <span class="content-card-body">
+          <span class="content-card-title">${escapeHTML(item.section || '')}</span>
+          <span class="content-card-meta"><span>${escapeHTML(item.type)}</span><span>${escapeHTML(item.duration || 'Conteúdo')}</span></span>
+        </span>
+      </button>`;
+  }
+
+  function renderHome() {
+    document.getElementById('contents-gallery').classList.remove('active');
+    document.getElementById('contents-home').hidden = false;
+    document.getElementById('contents-home').innerHTML = getSections().map((section, index) => `
+      <section class="content-section" aria-labelledby="content-section-${index}">
+        <div class="content-section-heading">
+          <div>
+            <h2 id="content-section-${index}">${escapeHTML(section.name)}</h2>
+            <p>${escapeHTML(section.description)}</p>
+          </div>
+          <button class="content-see-all" type="button" data-section="${escapeHTML(section.name)}">Ver mais ${Icons.chevronR}</button>
+        </div>
+        <div class="content-rail-wrap">
+          <button class="rail-arrow rail-arrow-left" type="button" aria-label="Rolar para o início">${Icons.chevronL}</button>
+          <div class="content-rail">${section.items.map(item => contentCard({ ...item, section:item.section || section.name })).join('')}</div>
+          <button class="rail-arrow rail-arrow-right" type="button" aria-label="Ver próximos conteúdos">${Icons.chevronR}</button>
+        </div>
+      </section>
+    `).join('');
+
+    document.querySelectorAll('.content-section').forEach(section => {
+      const rail = section.querySelector('.content-rail');
+      section.querySelector('.rail-arrow-left').addEventListener('click', () => rail.scrollBy({ left:-rail.clientWidth * .8, behavior:'smooth' }));
+      section.querySelector('.rail-arrow-right').addEventListener('click', () => rail.scrollBy({ left:rail.clientWidth * .8, behavior:'smooth' }));
+    });
+    document.querySelectorAll('.content-see-all').forEach(button => {
+      button.addEventListener('click', () => showGallery(button.dataset.section));
+    });
+    bindContentCards();
+  }
+
+  function showGallery(sectionName) {
+    const section = getSections().find(item => item.name === sectionName);
+    if (!section) return;
+    document.getElementById('contents-home').hidden = true;
+    const gallery = document.getElementById('contents-gallery');
+    gallery.classList.add('active');
+    gallery.innerHTML = `
+      <div class="content-section-heading">
+        <div>
+          <button class="content-see-all" type="button" id="gallery-back">${Icons.chevronL} Voltar aos conteúdos</button>
+          <h2 style="margin-top:10px;">${escapeHTML(section.name)}</h2>
+          <p>${escapeHTML(section.description)} · ${section.items.length} conteúdos</p>
+        </div>
+      </div>
+      <div class="contents-gallery-grid">${section.items.map(item => contentCard({ ...item, section:item.section || section.name })).join('')}</div>`;
+    document.getElementById('gallery-back').addEventListener('click', renderHome);
+    bindContentCards();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function findContent(id) {
+    return getSections().flatMap(section => section.items).find(item => String(item.id) === id);
+  }
+
+  function openContent(item) {
+    if (!item) return;
+    const modal = document.getElementById('contents-modal');
+    document.getElementById('contents-modal-title').textContent = item.title;
+    document.getElementById('contents-modal-body').innerHTML = `
+      <div class="content-art contents-modal-art" data-tone="${escapeHTML(item.tone || 'gold')}">
+        <span class="content-art-type">${escapeHTML(item.type)}</span>
+        <span class="content-art-label">${escapeHTML(item.title)}</span>
+      </div>
+      <p>${escapeHTML(item.summary)}</p>
+      <span class="badge badge-dourado">${escapeHTML(item.duration || 'Conteúdo da sua médica')}</span>`;
+    if (item.file && item.file.data) {
+      const fileLink = document.createElement('a');
+      fileLink.href = item.file.data;
+      fileLink.download = item.file.name;
+      fileLink.textContent = 'Abrir material PDF';
+      fileLink.className = 'btn btn-subtle btn-sm';
+      fileLink.style.marginTop = '14px';
+      document.getElementById('contents-modal-body').appendChild(fileLink);
+    }
+    document.getElementById('contents-modal-actions').innerHTML = canManageContents && item.custom
+      ? `<button class="btn btn-danger btn-sm" type="button" id="delete-content-btn">Excluir conteúdo</button>`
+      : `<button class="btn btn-primary btn-sm" type="button" id="finish-content-btn">Entendi</button>`;
+    modal.classList.add('open');
+    modal.dataset.contentId = item.id;
+    const deleteButton = document.getElementById('delete-content-btn');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', () => {
+        const remaining = loadAddedContents().filter(content => String(content.id) !== String(item.id));
+        if (saveAddedContents(remaining)) {
+          closeContentModal();
+          renderHome();
+        }
+      });
+    }
+    const finishButton = document.getElementById('finish-content-btn');
+    if (finishButton) finishButton.addEventListener('click', closeContentModal);
+  }
+
+  function bindContentCards() {
+    document.querySelectorAll('.content-card').forEach(card => {
+      card.addEventListener('click', () => openContent(findContent(card.dataset.contentId)));
+    });
+  }
+
+  function closeContentModal() {
+    document.getElementById('contents-modal').classList.remove('open');
+  }
+
+  document.getElementById('close-content-modal').addEventListener('click', closeContentModal);
+  document.getElementById('contents-modal').addEventListener('click', event => {
+    if (event.target.id === 'contents-modal') closeContentModal();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeContentModal();
+  });
+
+  if (canManageContents) {
+    const addButton = document.getElementById('add-content-btn');
+    addButton.hidden = false;
+    document.getElementById('contents-context').textContent = 'Publique orientações e materiais para as pacientes.';
+    addButton.addEventListener('click', () => {
+      document.getElementById('contents-modal-title').textContent = 'Adicionar conteúdo';
+      document.getElementById('contents-modal-body').innerHTML = `
+        <label class="form-group"><span class="form-label">Título</span><input class="form-input" id="new-content-title" maxlength="80" required placeholder="Ex.: Guia de sono"></label>
+        <label class="form-group"><span class="form-label">Seção</span><input class="form-input" id="new-content-section" maxlength="50" required list="content-section-options" placeholder="Escolha ou crie uma seção"><datalist id="content-section-options">${getSections().map(section => `<option value="${escapeHTML(section.name)}">`).join('')}</datalist></label>
+        <label class="form-group"><span class="form-label">Tipo</span><select class="form-select" id="new-content-type"><option>Artigo</option><option>Vídeo</option><option>Guia</option><option>Áudio</option></select></label>
+        <label class="form-group"><span class="form-label">Resumo</span><textarea class="form-textarea" id="new-content-summary" rows="4" maxlength="350" required placeholder="O que a paciente encontrará neste conteúdo?"></textarea></label>
+        <label class="form-group"><span class="form-label">Arquivo PDF (opcional, até 1 MB)</span><input class="form-input" id="new-content-pdf" type="file" accept="application/pdf,.pdf"></label>`;
+      document.getElementById('contents-modal-actions').innerHTML = '<button class="btn btn-primary btn-sm" type="button" id="save-content-btn">Publicar conteúdo</button>';
+      document.getElementById('contents-modal').classList.add('open');
+      document.getElementById('save-content-btn').addEventListener('click', () => {
+        const title = document.getElementById('new-content-title').value.trim();
+        const section = document.getElementById('new-content-section').value.trim();
+        const summary = document.getElementById('new-content-summary').value.trim();
+        if (!title || !section || !summary) {
+          alert('Preencha o título, a seção e o resumo para publicar.');
+          return;
+        }
+        const pdfInput = document.getElementById('new-content-pdf');
+        const pdf = pdfInput.files && pdfInput.files[0];
+        if (pdf && (pdf.type !== 'application/pdf' || pdf.size > 1024 * 1024)) {
+          alert('Envie um arquivo PDF de até 1 MB.');
+          return;
+        }
+        const publishContent = fileData => {
+        const items = loadAddedContents();
+        items.unshift({
+          id:`custom-${Date.now()}`,
+          title,
+          section,
+          type:document.getElementById('new-content-type').value,
+          summary,
+          duration:'Novo conteúdo',
+          tone:['gold','rose','olive','blue','plum'][items.length % 5],
+          custom:true,
+          file:fileData ? { name:pdf.name, data:fileData } : null,
+        });
+        if (saveAddedContents(items)) {
+          closeContentModal();
+          renderHome();
+        }
+        };
+        if (!pdf) {
+          publishContent(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => publishContent(reader.result);
+        reader.onerror = () => alert('Não foi possível ler o arquivo PDF selecionado.');
+        reader.readAsDataURL(pdf);
+      });
+    });
+  }
+
+  renderHome();
+</script>
+</body>
+</html>

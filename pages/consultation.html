@@ -158,6 +158,10 @@
       <div class="progress-bar" style="margin-bottom:16px;">
         <div class="progress-fill" id="checklist-bar" style="width:0%;background:linear-gradient(90deg,var(--vinho),var(--dourado));"></div>
       </div>
+      <form id="custom-checklist-form" style="display:flex;gap:8px;margin-bottom:12px;" hidden>
+        <input class="form-input" id="custom-checklist-label" maxlength="100" placeholder="Adicionar item ao checklist">
+        <button class="btn btn-subtle btn-sm" type="submit">Adicionar</button>
+      </form>
       <div id="checklist-items"></div>
     </div>
   </div>
@@ -167,24 +171,15 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
         <div>
-          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Painel de Exames</h3>
-          <p style="font-size:11px;color:var(--text-muted);">Resultado atual vs anterior, com meta e avaliação clínica</p>
+          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Exames desta consulta</h3>
+          <p style="font-size:11px;color:var(--text-muted);">Pedidos, arquivos recebidos e resultados compartilhados ficam associados a este atendimento.</p>
         </div>
-        <button class="btn btn-subtle btn-sm" id="btn-novo-exame">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Novo Exame
-        </button>
-        <button class="btn btn-ghost btn-sm" id="btn-publish-exams">Liberar exames para paciente</button>
+        <div id="doctor-exam-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" id="btn-request-exam" type="button">Pedir exame</button>
+          <button class="btn btn-subtle btn-sm" id="btn-send-exam" type="button">Enviar resultado</button>
+        </div>
       </div>
-      <div class="exam-header">
-        <div>Exame</div>
-        <div style="text-align:right;">Anterior</div>
-        <div style="text-align:right;">Atual</div>
-        <div class="exam-goal-h" style="text-align:right;">Meta</div>
-        <div style="text-align:right;">Datas</div>
-        <div class="exam-status-h" style="text-align:center;">Status</div>
-      </div>
-      <div id="exam-list"></div>
+      <div id="exam-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;"></div>
     </div>
   </div>
 
@@ -227,6 +222,12 @@
       </div>
       <div id="published-info" style="display:none;margin:12px 0;padding:10px;background:var(--green-bg);border-radius:var(--radius);font-size:12px;color:var(--green-text);"></div>
       <textarea class="form-textarea" id="analysis-draft" style="min-height:240px;margin-top:16px;" placeholder="Escreva aqui as análises da consulta para compartilhar com a paciente..."></textarea>
+      <div id="analysis-file-uploader" style="margin-top:14px;">
+        <label class="form-label" for="analysis-files">Arquivos da análise (relatório, PDF ou imagem)</label>
+        <input class="form-input" id="analysis-files" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple>
+        <div id="analysis-files-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
+        <p id="analysis-files-feedback" role="status" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></p>
+      </div>
     </div>
   </div>
 </main>
@@ -236,42 +237,27 @@
 <div class="modal-overlay" id="modal-novo-exame">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <span class="modal-title">Adicionar exame à consulta</span>
+      <span class="modal-title" id="exam-modal-title">Pedir exame</span>
       <button class="modal-close" type="button" id="close-modal-exame" aria-label="Fechar">×</button>
     </div>
-    <form id="form-novo-exame">
+    <form id="form-exam-action">
       <div class="modal-body">
-        <div class="exam-form-grid">
-          <div class="form-group" style="grid-column:1/-1;">
-            <label class="form-label" for="new-exam-name">Nome do exame *</label>
-            <input class="form-input" id="new-exam-name" required maxlength="100" placeholder="Ex.: Eletrocardiograma">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="new-exam-current">Resultado atual *</label>
-            <input class="form-input" id="new-exam-current" required maxlength="40" placeholder="Ex.: Laudo anexado">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="new-exam-unit">Unidade</label>
-            <input class="form-input" id="new-exam-unit" maxlength="30" placeholder="Ex.: bpm">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="new-exam-previous">Resultado anterior</label>
-            <input class="form-input" id="new-exam-previous" maxlength="40">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="new-exam-goal">Meta / referência</label>
-            <input class="form-input" id="new-exam-goal" maxlength="40">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="new-exam-date">Data do resultado *</label>
-            <input class="form-input" id="new-exam-date" type="date" required>
-          </div>
+        <div class="form-group" id="exam-request-fields">
+          <label class="form-label" for="exam-request-name">Nome do exame *</label>
+          <input class="form-input" id="exam-request-name" maxlength="100" placeholder="Ex.: Hemograma completo">
+          <label class="form-label" for="exam-request-details" style="margin-top:10px;">Orientação para a paciente</label>
+          <textarea class="form-textarea" id="exam-request-details" rows="3" maxlength="300" placeholder="Preparo, prazo ou informação adicional"></textarea>
         </div>
-        <p id="new-exam-error" role="alert" style="display:none;color:var(--red-text);font-size:12px;margin-top:12px;"></p>
+        <div class="form-group" id="exam-send-fields" hidden>
+          <label class="form-label" for="exam-result-file">Arquivo do resultado *</label>
+          <input class="form-input" id="exam-result-file" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+          <span style="font-size:11px;color:var(--text-muted);">PDF, JPG ou PNG · até 2 MB no protótipo</span>
+        </div>
+        <p id="exam-action-error" role="alert" style="display:none;color:var(--red-text);font-size:12px;margin-top:12px;"></p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-subtle" type="button" id="cancel-modal-exame">Cancelar</button>
-        <button class="btn btn-primary" type="submit">Adicionar exame</button>
+        <button class="btn btn-primary" type="submit" id="save-exam-action">Criar pedido</button>
       </div>
     </form>
   </div>
@@ -302,7 +288,7 @@
     ? p.protocolo + ' · ' + formatDate(consultation.data) + ' · ' + consultation.horario
     : p.protocolo + ' · ' + p.consultaAtual;
   document.getElementById('btn-voltar').addEventListener('click', function() {
-    Router.navigate(isPatientView ? 'agenda' : 'patient-detail', { patientId: p.id });
+    Router.goBack(isPatientView ? 'agenda' : 'patient-detail', { patientId: p.id });
   });
 
   // ── Load state from localStorage ──
@@ -313,7 +299,13 @@
     } catch(e) { return null; }
   }
   function saveState(data) {
-    try { localStorage.setItem(consultationStorageKey, JSON.stringify(data)); } catch(e) {}
+    try {
+      localStorage.setItem(consultationStorageKey, JSON.stringify(data));
+      return true;
+    } catch(e) {
+      console.error('Não foi possível salvar os dados da consulta no armazenamento local.', e);
+      return false;
+    }
   }
 
   var saved = loadState() || {
@@ -322,25 +314,15 @@
     publicDraft: 'Neste encontro, revisamos seus objetivos e os dados disponíveis para acompanhar sua jornada. Vamos continuar observando sua evolução em conjunto.',
     analysis: '',
     publishedAt: '',
-    examsPublished: false,
-    customExams: []
+    examCards: [],
+    analysisFiles: []
   };
-  saved.customExams = Array.isArray(saved.customExams) ? saved.customExams : [];
-
-  if (isDoctorView) {
-    var publishExamsButton = document.getElementById('btn-publish-exams');
-    publishExamsButton.textContent = saved.examsPublished ? 'Revogar acesso aos exames' : 'Liberar exames para paciente';
-    publishExamsButton.addEventListener('click', function() {
-      saved.examsPublished = !saved.examsPublished;
-      saveState(saved);
-      location.reload();
-    });
-  }
+  saved.examCards = Array.isArray(saved.examCards) ? saved.examCards : [];
+  saved.analysisFiles = Array.isArray(saved.analysisFiles) ? saved.analysisFiles : [];
 
   if (!isDoctorView) {
     document.getElementById('btn-finalizar').hidden = true;
-    document.getElementById('btn-novo-exame').hidden = true;
-    document.getElementById('btn-publish-exams').hidden = true;
+    document.getElementById('doctor-exam-actions').hidden = true;
     document.querySelector('[data-tab="checklist"]').classList.remove('active');
     document.getElementById('tab-checklist').classList.remove('active');
     if (!isPatientView) {
@@ -349,9 +331,7 @@
       document.getElementById('tab-checklist').hidden = true;
       document.getElementById('tab-anotacoes').hidden = true;
     }
-    if (isPatientView && !saved.examsPublished) {
-      document.querySelector('[data-tab="exames"]').hidden = true;
-      document.getElementById('tab-exames').hidden = true;
+    if (isPatientView) {
       document.querySelector('[data-tab="analises"]').classList.add('active');
       document.getElementById('tab-analises').classList.add('active');
     } else {
@@ -368,163 +348,244 @@
   if (isPatientView) {
     document.getElementById('btn-voltar').querySelector('#consult-back-label').textContent = 'Voltar para Minhas Consultas';
     document.getElementById('btn-jornada').hidden = true;
-    document.querySelector('[data-tab="anotacoes"]').textContent = 'Resumo';
+    document.querySelector('[data-tab="checklist"]').hidden = true;
+    document.getElementById('tab-checklist').hidden = true;
+    document.querySelector('[data-tab="anotacoes"]').hidden = true;
+    document.getElementById('tab-anotacoes').hidden = true;
     document.getElementById('private-notes-card').hidden = true;
     document.querySelector('#public-plan-card h3').textContent = 'Resumo compartilhado';
     document.querySelector('#public-plan-card p').textContent = 'Conteúdo compartilhado pela médica';
     document.querySelector('#tab-analises p').textContent = 'Resumo compartilhado pela médica';
     document.getElementById('save-draft').hidden = true;
+    document.getElementById('analysis-file-uploader').querySelector('label').hidden = true;
+    document.getElementById('analysis-files').hidden = true;
   }
 
   // ── CHECKLIST ──
-  var checkItems = [
+  var defaultCheckItems = [
     { id:'pressao',     label:'Verificar pressão arterial' },
     { id:'peso',        label:'Registrar peso e medidas' },
     { id:'medicamentos',label:'Revisar medicamentos e suplementos' },
     { id:'historico',   label:'Analisar histórico desde a última consulta' },
     { id:'objetivos',   label:'Revisar metas e objetivos da paciente' },
   ];
+  var checkItems = defaultCheckItems;
+  try {
+    var clinicalSettings = JSON.parse(localStorage.getItem('lapidar-settings-v1') || '{}');
+    if (Array.isArray(clinicalSettings.checklistTemplate) && clinicalSettings.checklistTemplate.length) {
+      checkItems = clinicalSettings.checklistTemplate.map(function(label, index) {
+        return { id:defaultCheckItems[index] ? defaultCheckItems[index].id : 'template-' + index, label:label };
+      });
+    }
+  } catch (error) {
+    console.error('Não foi possível carregar o template do checklist.', error);
+  }
+  if (isDoctorView) document.getElementById('custom-checklist-form').hidden = false;
 
   function renderChecklist() {
-    var completed = checkItems.filter(function(c) { return saved.checklist[c.id]; }).length;
-    var total = checkItems.length;
+    var allItems = checkItems.concat(Array.isArray(saved.customChecklistItems) ? saved.customChecklistItems : []);
+    var completed = allItems.filter(function(c) { return saved.checklist[c.id]; }).length;
+    var total = allItems.length;
     var pct = Math.round((completed / total) * 100);
     document.getElementById('checklist-progress').textContent = completed + '/' + total;
     document.getElementById('checklist-bar').style.width = pct + '%';
 
     var container = document.getElementById('checklist-items');
     container.innerHTML = '';
-    checkItems.forEach(function(item) {
+    allItems.forEach(function(item) {
       var div = document.createElement('div');
       div.className = 'checklist-item' + (saved.checklist[item.id] ? ' checked' : '');
       div.dataset.id = item.id;
-      div.innerHTML =
-        '<div class="checklist-box">' +
-          (saved.checklist[item.id] ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
-        '</div>' +
-        '<span class="checklist-label">' + item.label + '</span>';
+      var checkbox = document.createElement('div');
+      checkbox.className = 'checklist-box';
+      if (saved.checklist[item.id]) {
+        checkbox.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+      }
+      var label = document.createElement('span');
+      label.className = 'checklist-label';
+      label.textContent = item.label;
+      div.append(checkbox, label);
       if (!isPatientView) {
         div.addEventListener('click', function() {
           saved.checklist[item.id] = !saved.checklist[item.id];
           saveState(saved);
           renderChecklist();
         });
+        if (item.custom) {
+          var remove = document.createElement('button');
+          remove.className = 'btn btn-ghost btn-sm';
+          remove.type = 'button';
+          remove.textContent = 'Remover';
+          remove.style.marginLeft = 'auto';
+          remove.addEventListener('click', function(event) {
+            event.stopPropagation();
+            saved.customChecklistItems = saved.customChecklistItems.filter(function(entry) { return entry.id !== item.id; });
+            delete saved.checklist[item.id];
+            saveState(saved);
+            renderChecklist();
+          });
+          div.appendChild(remove);
+        }
       }
       container.appendChild(div);
     });
   }
   renderChecklist();
-
-  // ── EXAMES (22 Marcadores do Catálogo com Formatação Condicional 3 Níveis) ──
-  var exams = (typeof EXAMES_CATALOGO !== 'undefined' && EXAMES_CATALOGO.length > 0)
-    ? EXAMES_CATALOGO
-    : [
-        { nome:'Colesterol LDL', unidade:'mg/dL', meta:'< 100', anterior:'148', atual:'128', dir:'max', refMax:100, warnThreshold:130 },
-        { nome:'Colesterol HDL', unidade:'mg/dL', meta:'≥ 50',  anterior:'48',  atual:'52',  dir:'min', refMin:50, warnThreshold:45 },
-        { nome:'Triglicerídeos', unidade:'mg/dL', meta:'< 150', anterior:'162', atual:'138', dir:'max', refMax:150, warnThreshold:175 },
-      ];
-
-  function getStatus(exam) {
-    var val = parseFloat(String(exam.atual).replace(',','.'));
-    if (isNaN(val)) return { cls:'', text:'—' };
-
-    if (exam.dir === 'max') {
-      if (val <= exam.refMax) return { cls:'status-ok', text:'✓ Meta' };
-      if (exam.warnThreshold && val <= exam.warnThreshold) return { cls:'status-warn', text:'⚠ Atenção' };
-      return { cls:'status-bad', text:'✗ Fora' };
-    } else if (exam.dir === 'min') {
-      if (val >= exam.refMin) return { cls:'status-ok', text:'✓ Meta' };
-      if (exam.warnThreshold && val >= exam.warnThreshold) return { cls:'status-warn', text:'⚠ Atenção' };
-      return { cls:'status-bad', text:'✗ Fora' };
-    } else if (exam.dir === 'range') {
-      if (val >= exam.refMin && val <= exam.refMax) return { cls:'status-ok', text:'✓ Meta' };
-      if ((exam.warnMin && val >= exam.warnMin) || (exam.warnMax && val <= exam.warnMax)) return { cls:'status-warn', text:'⚠ Atenção' };
-      return { cls:'status-bad', text:'✗ Fora' };
-    }
-    return { cls:'status-ok', text:'✓ Normal' };
-  }
-
-  function getDelta(prev, curr) {
-    if (!prev || !curr) return '';
-    var p = parseFloat(String(prev).replace(',','.'));
-    var c = parseFloat(String(curr).replace(',','.'));
-    if (isNaN(p) || isNaN(c)) return '';
-    var d = c - p;
-    var sign = d > 0 ? '+' : '';
-    return sign + d.toFixed(1);
-  }
-
-  function escapeExamText(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, function(char) {
-      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char];
-    });
-  }
-
-  var examList = document.getElementById('exam-list');
-  function renderExams() {
-    examList.innerHTML = '';
-    if (isPatientView && !saved.examsPublished) return;
-    exams.concat(saved.customExams).forEach(function(ex) {
-    var isCustom = ex.custom === true;
-    var st = getStatus(ex);
-    var delta = isCustom ? '' : getDelta(ex.anterior, ex.atual);
-    var deltaColor = delta.startsWith('-') ? 'var(--oliva)' : (delta.startsWith('+') ? 'var(--red-text)' : '');
-    var row = document.createElement('div');
-    row.className = 'exam-row';
-    row.innerHTML =
-      '<div><span style="font-weight:600;color:var(--vinho);">' + escapeExamText(ex.nome) + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:4px;">' + escapeExamText(ex.unidade) + '</span>' +
-        (delta ? '<span style="font-size:11px;color:' + deltaColor + ';margin-left:6px;">(' + delta + ')</span>' : '') +
-      '</div>' +
-      '<div style="text-align:right;color:var(--text-muted);">' + escapeExamText(ex.anterior || '—') + '</div>' +
-      '<div style="text-align:right;font-weight:700;color:var(--text-primary);">' + escapeExamText(ex.atual || '—') + '</div>' +
-      '<div class="exam-goal" style="text-align:right;color:var(--text-secondary);font-size:12px;font-weight:500;">' + escapeExamText(ex.meta || '—') + '</div>' +
-      '<div style="text-align:right;color:var(--text-muted);font-size:10px;">' +
-        '<span>Atual ' + escapeExamText(ex.dataAtual || '—') + '</span><br><span>Ant. ' + escapeExamText(ex.dataAnterior || '—') + '</span>' +
-      '</div>' +
-      '<div style="text-align:center;"><span class="' + (isCustom ? '' : st.cls) + '" style="font-size:11.5px;padding:3px 8px;border-radius:999px;background:' + (isCustom ? 'var(--blue-bg)' : st.cls==='status-ok'?'var(--green-bg)':st.cls==='status-warn'?'var(--yellow-bg)':'var(--red-bg)') + ';">' + (isCustom ? 'Registrado' : st.text) + '</span></div>';
-    examList.appendChild(row);
+  document.getElementById('custom-checklist-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var field = document.getElementById('custom-checklist-label');
+    var label = field.value.trim();
+    if (!label) return;
+    saved.customChecklistItems = Array.isArray(saved.customChecklistItems) ? saved.customChecklistItems : [];
+    saved.customChecklistItems.push({ id:'custom-' + Date.now(), label:label, custom:true });
+    saved.checklist[saved.customChecklistItems[saved.customChecklistItems.length - 1].id] = false;
+    saveState(saved);
+    field.value = '';
+    renderChecklist();
   });
-  }
-  renderExams();
 
-  if (isDoctorView) {
-    var examModal = document.getElementById('modal-novo-exame');
-    var examForm = document.getElementById('form-novo-exame');
-    var examError = document.getElementById('new-exam-error');
-    function closeExamModal() { examModal.classList.remove('open'); }
-    document.getElementById('btn-novo-exame').addEventListener('click', function() {
-      examForm.reset();
-      document.getElementById('new-exam-date').value = new Date().toISOString().slice(0, 10);
-      examError.style.display = 'none';
-      examModal.classList.add('open');
-      document.getElementById('new-exam-name').focus();
+  // ── PEDIDOS E ARQUIVOS DE EXAMES ──
+  var examModal = document.getElementById('modal-novo-exame');
+  var examForm = document.getElementById('form-exam-action');
+  var examError = document.getElementById('exam-action-error');
+  var examMode = 'request';
+  var maxUploadBytes = 2 * 1024 * 1024;
+
+  function closeExamModal() { examModal.classList.remove('open'); }
+
+  function readUpload(file) {
+    return new Promise(function(resolve, reject) {
+      if (file.size > maxUploadBytes) {
+        reject(new Error('O arquivo excede 2 MB. Escolha um arquivo menor.'));
+        return;
+      }
+      if (!/^(application\/pdf|image\/png|image\/jpeg)$/.test(file.type)) {
+        reject(new Error('Formato inválido. Envie um PDF, PNG ou JPG.'));
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function() { resolve(reader.result); };
+      reader.onerror = function() { reject(new Error('Não foi possível ler o arquivo selecionado.')); };
+      reader.readAsDataURL(file);
     });
+  }
+
+  function makeFileLink(file, label) {
+    var link = document.createElement('a');
+    link.href = file.data;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = label + ': ' + file.name;
+    link.style.cssText = 'font-size:12px;color:var(--vinho);text-decoration:underline;overflow-wrap:anywhere;';
+    return link;
+  }
+
+  function renderExamCards() {
+    var container = document.getElementById('exam-cards');
+    container.replaceChildren();
+    if (!saved.examCards.length) {
+      var empty = document.createElement('p');
+      empty.textContent = 'Nenhum pedido ou arquivo de exame nesta consulta.';
+      empty.style.cssText = 'font-size:12px;color:var(--text-muted);grid-column:1/-1;';
+      container.appendChild(empty);
+      return;
+    }
+    saved.examCards.forEach(function(card) {
+      var panel = document.createElement('article');
+      panel.className = 'card';
+      panel.style.cssText = 'padding:14px;box-shadow:none;border:1px solid var(--border);';
+      var title = document.createElement('strong');
+      title.textContent = card.name;
+      title.style.cssText = 'display:block;font-size:13px;color:var(--vinho);margin-bottom:6px;';
+      var detail = document.createElement('p');
+      detail.textContent = card.details || (card.type === 'result' ? 'Resultado enviado pela médica.' : '');
+      detail.style.cssText = 'font-size:12px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:8px;';
+      var status = document.createElement('span');
+      status.className = 'badge ' + (card.status === 'received' ? 'badge-oliva' : 'badge-gold');
+      status.textContent = card.status === 'received' ? 'Arquivo recebido' : (card.type === 'result' ? 'Disponível para paciente' : 'Aguardando envio');
+      panel.append(title, detail, status);
+      if (card.file) panel.appendChild(makeFileLink(card.file, 'Abrir arquivo'));
+      if (card.patientFile) panel.appendChild(makeFileLink(card.patientFile, 'Arquivo enviado pela paciente'));
+      if (isPatientView && card.type === 'request' && card.status !== 'received') {
+        var upload = document.createElement('input');
+        upload.type = 'file';
+        upload.accept = '.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
+        upload.className = 'form-input';
+        upload.style.marginTop = '10px';
+        upload.setAttribute('aria-label', 'Enviar resultado de ' + card.name);
+        upload.addEventListener('change', function() {
+          var file = upload.files && upload.files[0];
+          if (!file) return;
+          readUpload(file).then(function(data) {
+            var previousFile = card.patientFile;
+            var previousStatus = card.status;
+            card.patientFile = { name:file.name, data:data };
+            card.status = 'received';
+            if (!saveState(saved)) {
+              card.patientFile = previousFile;
+              card.status = previousStatus;
+              alert('Não foi possível salvar o arquivo. O armazenamento local pode estar cheio.');
+              return;
+            }
+            renderExamCards();
+          }).catch(function(error) { alert(error.message); });
+        });
+        panel.appendChild(upload);
+      }
+      if (isDoctorView && card.patientFile) status.textContent = 'Paciente enviou o resultado';
+      container.appendChild(panel);
+    });
+  }
+
+  renderExamCards();
+  if (isDoctorView) {
+    function openExamModal(mode) {
+      examMode = mode;
+      examForm.reset();
+      examError.style.display = 'none';
+      document.getElementById('exam-request-fields').hidden = mode !== 'request';
+      document.getElementById('exam-send-fields').hidden = mode !== 'result';
+      document.getElementById('exam-request-name').required = mode === 'request';
+      document.getElementById('exam-result-file').required = mode === 'result';
+      document.getElementById('exam-modal-title').textContent = mode === 'request' ? 'Pedir exame à paciente' : 'Enviar resultado para a paciente';
+      document.getElementById('save-exam-action').textContent = mode === 'request' ? 'Criar pedido' : 'Enviar resultado';
+      examModal.classList.add('open');
+    }
+    document.getElementById('btn-request-exam').addEventListener('click', function() { openExamModal('request'); });
+    document.getElementById('btn-send-exam').addEventListener('click', function() { openExamModal('result'); });
     document.getElementById('close-modal-exame').addEventListener('click', closeExamModal);
     document.getElementById('cancel-modal-exame').addEventListener('click', closeExamModal);
     examForm.addEventListener('submit', function(event) {
       event.preventDefault();
-      var dateValue = document.getElementById('new-exam-date').value;
-      var newExam = {
-        custom: true,
-        nome: document.getElementById('new-exam-name').value.trim(),
-        atual: document.getElementById('new-exam-current').value.trim(),
-        unidade: document.getElementById('new-exam-unit').value.trim(),
-        anterior: document.getElementById('new-exam-previous').value.trim(),
-        meta: document.getElementById('new-exam-goal').value.trim(),
-        dataAtual: dateValue ? new Date(dateValue + 'T12:00:00').toLocaleDateString('pt-BR') : ''
+      var saveCard = function(card) {
+        saved.examCards.push(card);
+        if (saveState(saved)) {
+          renderExamCards();
+          closeExamModal();
+        } else {
+          saved.examCards.pop();
+          examError.textContent = 'Não foi possível salvar. O armazenamento local pode estar cheio.';
+          examError.style.display = 'block';
+        }
       };
-      if (!newExam.nome || !newExam.atual || !dateValue) return;
-      saved.customExams.push(newExam);
-      try {
-        localStorage.setItem(consultationStorageKey, JSON.stringify(saved));
-      } catch (error) {
-        saved.customExams.pop();
-        examError.textContent = 'Não foi possível salvar o exame neste navegador. Libere espaço no armazenamento e tente novamente.';
-        examError.style.display = 'block';
+      if (examMode === 'request') {
+        saveCard({
+          id:'request-' + Date.now(),
+          type:'request',
+          name:document.getElementById('exam-request-name').value.trim(),
+          details:document.getElementById('exam-request-details').value.trim(),
+          status:'pending'
+        });
         return;
       }
-      renderExams();
-      closeExamModal();
+      var file = document.getElementById('exam-result-file').files[0];
+      if (!file) return;
+      readUpload(file).then(function(data) {
+        saveCard({ id:'result-' + Date.now(), type:'result', name:file.name, file:{ name:file.name, data:data }, status:'shared' });
+      }).catch(function(error) {
+        examError.textContent = error.message;
+        examError.style.display = 'block';
+      });
     });
   }
 
@@ -554,6 +615,34 @@
   document.getElementById('analysis-draft').value = isPatientView
     ? (saved.publishedAt && saved.analysis ? saved.analysis : 'A médica ainda não compartilhou informações desta consulta.')
     : (saved.analysis || '');
+  function renderAnalysisFiles() {
+    var list = document.getElementById('analysis-files-list');
+    list.replaceChildren();
+    if (isPatientView && !saved.publishedAt) return;
+    saved.analysisFiles.forEach(function(file) {
+      list.appendChild(makeFileLink(file, 'Anexo'));
+    });
+  }
+  renderAnalysisFiles();
+  document.getElementById('analysis-files').addEventListener('change', function(event) {
+    var files = Array.prototype.slice.call(event.target.files || []);
+    if (!files.length) return;
+    Promise.all(files.map(function(file) {
+      return readUpload(file).then(function(data) { return { name:file.name, data:data }; });
+    })).then(function(newFiles) {
+      var previous = saved.analysisFiles;
+      saved.analysisFiles = previous.concat(newFiles);
+      if (!saveState(saved)) {
+        saved.analysisFiles = previous;
+        throw new Error('Não foi possível salvar os anexos. O armazenamento local pode estar cheio.');
+      }
+      document.getElementById('analysis-files-feedback').textContent = 'Anexo(s) salvo(s). Publique a análise para compartilhar com a paciente.';
+      renderAnalysisFiles();
+    }).catch(function(error) {
+      document.getElementById('analysis-files-feedback').textContent = error.message;
+      event.target.value = '';
+    });
+  });
   if (saved.publishedAt) {
     var info = document.getElementById('published-info');
     info.style.display = 'block';

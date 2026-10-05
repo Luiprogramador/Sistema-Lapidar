@@ -87,7 +87,7 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() !== 'doctor') {
+  if (Router.getRole() !== 'doctor' && Router.getRole() !== 'admin') {
     Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
   } else {
   initShell('dashboard');

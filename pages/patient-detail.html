@@ -16,7 +16,21 @@
       border-radius: var(--radius-md);
       padding: var(--space-4);
       box-shadow: var(--shadow-sm);
+      position: relative;
+      transition: var(--transition);
     }
+    .bio-card:hover, .bio-card:focus-within { border-color: var(--dourado); box-shadow: var(--shadow-md); }
+    .bio-card[role="button"] { cursor: pointer; }
+    .bio-card:focus-visible { outline: 2px solid var(--dourado); outline-offset: 2px; }
+    .bio-meta-line { font-size:11px; color:var(--text-muted); margin-top:6px; }
+    .bio-meta-set { margin-top:7px; padding:0; color:var(--vinho); font-size:11px; font-weight:600; }
+    .bio-goal-success { display:flex; align-items:center; gap:8px; padding:12px 14px; border-radius:var(--radius); margin:0 0 14px; color:var(--green-text); background:var(--green-bg); font-size:13px; font-weight:600; }
+    .score-dimensions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .score-dimension-card { padding:12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bege); }
+    .score-dimension-card h5 { color:var(--vinho); font-size:12px; margin-bottom:6px; }
+    .score-dimension-card p { color:var(--text-muted); font-size:11px; line-height:1.45; min-height:32px; }
+    .bio-chart-canvas { display:block; width:100%; height:280px; }
+    @media (max-width:640px) { .score-dimensions { grid-template-columns:1fr; } }
     .bio-card-label {
       font-size: 11px;
       font-weight: 600;
@@ -197,13 +211,13 @@
   <!-- Tabs Navigation -->
   <div class="tabs" id="tabs-nav">
     <button class="tab-item active" data-tab="painel">Painel Clínico</button>
+    <button class="tab-item" data-tab="timeline">Timeline</button>
     <button class="tab-item" data-tab="bio">Bioimpedância</button>
     <button class="tab-item" data-tab="score">Score Lapidar</button>
     <button class="tab-item" data-tab="risco">Risco CV</button>
     <button class="tab-item" data-tab="medicamentos">Medicamentos</button>
     <button class="tab-item" data-tab="arquivos">Arquivos</button>
     <button class="tab-item" data-tab="diario">Diário & Hábitos</button>
-    <button class="tab-item" data-tab="timeline">Timeline</button>
   </div>
 
   <!-- Tab 1: Painel Clínico -->
@@ -304,6 +318,18 @@
   const p = Router.getSelectedPatient() || PACIENTES[0];
   const isDoctorView = Router.getRole() === 'doctor';
   const isPatientView = Router.getRole() === 'patient';
+  const scoreHistoryKey = 'lapidar-score-history-' + p.id;
+  let scoreHistory = [];
+  try {
+    const storedScores = JSON.parse(localStorage.getItem(scoreHistoryKey) || '[]');
+    if (Array.isArray(storedScores)) scoreHistory = storedScores;
+  } catch (error) {
+    console.error('Não foi possível carregar o histórico do Score Lapidar.', error);
+  }
+  if (scoreHistory.length) {
+    scoreHistory.sort((a, b) => a.date.localeCompare(b.date));
+    p.scoreAtual = scoreHistory[scoreHistory.length - 1].values;
+  }
   const patientReleasesKey = 'lapidar-patient-releases-' + p.id;
   let patientReleases = {};
   try {
@@ -323,6 +349,14 @@
   const bio = p.bioimpedancia;
   const latestBio = bio[bio.length - 1];
   const prevBio   = bio[bio.length - 2] || null;
+  const patientMedicationKey = 'lapidar-medicamentos-' + p.id;
+  let patientMedications = Array.isArray(p.medicamentos) ? [...p.medicamentos] : [];
+  try {
+    const savedMedications = JSON.parse(localStorage.getItem(patientMedicationKey) || 'null');
+    if (Array.isArray(savedMedications)) patientMedications = savedMedications;
+  } catch (error) {
+    console.error('Não foi possível carregar os medicamentos da paciente.', error);
+  }
 
   // Buttons navigation
   if (isPatientView) {
@@ -330,9 +364,12 @@
     document.getElementById('btn-jornada').hidden = true;
     document.getElementById('btn-consulta').hidden = true;
   } else {
-    document.getElementById('back-label').textContent = 'Voltar para Pacientes';
+    const previousPage = Router.getState().navigationHistory?.slice(-1)[0]?.page;
+    document.getElementById('back-label').textContent = previousPage === 'consultations'
+      ? 'Voltar para Consultas'
+      : previousPage === 'agenda' ? 'Voltar para Agenda' : 'Voltar para Pacientes';
     document.getElementById('btn-back').addEventListener('click', () => {
-      Router.navigate('patients', { patientId: p.id });
+      Router.goBack('patients', { patientId: p.id });
     });
   }
   document.getElementById('btn-consulta').addEventListener('click', () => {
@@ -357,9 +394,9 @@
           <span>${p.telefone}</span>
           <span>${p.consultaAtual}</span>
           <span>${getProtocolBadge(p.protocolo)}</span>
-          <span id="patient-lead" style="color:var(--text-muted);" ${isPatientView ? 'hidden' : ''}>Lead: ${p.origemLead || 'Indicação'}</span>
+          <span id="patient-lead" class="patient-header-lead" ${isPatientView ? 'hidden' : ''}>Lead: ${p.origemLead || 'Indicação'}</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">
+        <div class="patient-header-objective">
           <strong>Objetivo:</strong> ${p.objetivo}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;">
@@ -473,6 +510,38 @@
       </div>
     </div>`;
 
+  const patientConsultations = CONSULTAS
+    .filter(consultation => consultation.paciente === p.nome)
+    .sort((a, b) => b.data.localeCompare(a.data));
+  document.getElementById('tab-painel').insertAdjacentHTML('beforeend', `
+    <section class="card" style="margin-top:16px;" aria-labelledby="patient-consultation-history">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <h4 id="patient-consultation-history" style="font-size:14px;font-weight:600;color:var(--vinho);">Histórico de Consultas</h4>
+          <p style="font-size:12px;color:var(--text-muted);">Atendimentos registrados para ${p.nome}</p>
+        </div>
+        ${isDoctorView ? '<button class="btn btn-primary btn-sm" id="patient-history-new-consult">Nova consulta</button>' : ''}
+      </div>
+      ${patientConsultations.length ? `<div style="display:flex;flex-direction:column;gap:8px;">
+        ${patientConsultations.map(consultation => `
+          <button type="button" class="patient-consultation-history-row" data-consultation-id="${consultation.id}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px;text-align:left;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;">
+            <span><strong style="display:block;color:var(--vinho);">${consultation.tipo}</strong><span style="font-size:11px;color:var(--text-muted);">${formatDate(consultation.data)} · ${consultation.horario}</span></span>
+            <span class="badge ${consultation.status === 'concluida' ? 'badge-oliva' : 'badge-vinho'}">${consultation.status === 'concluida' ? 'Realizada' : 'Agendada'}</span>
+          </button>`).join('')}
+      </div>` : '<p style="font-size:12px;color:var(--text-muted);">Nenhuma consulta registrada.</p>'}
+    </section>`);
+  document.querySelectorAll('.patient-consultation-history-row').forEach(button => {
+    button.addEventListener('click', () => Router.navigate('consultation', {
+      patientId:p.id,
+      consultationId:Number(button.dataset.consultationId),
+    }));
+  });
+  const newConsultButton = document.getElementById('patient-history-new-consult');
+  if (newConsultButton) newConsultButton.addEventListener('click', () => Router.navigate('consultation', {
+    patientId:p.id,
+    consultationId:null,
+  }));
+
   // ── TAB 2: BIOIMPEDÂNCIA ──
   const bioFields = [
     { key:'peso',            label:'Peso Total',          unit:'kg',   inv:true  },
@@ -484,6 +553,20 @@
     { key:'tmb',             label:'Taxa Metabólica Basal',unit:'kcal',inv:false },
     { key:'nota',            label:'Nota InBody / Score', unit:'/10',  inv:false },
   ];
+
+  const bioGoalsKey = 'lapidar-bio-metas-' + p.id;
+  let bioGoals = { peso:Number(p.meta) };
+  try {
+    const savedGoals = JSON.parse(localStorage.getItem(bioGoalsKey) || '{}');
+    if (savedGoals && typeof savedGoals === 'object') bioGoals = { ...bioGoals, ...savedGoals };
+  } catch (error) {
+    console.error('Não foi possível carregar as metas da bioimpedância.', error);
+  }
+  function bioGoalReached(field, value) {
+    const target = Number(bioGoals[field.key]);
+    if (!Number.isFinite(target)) return false;
+    return field.inv ? value <= target : value >= target;
+  }
 
   const bioReport = (p.arquivos || []).find(file => /bioimped|inbody/i.test(file.titulo + ' ' + file.desc));
   let bioHTML = `
@@ -506,8 +589,11 @@
     const delta = prev2 !== null ? last - prev2 : null;
     const improved = delta !== null ? (f.inv ? delta < 0 : delta > 0) : null;
     const sign = delta > 0 ? '+' : '';
+    const target = Number(bioGoals[f.key]);
+    const hasTarget = Number.isFinite(target);
+    const reached = hasTarget && bioGoalReached(f, last);
     bioHTML += `
-      <div class="bio-card">
+      <div class="bio-card" data-bio-field="${f.key}" role="group" tabindex="0" aria-label="Abrir gráfico de ${f.label}">
         <div class="bio-card-label">${f.label}</div>
         <div class="bio-card-value">${last}<span class="bio-card-unit">${f.unit}</span></div>
         ${delta !== null ? `<div class="bio-card-delta ${improved ? 'delta-pos' : 'delta-neg'}">${sign}${delta.toFixed(1)} vs. anterior</div>` : '<div class="bio-card-delta delta-pos">— Estável</div>'}
@@ -515,15 +601,134 @@
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;">
           <span>${bio[0].data}</span><span>${bio[bio.length-1].data}</span>
         </div>
+        ${hasTarget ? `<div class="bio-meta-line">Meta: ${f.inv ? '≤' : '≥'} ${target}${f.unit}</div>` : '<div class="bio-meta-line">Meta ainda não definida</div>'}
+        ${reached ? '<div class="badge badge-green" style="margin-top:7px;">Meta atingida</div>' : ''}
+        ${isDoctorView ? `<button class="bio-meta-set" type="button" data-set-bio-goal="${f.key}">${hasTarget ? 'Ajustar meta' : 'Definir meta'}</button>` : ''}
       </div>`;
   });
   bioHTML += `</div>`;
+  if (bioFields.some(field => bioGoalReached(field, Number(latestBio[field.key])))) {
+    bioHTML = bioHTML.replace('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">',
+      '<div class="bio-goal-success" role="status">🎉 Parabéns! Uma ou mais metas de bioimpedância foram atingidas.</div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">');
+  }
   bioHTML += `<div class="card" style="margin-top:16px;">
     <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Arquivo de Bioimpedância</h4>
     ${bioReport ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--text-secondary);">${bioReport.titulo} · ${bioReport.data}</span><button class="btn btn-subtle btn-sm" onclick="alert('Visualizando arquivo: ${bioReport.titulo}');">Visualizar</button></div>` : '<p style="font-size:12px;color:var(--text-muted);">Nenhum arquivo associado às medições.</p>'}
   </div>`;
   document.getElementById('tab-bio').innerHTML = bioHTML;
   if (!isDoctorView) document.getElementById('btn-new-bio').hidden = true;
+  document.querySelectorAll('#tab-bio [data-bio-field]').forEach(card => {
+    const openChart = () => showBioChart(card.dataset.bioField);
+    card.addEventListener('click', event => {
+      if (event.target.closest('[data-set-bio-goal]')) return;
+      openChart();
+    });
+    card.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target === card) {
+        event.preventDefault();
+        openChart();
+      }
+    });
+  });
+  document.querySelectorAll('#tab-bio [data-set-bio-goal]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const field = bioFields.find(item => item.key === button.dataset.setBioGoal);
+      if (!field) return;
+      const current = bioGoals[field.key] ?? '';
+      const value = prompt('Informe a meta para ' + field.label + (field.unit ? ' (' + field.unit + ')' : '') + ':', current);
+      if (value === null) return;
+      const target = Number(String(value).replace(',', '.'));
+      if (!Number.isFinite(target)) {
+        alert('Informe um valor numérico válido para a meta.');
+        return;
+      }
+      bioGoals[field.key] = target;
+      try {
+        localStorage.setItem(bioGoalsKey, JSON.stringify(bioGoals));
+        location.reload();
+      } catch (error) {
+        console.error('Não foi possível salvar a meta de bioimpedância.', error);
+        alert('Não foi possível salvar a meta neste navegador.');
+      }
+    });
+  });
+
+  function showBioChart(fieldKey) {
+    const field = bioFields.find(item => item.key === fieldKey);
+    if (!field) return;
+    let modal = document.getElementById('bio-chart-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'bio-chart-modal';
+      modal.className = 'modal-overlay';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      document.body.appendChild(modal);
+    }
+    const goal = Number(bioGoals[field.key]);
+    const hasGoal = Number.isFinite(goal);
+    modal.innerHTML = `
+      <div class="modal" style="max-width:760px;width:min(760px,94vw);">
+        <div class="modal-header">
+          <div><div class="modal-title">${field.label}</div><div style="font-size:12px;color:var(--text-muted);">${bio.length} medições · ${bio[0].data} – ${latestBio.data}</div></div>
+          <button type="button" class="modal-close" aria-label="Fechar gráfico">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;color:var(--vinho);font-family:var(--font-serif);font-size:26px;font-weight:600;">${latestBio[field.key]}<span style="font:400 13px var(--font-sans);color:var(--text-muted);">${field.unit}</span></div>
+          ${hasGoal ? `<p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Meta: ${field.inv ? '≤' : '≥'} ${goal}${field.unit}</p>` : ''}
+          <canvas class="bio-chart-canvas" id="bio-chart-large" aria-label="Gráfico de evolução de ${field.label}"></canvas>
+        </div>
+        <div class="modal-footer"><button class="btn btn-subtle" type="button">Fechar</button></div>
+      </div>`;
+    modal.classList.add('open');
+    const close = () => modal.classList.remove('open');
+    modal.querySelectorAll('.modal-close, .modal-footer button').forEach(button => button.addEventListener('click', close));
+    modal.addEventListener('click', event => { if (event.target === modal) close(); }, { once:true });
+    const canvas = modal.querySelector('#bio-chart-large');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const values = bio.map(item => Number(item[field.key]) || 0);
+    const min = Math.min(...values, hasGoal ? goal : Infinity);
+    const max = Math.max(...values, hasGoal ? goal : -Infinity);
+    const range = max - min || 1;
+    const pad = { left:44, right:18, top:18, bottom:38 };
+    const width = rect.width - pad.left - pad.right;
+    const height = rect.height - pad.top - pad.bottom;
+    const x = index => pad.left + (values.length < 2 ? width / 2 : index / (values.length - 1) * width);
+    const y = value => pad.top + height - (value - min) / range * height;
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.font = '11px Montserrat, sans-serif';
+    ctx.fillStyle = '#78685A';
+    ctx.textAlign = 'right';
+    [0, .5, 1].forEach(step => {
+      const value = min + range * step;
+      const lineY = y(value);
+      ctx.strokeStyle = '#E3D8C8';
+      ctx.beginPath(); ctx.moveTo(pad.left, lineY); ctx.lineTo(rect.width - pad.right, lineY); ctx.stroke();
+      ctx.fillText(value.toFixed(1), pad.left - 7, lineY + 4);
+    });
+    if (hasGoal) {
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#59633D';
+      ctx.beginPath(); ctx.moveTo(pad.left, y(goal)); ctx.lineTo(rect.width - pad.right, y(goal)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.beginPath();
+    values.forEach((value, index) => index ? ctx.lineTo(x(index), y(value)) : ctx.moveTo(x(index), y(value)));
+    ctx.strokeStyle = '#591B1C'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+    values.forEach((value, index) => {
+      ctx.beginPath(); ctx.arc(x(index), y(value), 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#591B1C'; ctx.fill();
+      ctx.textAlign = index === 0 ? 'left' : index === values.length - 1 ? 'right' : 'center';
+      ctx.fillStyle = '#78685A';
+      ctx.fillText(bio[index].data, x(index), rect.height - 12);
+    });
+  }
 
   // ── TAB 3: SCORE LAPIDAR (11 Dimensões) ──
   document.getElementById('tab-score').innerHTML = `
@@ -542,27 +747,130 @@
       </div>
 
       <div class="card">
-        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:14px;">Detalhamento das 11 Dimensões (0 a 10)</h4>
-        <div style="display:flex;flex-direction:column;gap:8px;">
+        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:6px;">As 11 dimensões do Score Lapidar</h4>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Acompanhe cada aspecto registrado no seu score.</p>
+        ${isPatientView ? '<form id="score-entry-form" style="padding:12px;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);"><label class="form-group"><span class="form-label">Data do registro</span><input class="form-input" id="score-entry-date" type="date" required></label><div id="score-entry-inputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0;"></div><button class="btn btn-primary btn-sm" type="submit">Salvar meu Score</button><span id="score-entry-feedback" role="status" style="font-size:11px;margin-left:8px;"></span><div id="score-history-list" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></div></form>' : ''}
+        <div class="score-dimensions">
           ${p.scoreLabels.map((lbl, i) => {
             const val = p.scoreAtual[i];
             const prev = p.scoreAnterior[i];
             const diff = val - prev;
             const sign = diff > 0 ? '+' : '';
+            const explanations = {
+              Saciedade:'Percepção de saciedade nas refeições.',
+              Fome:'Percepção de fome ao longo do dia.',
+              Energia:'Nível de energia percebido.',
+              Sono:'Qualidade percebida do sono.',
+              Humor:'Bem-estar emocional percebido.',
+              Libido:'Percepção de libido.',
+              Fogachos:'Frequência ou intensidade percebida de fogachos.',
+              'Perda urinária':'Percepção de sintomas urinários.',
+              Constipação:'Percepção do funcionamento intestinal.',
+              'Atividade física':'Consistência de atividade física relatada.',
+              Adesão:'Percepção de adesão ao plano combinado.',
+            };
             return `
-              <div>
-                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-                  <span style="color:var(--text-secondary);font-weight:500;">${lbl}</span>
-                  <span style="font-weight:600;color:var(--vinho);">${val}/10 <span style="font-weight:400;color:${diff>=0?'var(--oliva)':'var(--red-text)'};">(${sign}${diff})</span></span>
+              <div class="score-dimension-card">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:5px;">
+                  <h5>${lbl}</h5>
+                  <strong style="white-space:nowrap;color:var(--vinho);font-size:12px;"><span id="score-value-${i}">${val}/10</span> <span id="score-diff-${i}" style="font-weight:400;color:${diff>=0?'var(--oliva)':'var(--red-text)'};">(${sign}${diff})</span></strong>
                 </div>
+                <p>${explanations[lbl] || 'Dimensão registrada no Score Lapidar.'}</p>
                 <div class="progress-bar" style="height:7px;">
-                  <div class="progress-fill" style="width:${val*10}%;background:${val>=7?'var(--oliva)':val>=5?'var(--dourado)':'#DC2626'};"></div>
+                  <div class="progress-fill" data-score-bar="${i}" style="width:${val*10}%;background:${val>=7?'var(--oliva)':val>=5?'var(--dourado)':'#DC2626'};"></div>
                 </div>
               </div>`;
           }).join('')}
         </div>
       </div>
     </div>`;
+  if (isPatientView) {
+    const scoreDate = document.getElementById('score-entry-date');
+    const todayISO = new Date().toISOString().slice(0, 10);
+    scoreDate.max = todayISO;
+    scoreDate.value = scoreHistory.length ? scoreHistory[scoreHistory.length - 1].date : todayISO;
+    const inputContainer = document.getElementById('score-entry-inputs');
+    const scoreHistoryList = document.getElementById('score-history-list');
+    function renderScoreHistory() {
+      scoreHistoryList.textContent = scoreHistory.length
+        ? 'Registros: ' + scoreHistory.slice().reverse().map(entry => {
+          const [year, month, day] = entry.date.split('-');
+          return day + '/' + month + '/' + year;
+        }).join(' · ')
+        : '';
+    }
+    renderScoreHistory();
+    p.scoreLabels.forEach((label, index) => {
+      const field = document.createElement('label');
+      field.className = 'form-group';
+      const title = document.createElement('span');
+      title.className = 'form-label';
+      title.textContent = label + ' · ' + p.scoreAtual[index] + '/10';
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = '0';
+      input.max = '10';
+      input.step = '1';
+      input.value = String(p.scoreAtual[index]);
+      input.dataset.scoreIndex = String(index);
+      input.setAttribute('aria-label', label);
+      input.addEventListener('input', () => { title.textContent = label + ' · ' + input.value + '/10'; });
+      field.append(title, input);
+      inputContainer.appendChild(field);
+    });
+    document.getElementById('score-entry-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const date = scoreDate.value;
+      if (!date || date > todayISO) {
+        document.getElementById('score-entry-feedback').textContent = 'Selecione uma data válida, até hoje.';
+        return;
+      }
+      const values = Array.from(inputContainer.querySelectorAll('input')).map(input => Number(input.value));
+      const previousHistory = scoreHistory;
+      scoreHistory = scoreHistory.filter(entry => entry.date !== date);
+      scoreHistory.push({ date, values });
+      scoreHistory.sort((a, b) => a.date.localeCompare(b.date));
+      try {
+        localStorage.setItem(scoreHistoryKey, JSON.stringify(scoreHistory));
+      } catch (error) {
+        scoreHistory = previousHistory;
+        console.error('Não foi possível salvar o Score Lapidar.', error);
+        document.getElementById('score-entry-feedback').textContent = 'Não foi possível salvar neste navegador.';
+        return;
+      }
+      try {
+        const timelineKey = 'lapidar-diario-historico-' + p.id;
+        const timelineData = JSON.parse(localStorage.getItem(timelineKey) || '{"events":[]}');
+        timelineData.events = Array.isArray(timelineData.events) ? timelineData.events : [];
+        timelineData.events.push({
+          date,
+          time:new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }),
+          type:'Score Lapidar',
+          title:'Score Lapidar atualizado',
+          changes:[{ label:'Score', detail:'Atualização das 11 dimensões para o dia escolhido.' }],
+        });
+        localStorage.setItem(timelineKey, JSON.stringify(timelineData));
+      } catch (error) {
+        console.error('O Score foi salvo, mas não foi possível registrar a alteração na timeline.', error);
+      }
+      p.scoreAtual = scoreHistory[scoreHistory.length - 1].values;
+      p.scoreAtual.forEach((value, index) => {
+        const diff = value - p.scoreAnterior[index];
+        const diffSign = diff > 0 ? '+' : '';
+        document.getElementById('score-value-' + index).textContent = value + '/10';
+        const diffElement = document.getElementById('score-diff-' + index);
+        diffElement.textContent = '(' + diffSign + diff + ')';
+        diffElement.style.color = diff >= 0 ? 'var(--oliva)' : 'var(--red-text)';
+        const bar = document.querySelector('[data-score-bar="' + index + '"]');
+        bar.style.width = value * 10 + '%';
+        bar.style.background = value >= 7 ? 'var(--oliva)' : value >= 5 ? 'var(--dourado)' : '#DC2626';
+      });
+      const radar = document.getElementById('radar-chart');
+      if (radar) drawRadarChart(radar, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
+      document.getElementById('score-entry-feedback').textContent = 'Score salvo com a data escolhida.';
+      renderScoreHistory();
+    });
+  }
 
   // ── TAB 4: RISCO CARDIOVASCULAR ──
   const rv = p.riscoCV;
@@ -692,13 +1000,31 @@
           <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Prescrição Vigente — Medicamentos & Suplementos</h4>
           <p style="font-size:12px;color:var(--text-muted);">Monitoramento contínuo compartilhado com a paciente</p>
         </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        ${isDoctorView ? '<button class="btn btn-primary btn-sm" id="add-medication-btn" type="button">＋ Adicionar medicamento</button>' : ''}
         <div class="filter-chips" id="med-filter-chips">
-          <button class="filter-chip active" data-med-type="all">Todos (${p.medicamentos.length})</button>
+          <button class="filter-chip active" data-med-type="all">Todos (${patientMedications.length})</button>
           <button class="filter-chip" data-med-type="Medicamento">Medicamentos</button>
           <button class="filter-chip" data-med-type="Suplemento">Suplementos</button>
+          <button class="filter-chip" data-med-type="Anticoncepcional">Anticoncepcionais</button>
+        </div>
         </div>
       </div>
 
+      ${isDoctorView ? `<form id="medication-add-form" class="card" style="display:none;margin-bottom:16px;background:var(--bege);" novalidate>
+        <div class="form-grid">
+          <label class="form-group"><span class="form-label">Nome *</span><input class="form-input" id="med-name" required maxlength="100"></label>
+          <label class="form-group"><span class="form-label">Categoria</span><select class="form-select" id="med-type"><option>Medicamento</option><option>Suplemento</option><option>Anticoncepcional</option></select></label>
+          <label class="form-group"><span class="form-label">Dose</span><input class="form-input" id="med-dose" maxlength="60"></label>
+          <label class="form-group"><span class="form-label">Frequência</span><input class="form-input" id="med-frequency" maxlength="60"></label>
+          <label class="form-group"><span class="form-label">Início *</span><input class="form-input" id="med-start" type="date" required></label>
+          <label class="form-group"><span class="form-label">Indicação</span><input class="form-input" id="med-reason" maxlength="120"></label>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+          <button class="btn btn-subtle btn-sm" type="button" id="cancel-medication">Cancelar</button>
+          <button class="btn btn-primary btn-sm" type="submit">Salvar</button>
+        </div>
+      </form>` : ''}
       <div class="table-wrapper">
         <table class="data-table" id="med-table">
           <thead>
@@ -714,26 +1040,107 @@
               <th>Observações</th>
             </tr>
           </thead>
-          <tbody>
-            ${p.medicamentos.map(m => `
-              <tr data-type="${m.tipo}">
-                <td style="font-weight:600;color:var(--vinho);">${m.nome}</td>
-                <td><span class="badge ${m.tipo==='Medicamento'?'badge-vinho':'badge-oliva'}">${m.tipo}</span></td>
-                <td>${m.dose}</td>
-                <td>${m.freq}</td>
-                <td>${m.inicio}</td>
-                <td>${m.fim || 'Em uso'}</td>
-                <td style="color:var(--text-secondary);">${m.motivo}</td>
-                <td>
-                  ${m.receita ? `<a href="#" onclick="alert('Baixando receita: ${m.receita}');return false;" style="font-size:12px;color:var(--vinho);font-weight:600;">📥 Baixar</a>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}
-                </td>
-                <td style="color:var(--text-secondary);">${m.observacoes || '—'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
+          <tbody id="medication-table-body"></tbody>
         </table>
       </div>
     </div>`;
+
+  function escapeMedicationText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[char]);
+  }
+  function renderMedicationRows() {
+    document.getElementById('medication-table-body').innerHTML = patientMedications.map(m => `
+      <tr data-type="${escapeMedicationText(m.tipo)}">
+        <td style="font-weight:600;color:var(--vinho);">${escapeMedicationText(m.nome)}</td>
+        <td><span class="badge ${m.tipo==='Medicamento'?'badge-vinho':'badge-oliva'}">${escapeMedicationText(m.tipo)}</span></td>
+        <td>${escapeMedicationText(m.dose)}</td><td>${escapeMedicationText(m.freq)}</td>
+        <td>${escapeMedicationText(m.inicio)}</td><td>${escapeMedicationText(m.fim || 'Em uso')}</td>
+        <td style="color:var(--text-secondary);">${escapeMedicationText(m.motivo)}</td>
+        <td>${m.receita ? `<span style="font-size:12px;color:var(--vinho);font-weight:600;">📥 ${escapeMedicationText(m.receita)}</span>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}</td>
+        <td style="color:var(--text-secondary);">${escapeMedicationText(m.observacoes || '—')}</td>
+      </tr>`).join('');
+    const allFilter = document.querySelector('#med-filter-chips [data-med-type="all"]');
+    if (allFilter) allFilter.textContent = 'Todos (' + patientMedications.length + ')';
+  }
+  renderMedicationRows();
+
+  const addMedicationButton = document.getElementById('add-medication-btn');
+  if (addMedicationButton) {
+    const medicationForm = document.getElementById('medication-add-form');
+    try {
+      const clinicalSettings = JSON.parse(localStorage.getItem('lapidar-settings-v1') || '{}');
+      const catalog = Array.isArray(clinicalSettings.medicationCatalog) ? clinicalSettings.medicationCatalog : [];
+      const suggestions = document.createElement('datalist');
+      suggestions.id = 'medication-catalog-options';
+      const categories = new Set(['Medicamento', 'Suplemento', 'Anticoncepcional']);
+      catalog.forEach(entry => {
+        const parts = String(entry).split('|').map(value => value.trim());
+        if (!parts[0]) return;
+        const option = document.createElement('option');
+        option.value = parts[0];
+        suggestions.appendChild(option);
+        if (parts[1]) categories.add(parts[1]);
+      });
+      document.body.appendChild(suggestions);
+      document.getElementById('med-name').setAttribute('list', suggestions.id);
+      const typeSelect = document.getElementById('med-type');
+      categories.forEach(category => {
+        if (Array.from(typeSelect.options).some(option => option.value === category)) return;
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        typeSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Não foi possível carregar o catálogo de medicamentos.', error);
+    }
+    addMedicationButton.addEventListener('click', () => {
+      medicationForm.style.display = medicationForm.style.display === 'none' ? 'block' : 'none';
+      if (medicationForm.style.display !== 'none') {
+        document.getElementById('med-start').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('med-name').focus();
+      }
+    });
+    document.getElementById('cancel-medication').addEventListener('click', () => {
+      medicationForm.reset();
+      medicationForm.style.display = 'none';
+    });
+    medicationForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const name = document.getElementById('med-name').value.trim();
+      const startDate = document.getElementById('med-start').value;
+      if (!name || !startDate) {
+        alert('Informe o nome e a data de início.');
+        return;
+      }
+      const [year, month, day] = startDate.split('-');
+      patientMedications.push({
+        nome:name,
+        tipo:document.getElementById('med-type').value,
+        dose:document.getElementById('med-dose').value.trim(),
+        freq:document.getElementById('med-frequency').value.trim(),
+        inicio:day + '/' + month + '/' + year,
+        fim:'',
+        motivo:document.getElementById('med-reason').value.trim(),
+        receita:'',
+        observacoes:'',
+      });
+      try {
+        localStorage.setItem(patientMedicationKey, JSON.stringify(patientMedications));
+      } catch (error) {
+        patientMedications.pop();
+        console.error('Não foi possível salvar o medicamento da paciente.', error);
+        alert('Não foi possível salvar o medicamento neste navegador.');
+        return;
+      }
+      p.medicamentos = patientMedications;
+      renderMedicationRows();
+      medicationForm.reset();
+      medicationForm.style.display = 'none';
+    });
+  }
 
   // Attach med filter chips
   document.querySelectorAll('#med-filter-chips .filter-chip').forEach(chip => {
@@ -1035,7 +1442,7 @@
     </div>`;
 
   // ── TAB 8: TIMELINE ──
-  const tlColors = { 'Consulta':'#591B1C','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B' };
+  const tlColors = { 'Consulta':'#591B1C','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B','Diário':'#59633D' };
   function timelineDateValue(date) {
     const [day, month, year] = date.split('/').map(Number);
     return new Date(year, month - 1, day).getTime();
@@ -1066,7 +1473,27 @@
       dataUrl:file.dataUrl
     }
   })));
-  const sortedTimeline = (p.timeline || []).concat(fileTimeline)
+  let diaryTimeline = [];
+  try {
+    const diaryHistory = JSON.parse(localStorage.getItem('lapidar-diario-historico-' + p.id) || '{"events":[]}');
+    diaryTimeline = (Array.isArray(diaryHistory.events) ? diaryHistory.events : []).map(event => {
+      const eventDate = new Date(event.date + 'T12:00:00');
+      const formattedDate = eventDate.toLocaleDateString('pt-BR');
+      const changes = Array.isArray(event.changes) ? event.changes.map(change =>
+        typeof change === 'string' ? change : change.label + ': ' + change.detail
+      ) : [];
+      return {
+        tipo:event.type || 'Diário',
+        data:formattedDate,
+        icone:event.type === 'Score Lapidar' ? '◉' : '✦',
+        titulo:event.title || 'Atualização do Diário Lapidar',
+        desc:(event.time ? 'Atualizado às ' + event.time + '. ' : '') + (changes.length ? changes.join(' · ') : 'Check-in diário registrado.'),
+      };
+    });
+  } catch (error) {
+    console.error('Não foi possível carregar as alterações do diário para a timeline.', error);
+  }
+  const sortedTimeline = (p.timeline || []).concat(fileTimeline, diaryTimeline)
     .sort((a, b) => timelineDateValue(b.data) - timelineDateValue(a.data));
   const historyModal = document.createElement('div');
   historyModal.className = 'modal-overlay';

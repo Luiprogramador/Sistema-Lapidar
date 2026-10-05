@@ -461,11 +461,25 @@ table.data-table {
 }
 .patient-header-meta {
   font-size: var(--text-xs);
-  color: rgba(244,239,231,0.7);
+  color: rgba(244,239,231,0.78);
   margin-top: 2px;
   display: flex;
   gap: var(--space-3);
   flex-wrap: wrap;
+}
+.patient-header-lead {
+  color: rgba(244,239,231,0.96);
+  font-weight: 600;
+}
+.patient-header-objective {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(244,239,231,0.96);
+  line-height: 1.5;
+}
+.patient-header-objective strong {
+  color: var(--bege);
+  font-weight: 700;
 }
 .patient-header-stats {
   display: flex;

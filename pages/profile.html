@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu perfil — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter">
+  <div class="page-header">
+    <h1 class="page-title">Meu perfil</h1>
+    <p class="page-subtitle">Personalize as informações exibidas no seu espaço Lapidar.</p>
+  </div>
+  <section class="card" style="max-width:720px;">
+    <form id="profile-form">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap;">
+        <img id="profile-avatar-preview" alt="Foto do perfil" style="width:76px;height:76px;border-radius:50%;object-fit:cover;background:var(--bege);">
+        <label class="form-group" style="margin:0;flex:1;min-width:220px;">
+          <span class="form-label">Foto do perfil</span>
+          <input class="form-input" id="profile-avatar" type="file" accept="image/png,image/jpeg">
+          <span style="font-size:11px;color:var(--text-muted);">JPG ou PNG, até 500 KB. A imagem fica neste navegador.</span>
+        </label>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+        <label class="form-group"><span class="form-label">Nome</span><input class="form-input" id="profile-name" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">E-mail</span><input class="form-input" id="profile-email" type="email" maxlength="120"></label>
+        <label class="form-group"><span class="form-label">Telefone</span><input class="form-input" id="profile-phone" type="tel" maxlength="30"></label>
+        <label class="form-group"><span class="form-label">Como prefere ser chamada</span><input class="form-input" id="profile-display-name" maxlength="40"></label>
+      </div>
+      <label class="form-group" style="margin-top:12px;"><span class="form-label">Apresentação</span><textarea class="form-textarea" id="profile-bio" rows="4" maxlength="300" placeholder="Uma breve apresentação para sua equipe."></textarea></label>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:16px;">
+        <button class="btn btn-primary" type="submit">Salvar perfil</button>
+        <span id="profile-feedback" role="status" style="font-size:12px;color:var(--oliva);"></span>
+      </div>
+    </form>
+  </section>
+</main>
+<div id="bottombar-container"></div>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('profile');
+  const role = Router.getRole();
+  const key = 'lapidar-profile-' + role;
+  const defaults = {
+    doctor:{ name:'Dra. Andressa Gomide', email:'contato@clinicalapidar.com.br', phone:'', displayName:'Dra. Andressa', bio:'' },
+    secretary:{ name:'Gabi', email:'', phone:'', displayName:'Gabi', bio:'' },
+    patient:{ name:'Paciente', email:'', phone:'', displayName:'', bio:'' },
+    admin:{ name:'Administrador', email:'', phone:'', displayName:'Administração', bio:'' },
+  };
+  let profile = { ...defaults[role], avatar:'' };
+  try {
+    const stored = JSON.parse(localStorage.getItem(key) || 'null');
+    if (stored && typeof stored === 'object') profile = { ...profile, ...stored };
+  } catch (error) {
+    console.error('Não foi possível carregar o perfil salvo.', error);
+  }
+  const fields = {
+    name:'profile-name', email:'profile-email', phone:'profile-phone',
+    displayName:'profile-display-name', bio:'profile-bio',
+  };
+  Object.entries(fields).forEach(([keyName, id]) => {
+    document.getElementById(id).value = profile[keyName] || '';
+  });
+  const preview = document.getElementById('profile-avatar-preview');
+  preview.src = profile.avatar || '../assets/logo_lapidar_tp.png';
+  document.getElementById('profile-avatar').addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const feedback = document.getElementById('profile-feedback');
+    if (!/^image\/(png|jpeg)$/.test(file.type) || file.size > 500 * 1024) {
+      feedback.textContent = 'Escolha uma imagem JPG ou PNG de até 500 KB.';
+      event.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { profile.avatar = reader.result; preview.src = reader.result; };
+    reader.onerror = () => { feedback.textContent = 'Não foi possível ler a imagem selecionada.'; };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('profile-form').addEventListener('submit', event => {
+    event.preventDefault();
+    Object.entries(fields).forEach(([keyName, id]) => {
+      profile[keyName] = document.getElementById(id).value.trim();
+    });
+    try {
+      localStorage.setItem(key, JSON.stringify(profile));
+      document.getElementById('profile-feedback').textContent = 'Perfil salvo neste navegador.';
+    } catch (error) {
+      console.error('Não foi possível salvar o perfil.', error);
+      document.getElementById('profile-feedback').textContent = 'Não foi possível salvar. O armazenamento local pode estar cheio.';
+    }
+  });
+</script>
+</body>
+</html>

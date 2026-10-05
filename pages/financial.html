@@ -17,7 +17,7 @@
 <main class="main-content page-enter">
   <div class="page-header">
     <h1 class="page-title">Financeiro</h1>
-    <p class="page-subtitle" id="financial-subtitle">Receitas, pagamentos e pendências</p>
+    <p class="page-subtitle" id="financial-subtitle">Sua movimentação financeira e pendências</p>
   </div>
 
   <!-- Cards de resumo -->
@@ -54,7 +54,10 @@
   <!-- Filtros e tabela -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Transações</h3>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Transações</h3>
+        <button class="btn btn-primary btn-sm" id="btn-add-transaction" type="button" hidden>＋ Nova transação</button>
+      </div>
       <div class="filter-chips">
         <button class="filter-chip active" data-status="Todos">Todos</button>
         <button class="filter-chip" data-status="pago">Pagos</button>
@@ -83,6 +86,7 @@
             <th>Parcela</th>
             <th>Responsável</th>
             <th>Status</th>
+            <th id="transaction-actions-header" hidden>Ações</th>
           </tr>
         </thead>
         <tbody id="transactions-body"></tbody>
@@ -92,6 +96,29 @@
 </main>
 
 <div id="bottombar-container"></div>
+<div class="modal-overlay" id="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="transaction-modal-title">Nova transação</h2>
+      <button class="modal-close" id="close-transaction-modal" type="button" aria-label="Fechar">×</button>
+    </div>
+    <form id="transaction-form">
+      <div class="modal-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
+        <label class="form-group"><span class="form-label">Data</span><input class="form-input" type="date" id="tx-date" required></label>
+        <label class="form-group"><span class="form-label">Paciente / Referência</span><input class="form-input" id="tx-patient" required maxlength="100"></label>
+        <label class="form-group"><span class="form-label">Tipo</span><select class="form-select" id="tx-type"><option>Receita</option><option>Despesa</option></select></label>
+        <label class="form-group"><span class="form-label">Valor (R$)</span><input class="form-input" id="tx-value" type="number" min="0.01" step="0.01" required></label>
+        <label class="form-group"><span class="form-label">Origem</span><input class="form-input" id="tx-origin" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">Destino</span><input class="form-input" id="tx-destination" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">Plano / Categoria</span><input class="form-input" id="tx-plan" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">Parcela</span><input class="form-input" id="tx-installment" maxlength="20"></label>
+        <label class="form-group"><span class="form-label">Responsável</span><input class="form-input" id="tx-user" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">Status</span><select class="form-select" id="tx-status"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select></label>
+      </div>
+      <div class="modal-footer"><button class="btn btn-subtle" id="cancel-transaction" type="button">Cancelar</button><button class="btn btn-primary" type="submit">Salvar transação</button></div>
+    </form>
+  </div>
+</div>
 
 <script src="../js/data.js"></script>
 <script src="../js/charts.js"></script>
@@ -102,7 +129,26 @@
     Router.navigate('portal');
   } else {
   initShell('financial');
-  const isSecretaryView = Router.getRole() === 'secretary';
+  const currentRole = Router.getRole();
+  const isSecretaryView = currentRole === 'secretary';
+  const isAdminView = currentRole === 'admin';
+  const currentEmployee = currentRole === 'doctor' ? 'Dra. Andressa Gomide' : 'Secretaria';
+  let editingTransactionId = null;
+  let transactions = TRANSACOES.map((transaction, index) => ({ ...transaction, id:transaction.id || 'demo-' + index }));
+  try {
+    const savedTransactions = JSON.parse(localStorage.getItem('lapidar-transacoes') || 'null');
+    if (Array.isArray(savedTransactions)) transactions = savedTransactions;
+  } catch (error) {
+    console.error('Não foi possível carregar as transações locais.', error);
+  }
+  if (!isAdminView) {
+    transactions = transactions.filter(transaction => transaction.usuario === currentEmployee);
+    document.getElementById('financial-subtitle').textContent = isSecretaryView
+      ? 'Movimentações e pacientes vinculadas à médica atendida por esta secretária'
+      : 'Receitas e despesas vinculadas ao seu perfil profissional';
+  }
+  document.getElementById('btn-add-transaction').hidden = !isAdminView;
+  document.getElementById('transaction-actions-header').hidden = !isAdminView;
   if (isSecretaryView) {
     document.getElementById('financial-subtitle').textContent = 'Financeiro operacional · pagamentos e pendências';
     document.getElementById('finance-summary').hidden = true;
@@ -126,16 +172,18 @@
     return value.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
   }
 
-  const monthlyRevenue = TRANSACOES
+  const monthlyRevenue = transactions
     .filter(transaction => transaction.tipo === 'Receita' && transaction.data.endsWith('/09/2026'))
     .reduce((sum, transaction) => sum + transaction.valor, 0);
-  const receivedRevenue = TRANSACOES
+  const receivedRevenue = transactions
     .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pago')
     .reduce((sum, transaction) => sum + transaction.valor, 0);
-  const pendingRevenue = TRANSACOES
+  const pendingRevenue = transactions
     .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pendente')
     .reduce((sum, transaction) => sum + transaction.valor, 0);
-  const annualRevenue = receitaMensal.reduce((sum, month) => sum + month.value, 0);
+  const annualRevenue = isAdminView
+    ? receitaMensal.reduce((sum, month) => sum + month.value, 0)
+    : monthlyRevenue;
   document.getElementById('month-revenue').textContent = formatCurrency(monthlyRevenue);
   document.getElementById('received-total').textContent = formatCurrency(receivedRevenue);
   document.getElementById('pending-total').textContent = formatCurrency(pendingRevenue);
@@ -159,7 +207,7 @@
 
   filterFields.forEach(([elementId, field]) => {
     const select = document.getElementById(elementId);
-    const values = [...new Set(TRANSACOES.map(transaction => transaction[field]))].sort();
+    const values = [...new Set(transactions.map(transaction => transaction[field]))].sort();
     values.forEach(value => {
       const option = document.createElement('option');
       option.value = value;
@@ -180,7 +228,7 @@
     ]));
     const dateFrom = document.getElementById('filter-date-from').value;
     const dateTo = document.getElementById('filter-date-to').value;
-    const filtered = TRANSACOES.filter(transaction => {
+    const filtered = transactions.filter(transaction => {
       const date = getIsoDate(transaction.data);
       return (activeStatus === 'Todos' || transaction.status === activeStatus) &&
         Object.entries(filters).every(([field, value]) => !value || transaction[field] === value) &&
@@ -189,19 +237,81 @@
 
     document.getElementById('transactions-body').innerHTML = filtered.map(t => `
       <tr>
-        <td style="color:var(--text-muted);font-size:12px;">${t.data}</td>
-        <td>${t.paciente}</td>
-        <td>${t.origem}</td>
-        <td>${t.destino}</td>
+        <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(t.data)}</td>
+        <td>${escapeHTML(t.paciente)}</td>
+        <td>${escapeHTML(t.origem)}</td>
+        <td>${escapeHTML(t.destino)}</td>
         <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${t.tipo}</span></td>
-        <td>${getProtocolBadge(t.plano)}</td>
+        <td>${getProtocolBadge(escapeHTML(t.plano))}</td>
         <td style="font-weight:600;color:var(--vinho);">R$ ${t.valor.toLocaleString('pt-BR')}</td>
-        <td style="color:var(--text-muted);font-size:12px;">${t.parcelas}</td>
-        <td>${t.usuario}</td>
+        <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(t.parcelas)}</td>
+        <td>${escapeHTML(t.usuario)}</td>
         <td>${getStatusBadge(t.status)}</td>
+        ${isAdminView ? `<td><button class="btn btn-subtle btn-sm" type="button" data-edit-transaction="${escapeHTML(t.id)}">Editar</button></td>` : ''}
       </tr>
-    `).join('') || '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>';
+    `).join('') || `<tr><td colspan="${isAdminView ? 11 : 10}" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>`;
+    document.querySelectorAll('[data-edit-transaction]').forEach(button => {
+      button.addEventListener('click', () => openTransactionEditor(button.dataset.editTransaction));
+    });
   }
+
+  function escapeHTML(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, character => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+    }[character]));
+  }
+
+  function openTransactionEditor(id) {
+    const transaction = id ? transactions.find(item => String(item.id) === String(id)) : null;
+    editingTransactionId = transaction ? transaction.id : null;
+    document.getElementById('transaction-modal-title').textContent = transaction ? 'Editar transação' : 'Nova transação';
+    const [day, month, year] = (transaction ? transaction.data : new Date().toLocaleDateString('pt-BR')).split('/');
+    document.getElementById('tx-date').value = year + '-' + month + '-' + day;
+    document.getElementById('tx-patient').value = transaction ? transaction.paciente : '';
+    document.getElementById('tx-type').value = transaction ? transaction.tipo : 'Receita';
+    document.getElementById('tx-value').value = transaction ? transaction.valor : '';
+    document.getElementById('tx-origin').value = transaction ? transaction.origem : '';
+    document.getElementById('tx-destination').value = transaction ? transaction.destino : '';
+    document.getElementById('tx-plan').value = transaction ? transaction.plano : '';
+    document.getElementById('tx-installment').value = transaction ? transaction.parcelas : '';
+    document.getElementById('tx-user').value = transaction ? transaction.usuario : '';
+    document.getElementById('tx-status').value = transaction ? transaction.status : 'pago';
+    document.getElementById('transaction-modal').classList.add('open');
+  }
+  function closeTransactionEditor() {
+    document.getElementById('transaction-modal').classList.remove('open');
+  }
+  document.getElementById('btn-add-transaction').addEventListener('click', () => openTransactionEditor(null));
+  document.getElementById('close-transaction-modal').addEventListener('click', closeTransactionEditor);
+  document.getElementById('cancel-transaction').addEventListener('click', closeTransactionEditor);
+  document.getElementById('transaction-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!isAdminView) return;
+    const [year, month, day] = document.getElementById('tx-date').value.split('-');
+    const updated = {
+      id:editingTransactionId || 'tx-' + Date.now(),
+      data:day + '/' + month + '/' + year,
+      paciente:document.getElementById('tx-patient').value.trim(),
+      tipo:document.getElementById('tx-type').value,
+      valor:Number(document.getElementById('tx-value').value),
+      origem:document.getElementById('tx-origin').value.trim(),
+      destino:document.getElementById('tx-destination').value.trim(),
+      plano:document.getElementById('tx-plan').value.trim(),
+      parcelas:document.getElementById('tx-installment').value.trim() || '—',
+      usuario:document.getElementById('tx-user').value.trim(),
+      status:document.getElementById('tx-status').value,
+    };
+    const index = transactions.findIndex(item => String(item.id) === String(editingTransactionId));
+    if (index < 0) transactions.push(updated);
+    else transactions[index] = updated;
+    try {
+      localStorage.setItem('lapidar-transacoes', JSON.stringify(transactions));
+      location.reload();
+    } catch (error) {
+      console.error('Não foi possível salvar a transação.', error);
+      alert('Não foi possível salvar. O armazenamento local pode estar cheio.');
+    }
+  });
 
   document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
     btn.addEventListener('click', () => {

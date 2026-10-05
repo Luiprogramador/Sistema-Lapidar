@@ -251,6 +251,10 @@
       <div style="font-size:12px;color:rgba(244,239,231,0.7);margin-top:8px;" id="checkin-date-indicator">
         Preenchimento rápido · Associado à data e hora de registro
       </div>
+      <label id="diary-date-field" style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--bege);">
+        Data deste diário
+        <input type="date" class="form-input" id="diary-entry-date" style="width:auto;padding:6px 9px;">
+      </label>
     </div>
 
     <!-- Success Banner -->
@@ -546,10 +550,19 @@
   const p = Router.getSelectedPatient() || PACIENTES[0];
   const role = Router.getRole();
   const diaryStorageKey = 'lapidar-diario-' + p.id;
+  const diaryHistoryKey = 'lapidar-diario-historico-' + p.id;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const diaryDateInput = document.getElementById('diary-entry-date');
+  diaryDateInput.value = todayIso;
+  diaryDateInput.max = todayIso;
+  if (role !== 'patient') {
+    document.getElementById('diary-date-field').hidden = true;
+    diaryDateInput.disabled = true;
+  }
 
   // Header and back button
   document.getElementById('btn-back-patient').addEventListener('click', function() {
-    Router.navigate('patient-detail', { patientId: p.id });
+    Router.goBack('patient-detail', { patientId: p.id });
   });
   document.getElementById('back-label').textContent = role === 'patient' ? 'Voltar para Minha Ficha' : 'Voltar para ' + p.nome;
   document.getElementById('checkin-date-indicator').textContent = 
@@ -567,25 +580,70 @@
     document.getElementById('meta-agua-badge').textContent = 'Meta: ' + p.nutricaoMetas.agua;
   }
 
-  // Load saved daily state
-  function loadDailyData() {
-    try {
-      const raw = localStorage.getItem(diaryStorageKey);
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return p.diarioHoje || {
-      preenchido: false,
-      movimento: { musculacao: 'sim', cardio: 'nao_programado' },
-      nutricao: { proteina: 'atingi', fibras: 'atingi', agua: 'atingi' },
-      sono: { dormiu: '23:00', acordou: '06:30', duracao: '7h30', despertares: '1', qualidade: 8 },
-      bemEstar: { energia: 8, estresse: 3 },
-      metas: {},
-      sintomas40: { fogachos: 3, ressecamento: 2, irritabilidade: 2, nevoa: 2, libido: 7 },
-      observacoes: ''
+  function makeEmptyDailyData() {
+    return {
+      preenchido:false,
+      movimento:{ musculacao:'', cardio:'' },
+      nutricao:{ proteina:'', fibras:'', agua:'' },
+      sono:{ dormiu:'', acordou:'', duracao:'', despertares:'', qualidade:null },
+      bemEstar:{ energia:null, estresse:null },
+      metas:{},
+      sintomas40:{ fogachos:null, ressecamento:null, irritabilidade:null, nevoa:null, libido:null },
+      observacoes:'',
     };
   }
 
-  let currentData = loadDailyData();
+  function loadDiaryHistory() {
+    try {
+      const history = JSON.parse(localStorage.getItem(diaryHistoryKey) || '{"events":[]}');
+      return history && Array.isArray(history.events) ? history : { events:[] };
+    } catch (error) {
+      console.error('Não foi possível carregar o histórico do diário.', error);
+      return { events:[] };
+    }
+  }
+
+  function loadDailyData(dateIso) {
+    try {
+      const datedEntry = localStorage.getItem(diaryStorageKey + '-' + dateIso);
+      if (datedEntry) return JSON.parse(datedEntry);
+      if (dateIso === todayIso) {
+        const legacyEntry = localStorage.getItem(diaryStorageKey);
+        if (legacyEntry) return JSON.parse(legacyEntry);
+        return p.diarioHoje || makeEmptyDailyData();
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar os dados deste diário.', error);
+    }
+    return makeEmptyDailyData();
+  }
+
+  let currentData = loadDailyData(diaryDateInput.value);
+  let savedBaseline = JSON.stringify(currentData);
+
+  function formatDiaryDate(dateIso) {
+    const date = new Date(dateIso + 'T12:00:00');
+    return date.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  }
+  function escapeDiaryHTML(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+    }[char]));
+  }
+  function updateDiaryDateLabel() {
+    document.getElementById('checkin-date-indicator').textContent =
+      'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + formatDiaryDate(diaryDateInput.value);
+  }
+  updateDiaryDateLabel();
+  diaryDateInput.addEventListener('change', () => {
+    if (!diaryDateInput.value) return;
+    currentData = loadDailyData(diaryDateInput.value);
+    savedBaseline = JSON.stringify(currentData);
+    document.getElementById('success-banner').style.display = 'none';
+    updateDiaryDateLabel();
+    syncUIWithData();
+    updateSleepCalc();
+  });
 
   // Helper to build 0-10 interactive scales
   function buildScale(containerId, activeVal, onChange) {
@@ -751,15 +809,63 @@
   // Save check-in
   document.getElementById('btn-salvar-checkin').addEventListener('click', () => {
     currentData.preenchido = true;
-    currentData.data = new Date().toLocaleDateString('pt-BR');
+    currentData.data = formatDiaryDate(diaryDateInput.value);
     currentData.horario = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     currentData.sono.dormiu = document.getElementById('sleep-start').value;
     currentData.sono.acordou = document.getElementById('sleep-end').value;
     currentData.observacoes = document.getElementById('observacoes-input').value;
 
+    const previousData = JSON.parse(savedBaseline);
+    const changedFields = Object.keys({
+      movimento:true, nutricao:true, sono:true, bemEstar:true, metas:true, sintomas40:true, observacoes:true,
+    }).filter(key =>
+      JSON.stringify(previousData[key]) !== JSON.stringify(currentData[key])
+    );
+    const diaryFieldLabels = {
+      movimento:'Movimento',
+      nutricao:'Nutrição e hidratação',
+      sono:'Sono e descanso',
+      bemEstar:'Bem-estar',
+      metas:'Metas personalizadas',
+      sintomas40:'Sintomas Lapidar 40+',
+      observacoes:'Observações do dia',
+    };
+    const formatChoice = value => ({
+      sim:'Sim', nao:'Não', nao_programado:'Não programado',
+      atingi:'Atingi', parcialmente:'Parcialmente', nao_atingi:'Não atingi',
+    }[value] || value || 'Não informado');
+    const changeDetails = {
+      movimento:() => 'Musculação: ' + formatChoice(currentData.movimento.musculacao) + '; cardio: ' + formatChoice(currentData.movimento.cardio),
+      nutricao:() => 'Proteína: ' + formatChoice(currentData.nutricao.proteina) + '; fibras: ' + formatChoice(currentData.nutricao.fibras) + '; água: ' + formatChoice(currentData.nutricao.agua),
+      sono:() => 'Dormiu ' + (currentData.sono.dormiu || '—') + ', acordou ' + (currentData.sono.acordou || '—') + '; qualidade: ' + (currentData.sono.qualidade == null ? '—' : currentData.sono.qualidade + '/10'),
+      bemEstar:() => 'Energia: ' + (currentData.bemEstar.energia == null ? '—' : currentData.bemEstar.energia + '/10') + '; estresse: ' + (currentData.bemEstar.estresse == null ? '—' : currentData.bemEstar.estresse + '/10'),
+      metas:() => Object.entries(currentData.metas || {}).map(([name, value]) => name + ': ' + formatChoice(value)).join('; ') || 'Metas atualizadas',
+      sintomas40:() => Object.entries(currentData.sintomas40 || {}).map(([name, value]) => name + ': ' + (value == null ? '—' : value + '/10')).join('; ') || 'Sintomas atualizados',
+      observacoes:() => currentData.observacoes || 'Observação removida',
+    };
+    const changeRecords = changedFields.map(key => ({
+      label:diaryFieldLabels[key],
+      detail:changeDetails[key](),
+    }));
+    const history = loadDiaryHistory();
+    const event = {
+      id:String(Date.now()),
+      date:diaryDateInput.value,
+      time:currentData.horario,
+      changes:changeRecords,
+      snapshot:JSON.parse(JSON.stringify(currentData)),
+    };
+    history.events.push(event);
     try {
-      localStorage.setItem(diaryStorageKey, JSON.stringify(currentData));
-    } catch(e) {}
+      localStorage.setItem(diaryStorageKey + '-' + diaryDateInput.value, JSON.stringify(currentData));
+      localStorage.setItem(diaryHistoryKey, JSON.stringify(history));
+      if (diaryDateInput.value === todayIso) localStorage.setItem(diaryStorageKey, JSON.stringify(currentData));
+    } catch (error) {
+      console.error('Não foi possível salvar o check-in e seu histórico.', error);
+      alert('Não foi possível salvar o diário neste navegador. Verifique o espaço disponível.');
+      return;
+    }
+    savedBaseline = JSON.stringify(currentData);
 
     // Show success banner
     const banner = document.getElementById('success-banner');
@@ -771,6 +877,9 @@
     document.getElementById('goal-celebration').textContent = completedGoals.length
       ? 'Meta da semana concluída: ' + completedGoals.map(goal => goal.nome).join(', ') + '. Comemore essa conquista!'
       : 'Parabéns pela constância! Cada passo diário fortalece a sua transformação.';
+    document.getElementById('goal-celebration').textContent += changedFields.length
+      ? ' Alterações de hoje: ' + event.changes.map(change => change.label).join(', ') + '.'
+      : ' Diário salvo sem alterações nos campos.';
     banner.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -793,6 +902,7 @@
   });
 
   // Render Evolução
+  let activeHistoryPeriod = '7';
   function renderEvolucaoView() {
     const goals = p.metasPersonalizadas || [];
     const container = document.getElementById('weekly-goals-progress');
@@ -811,27 +921,43 @@
     }).join('');
 
     const list = document.getElementById('recent-logs-list');
-    const logs = [
-      { data: 'Hoje (29/09)', treinos: 'Musculação ✓', sono: '7h30 (Nota 8/10)', nutri: '100% das metas batidas', obs: currentData.observacoes || 'Excelente adesão.' },
-      { data: 'Ontem (28/09)', treinos: 'Cardio zona 2 ✓', sono: '8h00 (Nota 9/10)', nutri: 'Proteína e água atingidas', obs: 'Caminhada matinal ao ar livre.' },
-      { data: '27/09/2026', treinos: 'Musculação ✓', sono: '7h15 (Nota 7/10)', nutri: 'Parcial (refeição livre)', obs: 'Jantar comemorativo em família.' },
-      { data: '26/09/2026', treinos: 'Descanso programado', sono: '7h45 (Nota 8/10)', nutri: '100% das metas batidas', obs: 'Dia tranquilo, boa energia.' }
-    ];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - (activeHistoryPeriod === 'all' ? 100000 : Number(activeHistoryPeriod)));
+    const logs = loadDiaryHistory().events
+      .filter(entry => activeHistoryPeriod === 'all' || new Date(entry.date + 'T23:59:59') >= cutoff)
+      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
-    list.innerHTML = logs.map(l => `
+    list.innerHTML = logs.length ? logs.map(entry => {
+      const snapshot = entry.snapshot || {};
+      const movement = snapshot.movimento || {};
+      const sleep = snapshot.sono || {};
+      const nutrition = snapshot.nutricao || {};
+      const nutritionSummary = ['proteina','fibras','agua']
+        .filter(key => nutrition[key] === 'atingi').length + '/3 metas atingidas';
+      return `
       <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bege);">
         <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;color:var(--vinho);margin-bottom:4px;">
-          <span>${l.data}</span>
-          <span style="color:var(--oliva);font-size:12px;">${l.treinos}</span>
+          <span>${escapeDiaryHTML(formatDiaryDate(entry.date))} · ${escapeDiaryHTML(entry.time || '')}</span>
+          <span style="color:var(--oliva);font-size:12px;">${movement.musculacao === 'sim' ? 'Musculação ✓' : movement.cardio === 'sim' ? 'Cardio ✓' : 'Diário registrado'}</span>
         </div>
         <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px;">
-          <span>🌙 Sono: ${l.sono}</span>
-          <span>🥗 Nutrição: ${l.nutri}</span>
+          <span>🌙 Sono: ${escapeDiaryHTML(sleep.duracao || 'Não informado')}${sleep.qualidade != null ? ' (Nota ' + escapeDiaryHTML(sleep.qualidade) + '/10)' : ''}</span>
+          <span>🥗 Nutrição: ${nutritionSummary}</span>
         </div>
-        <div style="font-size:11.5px;color:var(--text-muted);font-style:italic;">"${l.obs}"</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Alterações: ${entry.changes && entry.changes.length ? entry.changes.map(change => typeof change === 'string' ? escapeDiaryHTML(change) : escapeDiaryHTML(change.label) + ' — ' + escapeDiaryHTML(change.detail)).join(' · ') : 'Check-in registrado'}</div>
+        ${snapshot.observacoes ? `<div style="font-size:11.5px;color:var(--text-muted);font-style:italic;">"${escapeDiaryHTML(snapshot.observacoes)}"</div>` : ''}
       </div>
-    `).join('');
+    `;
+    }).join('') : '<div class="empty-state" style="padding:20px;"><p>Nenhum diário salvo neste período. Os registros aparecerão aqui após o primeiro salvamento.</p></div>';
   }
+  document.querySelectorAll('.period-filter-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.period-filter-btn').forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      activeHistoryPeriod = button.dataset.period;
+      renderEvolucaoView();
+    });
+  });
 
   // Init
   initChoiceGroups();
