@@ -88,6 +88,29 @@
     .toggle-switch input:checked + .toggle-track::after { left: 23px; }
     .exam-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media (max-width: 560px) { .exam-form-grid { grid-template-columns:1fr; } }
+    #tabs-nav {
+      width:100%;
+      min-width:0;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+      scroll-behavior:smooth;
+      cursor:grab;
+      user-select:none;
+    }
+    #tabs-nav.is-dragging { cursor:grabbing; scroll-behavior:auto; }
+    #tabs-nav .tab-item { flex:0 0 auto; }
+    #analysis-actions {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    @media (max-width: 560px) {
+      #analysis-actions { width:100%; }
+      #analysis-actions .btn { flex:1 1 150px; }
+    }
     @media (max-width: 768px) {
       .exam-row, .exam-header { grid-template-columns: minmax(90px, 1fr) 54px 54px 80px; }
       .exam-row .exam-goal, .exam-header .exam-goal-h,
@@ -197,7 +220,7 @@
           <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Análises em Consulta</h3>
           <p style="font-size:11px;color:var(--text-muted);">Publicado para a paciente ver no portal</p>
         </div>
-        <div style="display:flex;gap:8px;" id="analysis-actions">
+        <div id="analysis-actions">
           <button class="btn btn-subtle btn-sm" id="btn-load-draft">Carregar Rascunho</button>
           <button class="btn btn-primary btn-sm" id="btn-publish">Publicar para Paciente</button>
         </div>
@@ -557,12 +580,55 @@
   });
 
   // ── Tabs ──
+  var tabsNav = document.getElementById('tabs-nav');
+  var tabsDrag = null;
+  var suppressTabClick = false;
+  tabsNav.addEventListener('pointerdown', function(event) {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    tabsDrag = {
+      pointerId:event.pointerId,
+      startX:event.clientX,
+      startScrollLeft:tabsNav.scrollLeft,
+      moved:false
+    };
+    document.addEventListener('pointermove', moveTabsWithPointer);
+    document.addEventListener('pointerup', stopTabsPointerDrag);
+    document.addEventListener('pointercancel', stopTabsPointerDrag);
+  });
+  function moveTabsWithPointer(event) {
+    if (!tabsDrag || event.pointerId !== tabsDrag.pointerId) return;
+    var distance = event.clientX - tabsDrag.startX;
+    if (!tabsDrag.moved && Math.abs(distance) > 4) {
+      tabsDrag.moved = true;
+      tabsNav.classList.add('is-dragging');
+    }
+    if (tabsDrag.moved) {
+      tabsNav.scrollLeft = tabsDrag.startScrollLeft - distance;
+      event.preventDefault();
+    }
+  }
+  function stopTabsPointerDrag(event) {
+    if (!tabsDrag || event.pointerId !== tabsDrag.pointerId) return;
+    suppressTabClick = tabsDrag.moved;
+    tabsNav.classList.remove('is-dragging');
+    tabsDrag = null;
+    document.removeEventListener('pointermove', moveTabsWithPointer);
+    document.removeEventListener('pointerup', stopTabsPointerDrag);
+    document.removeEventListener('pointercancel', stopTabsPointerDrag);
+    if (suppressTabClick) setTimeout(function() { suppressTabClick = false; }, 0);
+  }
+  tabsNav.addEventListener('click', function(event) {
+    if (!suppressTabClick) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
   document.querySelectorAll('.tab-item').forEach(function(btn) {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.tab-item').forEach(function(b) { b.classList.remove('active'); });
       document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      btn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'nearest' });
     });
   });
   }

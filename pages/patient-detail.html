@@ -96,6 +96,40 @@
       border-top: 1px solid var(--border);
       padding-top: 8px;
     }
+    .timeline-event-button {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+    }
+    .timeline-event-button:hover .timeline-title,
+    .timeline-event-button:focus-visible .timeline-title {
+      color: var(--vinho);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .timeline-event-button:focus-visible {
+      outline: 2px solid var(--dourado);
+      outline-offset: 3px;
+    }
+    #tabs-nav {
+      width: 100%;
+      min-width: 0;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      cursor: grab;
+      user-select: none;
+    }
+    #tabs-nav.is-dragging { cursor: grabbing; scroll-behavior: auto; }
+    #tabs-nav .tab-item {
+      flex: 0 0 auto;
+    }
 
     /* Print report styles */
     @media print {
@@ -819,7 +853,7 @@
     const typeFilter = document.getElementById('file-type-filter');
     typeFilter.options[0].textContent = 'Todos os tipos (' + allFiles.length + ')';
     fileGrid.innerHTML = allFiles.map(f => `
-        <div class="file-card" data-tipo="${f.tipo}" data-origem="${f.origem}">
+        <div class="file-card" data-file-id="${escapeFileText(f.id)}" data-tipo="${escapeFileText(f.tipo)}" data-origem="${escapeFileText(f.origem)}">
           <div class="file-card-preview">
             <span>${escapeFileText(f.icon)}</span>
           </div>
@@ -855,7 +889,16 @@
     });
     fileGrid.querySelectorAll('[data-file-title]').forEach(button => {
       button.addEventListener('click', function() {
-        alert('Visualizando arquivo: ' + button.dataset.fileTitle);
+        const fileCard = button.closest('.file-card');
+        const file = allFiles.find(item => String(item.id) === fileCard.dataset.fileId);
+        if (file) openHistoryDetails({
+          title:file.titulo,
+          type:file.tipo,
+          date:file.data,
+          description:file.desc,
+          file:file,
+          fileRecord:true
+        });
       });
     });
     filterFiles();
@@ -997,25 +1040,172 @@
     const [day, month, year] = date.split('/').map(Number);
     return new Date(year, month - 1, day).getTime();
   }
-  const sortedTimeline = (p.timeline || []).slice().sort((a, b) => timelineDateValue(b.data) - timelineDateValue(a.data));
+  const fileTimeline = (arquivos || []).map(file => ({
+    tipo:'Arquivo',
+    data:file.data,
+    icone:file.icon || '📄',
+    titulo:file.titulo,
+    desc:file.desc || file.tipo,
+    arquivo:file
+  })).concat(externalFiles.map(file => ({
+    tipo:'Arquivo',
+    data:file.data,
+    icone:file.tipo.indexOf('Cardiograma') >= 0 ? '💓' : '📄',
+    titulo:file.titulo,
+    desc:file.desc || file.tipo,
+    arquivo:{
+      id:file.id,
+      titulo:file.titulo,
+      tipo:'Exames',
+      data:file.data,
+      origem:isPatientView ? 'Enviado' : 'Recebido',
+      tamanho:formatFileSize(file.size),
+      icon:file.tipo.indexOf('Cardiograma') >= 0 ? '💓' : '📄',
+      desc:file.desc || file.tipo,
+      externalFile:true,
+      dataUrl:file.dataUrl
+    }
+  })));
+  const sortedTimeline = (p.timeline || []).concat(fileTimeline)
+    .sort((a, b) => timelineDateValue(b.data) - timelineDateValue(a.data));
+  const historyModal = document.createElement('div');
+  historyModal.className = 'modal-overlay';
+  historyModal.id = 'history-detail-modal';
+  historyModal.setAttribute('role', 'dialog');
+  historyModal.setAttribute('aria-modal', 'true');
+  historyModal.setAttribute('aria-labelledby', 'history-modal-title');
+  historyModal.innerHTML = `
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <span class="modal-title" id="history-modal-title"></span>
+        <button class="modal-close" type="button" id="history-modal-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+          <span class="badge badge-gray" id="history-modal-type"></span>
+          <span style="font-size:12px;color:var(--text-muted);" id="history-modal-date"></span>
+        </div>
+        <p id="history-modal-description" style="font-size:13px;color:var(--text-secondary);line-height:1.6;"></p>
+        <p id="history-modal-file-meta" style="font-size:11px;color:var(--text-muted);margin-top:12px;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-subtle" type="button" id="history-modal-dismiss">Fechar</button>
+        <button class="btn btn-primary" type="button" id="history-modal-action"></button>
+      </div>
+    </div>`;
+  document.body.appendChild(historyModal);
+  let currentHistoryItem = null;
+  let lastHistoryTrigger = null;
+  function closeHistoryDetails() {
+    historyModal.classList.remove('open');
+    if (lastHistoryTrigger) lastHistoryTrigger.focus();
+  }
+  function openHistoryDetails(item, trigger) {
+    currentHistoryItem = item;
+    lastHistoryTrigger = trigger || document.activeElement;
+    document.getElementById('history-modal-title').textContent = item.title || 'Histórico da paciente';
+    document.getElementById('history-modal-type').textContent = item.type || 'Atividade';
+    document.getElementById('history-modal-date').textContent = item.date || '';
+    document.getElementById('history-modal-description').textContent = item.description || 'Sem detalhes adicionais.';
+    const fileMeta = document.getElementById('history-modal-file-meta');
+    fileMeta.textContent = item.file
+      ? [item.file.origem, item.file.tamanho].filter(Boolean).join(' · ')
+      : '';
+    const action = document.getElementById('history-modal-action');
+    if (item.fileRecord) {
+      action.textContent = item.file && item.file.externalFile ? 'Abrir arquivo' : 'Abrir biblioteca de arquivos';
+    } else if (item.type === 'Exame') {
+      action.textContent = 'Ver arquivos de exames';
+    } else if (item.type === 'Consulta') {
+      action.textContent = 'Ver painel clínico';
+    } else {
+      action.textContent = 'Ver Diário e Hábitos';
+    }
+    historyModal.classList.add('open');
+    document.getElementById('history-modal-close').focus();
+  }
+  function activatePatientTab(tabName) {
+    closeHistoryDetails();
+    const tab = document.querySelector('#tabs-nav .tab-item[data-tab="' + tabName + '"]');
+    if (tab && !tab.hidden) tab.click();
+  }
+  document.getElementById('history-modal-close').addEventListener('click', closeHistoryDetails);
+  document.getElementById('history-modal-dismiss').addEventListener('click', closeHistoryDetails);
+  historyModal.addEventListener('click', function(event) {
+    if (event.target === historyModal) closeHistoryDetails();
+  });
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && historyModal.classList.contains('open')) closeHistoryDetails();
+  });
+  document.getElementById('history-modal-action').addEventListener('click', function() {
+    if (!currentHistoryItem) return;
+    if (currentHistoryItem.fileRecord && currentHistoryItem.file && currentHistoryItem.file.externalFile) {
+      if (!currentHistoryItem.file.dataUrl) {
+        alert('O conteúdo deste arquivo não está disponível neste navegador.');
+        return;
+      }
+      window.open(currentHistoryItem.file.dataUrl, '_blank', 'noopener');
+      closeHistoryDetails();
+      return;
+    }
+    if (currentHistoryItem.fileRecord || currentHistoryItem.type === 'Exame') {
+      activatePatientTab('arquivos');
+      if (currentHistoryItem.fileRecord && currentHistoryItem.file) {
+        document.getElementById('file-type-filter').value = currentHistoryItem.file.tipo === 'Exames' ? 'Exames' : '';
+        document.getElementById('file-origin-filter').value = currentHistoryItem.file.origem || '';
+        filterFiles();
+        const card = fileGrid.querySelector('[data-file-id="' + CSS.escape(String(currentHistoryItem.file.id)) + '"]');
+        if (card) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      } else {
+        document.getElementById('file-type-filter').value = 'Exames';
+        filterFiles();
+      }
+      return;
+    }
+    activatePatientTab(currentHistoryItem.type === 'Consulta' ? 'painel' : 'diario');
+  });
+
   document.getElementById('tab-timeline').innerHTML = `
     <div class="timeline">
-      ${sortedTimeline.map(ev => `
+      ${sortedTimeline.map((ev, index) => `
         <div class="timeline-item">
           <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#78685A'}22;color:${tlColors[ev.tipo]||'#78685A'};">
-            <span style="font-size:18px;">${ev.icone}</span>
+            <span style="font-size:18px;">${escapeFileText(ev.icone)}</span>
           </div>
           <div class="timeline-content">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span class="timeline-title">${ev.titulo}</span>
-              <span class="badge badge-gray">${ev.tipo}</span>
+              <button type="button" class="timeline-event-button timeline-title" data-history-index="${index}">${escapeFileText(ev.titulo)}</button>
+              <span class="badge badge-gray">${escapeFileText(ev.tipo)}</span>
             </div>
-            <div class="timeline-date">${ev.data}</div>
-            <div class="timeline-body">${ev.desc}</div>
+            <div class="timeline-date">${escapeFileText(ev.data)}</div>
+            <div class="timeline-body">${escapeFileText(ev.desc)}</div>
+            <button type="button" class="btn btn-subtle btn-sm timeline-event-button" data-history-index="${index}" style="margin-top:8px;padding:4px 9px;font-size:11px;">Ver detalhes →</button>
           </div>
         </div>
       `).join('')}
     </div>`;
+  document.querySelectorAll('#tab-timeline [data-history-index]').forEach(button => {
+    button.addEventListener('click', function() {
+      const event = sortedTimeline[Number(button.dataset.historyIndex)];
+      if (event.arquivo) {
+        openHistoryDetails({
+          title:event.titulo,
+          type:event.tipo + ' · ' + (event.arquivo.tipo || 'Arquivo'),
+          date:event.data,
+          description:event.desc,
+          file:event.arquivo,
+          fileRecord:true
+        }, button);
+        return;
+      }
+      openHistoryDetails({
+        title:event.titulo,
+        type:event.tipo,
+        date:event.data,
+        description:event.desc
+      }, button);
+    });
+  });
 
   // Draw initial sparklines & radar
   setTimeout(() => {
@@ -1028,12 +1218,53 @@
   }, 100);
 
   // ── Tabs switching logic ──
+  const tabsNav = document.getElementById('tabs-nav');
+  let tabsDrag = null;
+  let suppressTabClick = false;
+  tabsNav.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    tabsDrag = { pointerId:event.pointerId, startX:event.clientX, startScrollLeft:tabsNav.scrollLeft, moved:false };
+    document.addEventListener('pointermove', moveTabsWithPointer);
+    document.addEventListener('pointerup', stopTabsPointerDrag);
+    document.addEventListener('pointercancel', stopTabsPointerDrag);
+  });
+  function moveTabsWithPointer(event) {
+    if (!tabsDrag || event.pointerId !== tabsDrag.pointerId) return;
+    const distance = event.clientX - tabsDrag.startX;
+    if (!tabsDrag.moved && Math.abs(distance) > 4) {
+      tabsDrag.moved = true;
+      tabsNav.classList.add('is-dragging');
+    }
+    if (tabsDrag.moved) {
+      tabsNav.scrollLeft = tabsDrag.startScrollLeft - distance;
+      event.preventDefault();
+    }
+  }
+  function stopTabsPointerDrag(event) {
+    if (!tabsDrag || event.pointerId !== tabsDrag.pointerId) return;
+    suppressTabClick = tabsDrag.moved;
+    tabsNav.classList.remove('is-dragging');
+    tabsDrag = null;
+    document.removeEventListener('pointermove', moveTabsWithPointer);
+    document.removeEventListener('pointerup', stopTabsPointerDrag);
+    document.removeEventListener('pointercancel', stopTabsPointerDrag);
+    if (suppressTabClick) {
+      setTimeout(() => { suppressTabClick = false; }, 0);
+    }
+  }
+  tabsNav.addEventListener('click', event => {
+    if (!suppressTabClick) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
   document.querySelectorAll('#tabs-nav .tab-item').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#tabs-nav .tab-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      btn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'nearest' });
 
       if (btn.dataset.tab === 'bio') {
         setTimeout(() => {
