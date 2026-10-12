@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .exam-row {
       display: grid;
@@ -134,21 +135,35 @@
       <p class="page-subtitle" id="consult-subtitle"></p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-subtle btn-sm" id="btn-open-record" type="button">Abrir ficha</button>
       <button class="btn btn-subtle btn-sm" id="btn-jornada" onclick="Router.navigate('journey',{patientId:Router.getState().patientId})">Ver Jornada</button>
-      <button class="btn btn-primary btn-sm" id="btn-finalizar">Finalizar Consulta</button>
+      <button class="btn btn-subtle btn-sm" id="btn-edit-consult" type="button">Editar consulta</button>
+      <button class="btn btn-primary btn-sm" id="btn-finalizar">Concluir consulta</button>
     </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs" id="tabs-nav">
-    <button class="tab-item active" data-tab="checklist">Checklist</button>
+    <button class="tab-item active" data-tab="detalhes">Detalhes</button>
+    <button class="tab-item" data-tab="checklist">Checklist</button>
     <button class="tab-item" data-tab="exames">Exames</button>
     <button class="tab-item" data-tab="anotacoes">Anotações</button>
-    <button class="tab-item" data-tab="analises">Análises em Consulta</button>
+    <button class="tab-item" data-tab="analises">Análises</button>
+  </div>
+
+  <div id="consult-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 16px;"></div>
+
+  <!-- Tab: Detalhes -->
+  <div class="tab-content active" id="tab-detalhes">
+    <div class="card">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Detalhes da consulta</h3>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;" id="details-subtitle"></p>
+      <dl id="details-lines" style="display:grid;grid-template-columns:minmax(120px,180px) 1fr;gap:10px 16px;font-size:13px;"></dl>
+    </div>
   </div>
 
   <!-- Tab: Checklist -->
-  <div class="tab-content active" id="tab-checklist">
+  <div class="tab-content" id="tab-checklist">
     <div class="card" style="margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Checklist da Consulta</h3>
@@ -187,21 +202,11 @@
   <div class="tab-content" id="tab-anotacoes">
     <div class="grid-responsive-2" style="gap:16px;">
       <div class="card" id="private-notes-card">
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Anotações Privadas</h3>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Visíveis apenas para a médica — não aparecem para a paciente</p>
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Anotações da consulta</h3>
         <textarea class="form-textarea" id="private-notes" style="min-height:200px;"></textarea>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
           <span style="font-size:11px;color:var(--text-muted);" id="private-saved"></span>
           <button class="btn btn-primary btn-sm" id="save-private">Salvar</button>
-        </div>
-      </div>
-      <div class="card" id="public-plan-card">
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Plano até Próximo Contato</h3>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Resumo que será compartilhado com a paciente nas Análises</p>
-        <textarea class="form-textarea" id="public-draft" style="min-height:200px;"></textarea>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-          <span style="font-size:11px;color:var(--text-muted);" id="draft-saved"></span>
-          <button class="btn btn-ghost btn-sm" id="save-draft">Salvar Rascunho</button>
         </div>
       </div>
     </div>
@@ -212,19 +217,48 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
         <div>
-          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Análises em Consulta</h3>
-          <p style="font-size:11px;color:var(--text-muted);">Publicado para a paciente ver no portal</p>
+          <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Análise e plano até o próximo contato</h3>
+          <p style="font-size:11px;color:var(--text-muted);">Uma mensagem única para compartilhar com a paciente.</p>
         </div>
         <div id="analysis-actions">
-          <button class="btn btn-subtle btn-sm" id="btn-load-draft">Carregar Rascunho</button>
+          <button class="btn btn-subtle btn-sm" id="btn-load-draft">Recuperar rascunho</button>
+          <button class="btn btn-subtle btn-sm" id="btn-save-analysis-draft">Salvar rascunho</button>
           <button class="btn btn-primary btn-sm" id="btn-publish">Publicar para Paciente</button>
         </div>
       </div>
       <div id="published-info" style="display:none;margin:12px 0;padding:10px;background:var(--green-bg);border-radius:var(--radius);font-size:12px;color:var(--green-text);"></div>
-      <textarea class="form-textarea" id="analysis-draft" style="min-height:240px;margin-top:16px;" placeholder="Escreva aqui as análises da consulta para compartilhar com a paciente..."></textarea>
+      <textarea class="form-textarea" id="analysis-draft" style="min-height:240px;margin-top:16px;" placeholder="Registre a análise da consulta, as orientações e o plano até o próximo contato..."></textarea>
+      <p id="analysis-save-feedback" role="status" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></p>
+      <section style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);" aria-labelledby="exam-analysis-title">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+          <div>
+            <h4 id="exam-analysis-title" style="font-size:13px;font-weight:600;color:var(--vinho);">Análises de exames recebidos</h4>
+            <p id="exam-analysis-hint" style="font-size:11px;color:var(--text-muted);">Registre resultados somente de exames recebidos nesta consulta.</p>
+          </div>
+          <button class="btn btn-subtle btn-sm" type="button" id="btn-add-exam-analysis">Adicionar análise de exame</button>
+        </div>
+        <form id="exam-analysis-form" hidden novalidate>
+          <div class="form-grid">
+            <label class="form-group"><span class="form-label">Exame recebido *</span><select class="form-select" id="exam-analysis-exam" required></select></label>
+            <label class="form-group"><span class="form-label">Data do resultado *</span><input class="form-input" id="exam-analysis-date" type="date" required></label>
+            <label class="form-group"><span class="form-label">Objetivo / referência</span><input class="form-input" id="exam-analysis-objective" maxlength="160"></label>
+            <label class="form-group"><span class="form-label">Tipo de análise *</span><select class="form-select" id="exam-analysis-type" required><option value="laboratorial">Laboratorial</option><option value="bioimpedancia">Bioimpedância</option><option value="imagem">Imagem / ecografia</option></select></label>
+            <label class="form-group"><span class="form-label">Situação do resultado *</span><select class="form-select" id="exam-analysis-status" required><option value="">Selecionar</option><option value="ok">✓ Dentro da meta</option><option value="attention">⚠ Atenção</option><option value="out">● Fora da meta</option></select></label>
+            <div class="form-group" id="exam-analysis-typed-fields" style="grid-column:1/-1;"></div>
+            <input id="exam-analysis-result" type="hidden">
+            <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Interpretação e observações clínicas</span><textarea class="form-textarea" id="exam-analysis-notes" rows="3" maxlength="1200"></textarea></label>
+          </div>
+          <p id="exam-analysis-error" role="alert" hidden style="font-size:12px;color:var(--red-text);margin-top:8px;"></p>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;"><button class="btn btn-subtle btn-sm" type="button" id="cancel-exam-analysis">Cancelar</button><button class="btn btn-primary btn-sm" type="submit">Salvar análise</button></div>
+        </form>
+        <div id="exam-analyses-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;"></div>
+      </section>
       <div id="analysis-file-uploader" style="margin-top:14px;">
-        <label class="form-label" for="analysis-files">Arquivos da análise (relatório, PDF ou imagem)</label>
-        <input class="form-input" id="analysis-files" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="form-label" style="margin:0;">Arquivos da análise</span>
+          <button class="btn btn-subtle btn-sm" type="button" id="btn-analysis-upload">Enviar arquivo</button>
+        </div>
+        <input class="form-input" id="analysis-files" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple hidden>
         <div id="analysis-files-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
         <p id="analysis-files-feedback" role="status" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></p>
       </div>
@@ -232,7 +266,30 @@
   </div>
 </main>
 
-<div id="bottombar-container"></div>
+
+<div class="modal-overlay" id="modal-edit-consult" role="dialog" aria-modal="true" aria-labelledby="edit-consult-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="edit-consult-title">Editar consulta</span>
+      <button class="modal-close" type="button" data-close-edit aria-label="Fechar">&times;</button>
+    </div>
+    <form id="edit-consult-form">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label" for="edit-consult-date">Data</label><input class="form-input" type="date" id="edit-consult-date" required></div>
+          <div class="form-group"><label class="form-label" for="edit-consult-time">Horário</label><input class="form-input" type="time" id="edit-consult-time" required></div>
+          <div class="form-group" style="grid-column:1/-1;"><label class="form-label" for="edit-consult-type">Tipo</label>
+            <select class="form-select" id="edit-consult-type"></select></div>
+        </div>
+        <p id="edit-consult-error" role="alert" hidden style="margin-top:10px;color:var(--red-text);font-size:12px;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-subtle btn-sm" type="button" data-close-edit>Cancelar</button>
+        <button class="btn btn-primary btn-sm" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal-novo-exame">
   <div class="modal" style="max-width:560px;">
@@ -247,6 +304,8 @@
           <input class="form-input" id="exam-request-name" maxlength="100" placeholder="Ex.: Hemograma completo">
           <label class="form-label" for="exam-request-details" style="margin-top:10px;">Orientação para a paciente</label>
           <textarea class="form-textarea" id="exam-request-details" rows="3" maxlength="300" placeholder="Preparo, prazo ou informação adicional"></textarea>
+          <label class="form-label" for="exam-request-file" style="margin-top:10px;">Receita ou pedido assinado (opcional)</label>
+          <input class="form-input" id="exam-request-file" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
         </div>
         <div class="form-group" id="exam-send-fields" hidden>
           <label class="form-label" for="exam-result-file">Arquivo do resultado *</label>
@@ -267,10 +326,9 @@
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() === 'secretary') {
-    Router.navigate('agenda');
+  if (false) {
   } else {
-  initShell(Router.getRole() === 'patient' ? 'agenda' : 'patients');
+  initShell(Router.getRole() === 'patient' ? 'agenda' : Router.getRole() === 'secretary' ? 'agenda' : 'consultations');
 
   var state = Router.getState();
   var p = Router.getSelectedPatient() || PACIENTES[0];
@@ -288,7 +346,7 @@
     ? p.protocolo + ' · ' + formatDate(consultation.data) + ' · ' + consultation.horario
     : p.protocolo + ' · ' + p.consultaAtual;
   document.getElementById('btn-voltar').addEventListener('click', function() {
-    Router.goBack(isPatientView ? 'agenda' : 'patient-detail', { patientId: p.id });
+    Router.goBack(isPatientView || role === 'secretary' ? 'agenda' : 'patient-detail', { patientId: p.id });
   });
 
   // ── Load state from localStorage ──
@@ -307,6 +365,44 @@
       return false;
     }
   }
+  function persistConsultationUpdate(details, status) {
+    var nextState = Object.assign({}, saved, { details:details, status:status });
+    if (!consultation) {
+      if (!saveState(nextState)) return false;
+      Object.assign(saved, nextState);
+      return true;
+    }
+    var updatedConsultation = Object.assign({}, consultation, {
+      data:details.data,
+      horario:details.horario,
+      tipo:details.tipo,
+      status:status,
+    });
+    var nextConsultations = CONSULTAS.map(function(item) {
+      return item.id === consultation.id ? updatedConsultation : item;
+    });
+    var previousConsultations = localStorage.getItem('lapidar-consultas');
+    var previousState = localStorage.getItem(consultationStorageKey);
+    try {
+      localStorage.setItem('lapidar-consultas', JSON.stringify(nextConsultations));
+      localStorage.setItem(consultationStorageKey, JSON.stringify(nextState));
+    } catch (error) {
+      console.error('Não foi possível atualizar a consulta.', error);
+      try {
+        if (previousConsultations === null) localStorage.removeItem('lapidar-consultas');
+        else localStorage.setItem('lapidar-consultas', previousConsultations);
+        if (previousState === null) localStorage.removeItem(consultationStorageKey);
+        else localStorage.setItem(consultationStorageKey, previousState);
+      } catch (rollbackError) {
+        console.error('Não foi possível restaurar os dados anteriores da consulta.', rollbackError);
+      }
+      return false;
+    }
+    CONSULTAS.splice(0, CONSULTAS.length, ...nextConsultations);
+    Object.assign(consultation, updatedConsultation);
+    Object.assign(saved, nextState);
+    return true;
+  }
 
   var saved = loadState() || {
     checklist: { pressao: false, peso: false, medicamentos: true, historico: true, objetivos: false },
@@ -318,25 +414,132 @@
     analysisFiles: []
   };
   saved.examCards = Array.isArray(saved.examCards) ? saved.examCards : [];
+  saved.examAnalyses = Array.isArray(saved.examAnalyses) ? saved.examAnalyses : [];
   saved.analysisFiles = Array.isArray(saved.analysisFiles) ? saved.analysisFiles : [];
 
-  if (!isDoctorView) {
-    document.getElementById('btn-finalizar').hidden = true;
-    document.getElementById('doctor-exam-actions').hidden = true;
-    document.querySelector('[data-tab="checklist"]').classList.remove('active');
-    document.getElementById('tab-checklist').classList.remove('active');
-    if (!isPatientView) {
-      document.querySelector('[data-tab="checklist"]').hidden = true;
-      document.querySelector('[data-tab="anotacoes"]').hidden = true;
-      document.getElementById('tab-checklist').hidden = true;
-      document.getElementById('tab-anotacoes').hidden = true;
+  // ── Detalhes / ações (ConsultationDetailPage do Flutter) ──
+  saved.details = saved.details || {
+    data: consultation ? consultation.data : '',
+    horario: consultation ? consultation.horario : '',
+    tipo: consultation ? consultation.tipo : 'Retorno',
+  };
+  saved.status = saved.status || (consultation ? consultation.status : 'agendada');
+  var statusLabels = {
+    agendada:'Agendada',
+    concluida:'Realizada',
+    remarcada:'Reagendada',
+    cancelada:'Cancelada',
+    nao_compareceu:'Paciente não compareceu',
+    registrada:'Registrada'
+  };
+  function escapeText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function(c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; });
+  }
+  function renderDetails() {
+    var details = saved.details;
+    var checklistValues = Object.values(saved.checklist || {});
+    var done = checklistValues.filter(Boolean).length;
+    var pendingExams = saved.examCards.filter(function(card) { return card.status === 'pending'; }).length;
+    var chip = function(text, cls) { return '<span class="badge ' + cls + '">' + escapeText(text) + '</span>'; };
+    document.getElementById('consult-chips').innerHTML =
+      chip(statusLabels[saved.status] || saved.status, saved.status === 'concluida' ? 'badge-green' : 'badge-vinho') +
+      chip(p.protocolo || 'Sem protocolo', 'badge-dourado') +
+      (!isDoctorView ? '' : chip(done + '/' + checklistValues.length + ' checklist', 'badge-oliva')) +
+      chip(pendingExams + ' exame(s) pendente(s)', pendingExams ? 'badge-yellow' : 'badge-gray');
+    var isPast = saved.status === 'concluida';
+    var subtitle = isPast ? 'Consulta realizada' : 'Consulta marcada';
+    if (!isPast && details.data) {
+      var diff = Math.round((new Date(details.data + 'T00:00:00') - new Date(dateOffset(0) + 'T00:00:00')) / 86400000);
+      subtitle += diff === 0 ? ' para hoje' : diff === 1 ? ' para amanhã' : diff > 1 ? ' para daqui a ' + diff + ' dias' : ' há ' + Math.abs(diff) + ' dias';
     }
-    if (isPatientView) {
-      document.querySelector('[data-tab="analises"]').classList.add('active');
-      document.getElementById('tab-analises').classList.add('active');
-    } else {
+    document.getElementById('details-subtitle').textContent = subtitle;
+    var longDate = details.data ? new Date(details.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+    var lines = [
+      ['Data', longDate],
+      ['Horário', (details.horario || '—') + ' • 60 min'],
+      ['Tipo', (details.tipo || 'Consulta') + ' • Presencial'],
+      ['Protocolo', p.protocolo || '—'],
+      ['Status', statusLabels[saved.status] || saved.status],
+      ['Peso na consulta', p.pesoAtual ? p.pesoAtual + ' kg' : '—'],
+      ['Exames', saved.examCards.length ? saved.examCards.length + ' no total • ' + pendingExams + ' pendente(s)' : 'Nenhum exame'],
+    ];
+    if (saved.publishedAt && saved.publicDraft) lines.push(['Plano', saved.publicDraft]);
+    document.getElementById('details-lines').innerHTML = lines.map(function(line) {
+      return '<dt style="color:var(--text-muted);">' + line[0] + '</dt><dd style="color:var(--text-primary);font-weight:500;">' + escapeText(line[1]) + '</dd>';
+    }).join('');
+    document.getElementById('btn-finalizar').hidden = !isDoctorView || saved.status === 'concluida';
+    document.getElementById('consult-subtitle').textContent = (p.protocolo || '') + ' · ' +
+      (details.data ? formatDate(details.data) + ' · ' + details.horario : p.consultaAtual);
+  }
+  document.getElementById('btn-open-record').addEventListener('click', function() {
+    Router.navigate('patient-detail', { patientId: p.id });
+  });
+  document.getElementById('btn-edit-consult').hidden = !isDoctorView;
+  var editModal = document.getElementById('modal-edit-consult');
+  var editConsultType = document.getElementById('edit-consult-type');
+  var consultationTypes = ['Primeira consulta', 'Retorno', 'Marco Zero', 'Bioimpedância', 'Teleconsulta'];
+  try {
+    var typeSettings = JSON.parse(localStorage.getItem('lapidar-settings-v1') || '{}');
+    if (Array.isArray(typeSettings.consultationTypes)) consultationTypes = Array.from(new Set(consultationTypes.concat(typeSettings.consultationTypes.filter(Boolean))));
+  } catch (error) {
+    console.error('Não foi possível carregar os tipos de consulta configurados.', error);
+  }
+  consultationTypes.forEach(function(type) {
+    var option = document.createElement('option');
+    option.value = type;
+    option.textContent = type;
+    editConsultType.appendChild(option);
+  });
+  document.getElementById('btn-edit-consult').addEventListener('click', function() {
+    document.getElementById('edit-consult-date').value = saved.details.data || dateOffset(0);
+    document.getElementById('edit-consult-time').value = saved.details.horario || '09:00';
+    if (saved.details.tipo && !consultationTypes.includes(saved.details.tipo)) {
+      var currentType = document.createElement('option');
+      currentType.value = saved.details.tipo;
+      currentType.textContent = saved.details.tipo;
+      editConsultType.appendChild(currentType);
+    }
+    document.getElementById('edit-consult-type').value = saved.details.tipo || 'Retorno';
+    document.getElementById('edit-consult-error').hidden = true;
+    editModal.classList.add('open');
+  });
+  editModal.querySelectorAll('[data-close-edit]').forEach(function(btn) {
+    btn.addEventListener('click', function() { editModal.classList.remove('open'); });
+  });
+  document.getElementById('edit-consult-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var updatedDetails = {
+      data: document.getElementById('edit-consult-date').value,
+      horario: document.getElementById('edit-consult-time').value,
+      tipo: document.getElementById('edit-consult-type').value,
+    };
+    if (!persistConsultationUpdate(updatedDetails, saved.status)) {
+      document.getElementById('edit-consult-error').textContent = 'Não foi possível salvar a consulta neste navegador.';
+      document.getElementById('edit-consult-error').hidden = false;
+      return;
+    }
+    editModal.classList.remove('open');
+    renderDetails();
+  });
+
+  // Flutter ConsultationTab.allowedFor: médica vê tudo; secretária só Exames;
+  // paciente não vê Checklist nem Anotações.
+  if (!isDoctorView) {
+    document.getElementById('doctor-exam-actions').hidden = true;
+    document.querySelector('[data-tab="checklist"]').hidden = true;
+    document.querySelector('[data-tab="anotacoes"]').hidden = true;
+    document.getElementById('tab-checklist').hidden = true;
+    document.getElementById('tab-anotacoes').hidden = true;
+    if (!isPatientView) {
+      document.querySelector('[data-tab="detalhes"]').hidden = true;
+      document.querySelector('[data-tab="analises"]').hidden = true;
+      document.getElementById('tab-detalhes').hidden = true;
+      document.getElementById('tab-analises').hidden = true;
+      document.querySelector('[data-tab="detalhes"]').classList.remove('active');
+      document.getElementById('tab-detalhes').classList.remove('active');
       document.querySelector('[data-tab="exames"]').classList.add('active');
       document.getElementById('tab-exames').classList.add('active');
+      document.getElementById('consult-back-label').textContent = 'Voltar para Agenda';
     }
     document.getElementById('analysis-actions').hidden = true;
     var analysisDraft = document.getElementById('analysis-draft');
@@ -353,12 +556,8 @@
     document.querySelector('[data-tab="anotacoes"]').hidden = true;
     document.getElementById('tab-anotacoes').hidden = true;
     document.getElementById('private-notes-card').hidden = true;
-    document.querySelector('#public-plan-card h3').textContent = 'Resumo compartilhado';
-    document.querySelector('#public-plan-card p').textContent = 'Conteúdo compartilhado pela médica';
     document.querySelector('#tab-analises p').textContent = 'Resumo compartilhado pela médica';
-    document.getElementById('save-draft').hidden = true;
-    document.getElementById('analysis-file-uploader').querySelector('label').hidden = true;
-    document.getElementById('analysis-files').hidden = true;
+    document.getElementById('analysis-file-uploader').hidden = true;
   }
 
   // ── CHECKLIST ──
@@ -505,6 +704,7 @@
       status.textContent = card.status === 'received' ? 'Arquivo recebido' : (card.type === 'result' ? 'Disponível para paciente' : 'Aguardando envio');
       panel.append(title, detail, status);
       if (card.file) panel.appendChild(makeFileLink(card.file, 'Abrir arquivo'));
+      if (card.requestFile) panel.appendChild(makeFileLink(card.requestFile, 'Receita / pedido'));
       if (card.patientFile) panel.appendChild(makeFileLink(card.patientFile, 'Arquivo enviado pela paciente'));
       if (isPatientView && card.type === 'request' && card.status !== 'received') {
         var upload = document.createElement('input');
@@ -569,13 +769,27 @@
         }
       };
       if (examMode === 'request') {
-        saveCard({
-          id:'request-' + Date.now(),
-          type:'request',
-          name:document.getElementById('exam-request-name').value.trim(),
-          details:document.getElementById('exam-request-details').value.trim(),
-          status:'pending'
-        });
+        var requestFile = document.getElementById('exam-request-file').files[0];
+        var createRequest = function(fileData) {
+          saveCard({
+            id:'request-' + Date.now(),
+            type:'request',
+            name:document.getElementById('exam-request-name').value.trim(),
+            details:document.getElementById('exam-request-details').value.trim(),
+            requestFile:fileData,
+            status:'pending'
+          });
+        };
+        if (requestFile) {
+          readUpload(requestFile).then(function(data) {
+            createRequest({ name:requestFile.name, data:data });
+          }).catch(function(error) {
+            examError.textContent = error.message;
+            examError.style.display = 'block';
+          });
+        } else {
+          createRequest(null);
+        }
         return;
       }
       var file = document.getElementById('exam-result-file').files[0];
@@ -591,30 +805,26 @@
 
   // ── ANOTAÇÕES ──
   document.getElementById('private-notes').value = saved.privateNotes;
-  document.getElementById('public-draft').value = isPatientView
-    ? (saved.publishedAt && saved.analysis ? saved.analysis : 'A médica ainda não compartilhou informações desta consulta.')
-    : saved.publicDraft;
-  document.getElementById('public-draft').readOnly = isPatientView;
 
   document.getElementById('save-private').addEventListener('click', function() {
+    var previousNotes = saved.privateNotes;
     saved.privateNotes = document.getElementById('private-notes').value;
-    saveState(saved);
     var el = document.getElementById('private-saved');
+    if (!saveState(saved)) {
+      saved.privateNotes = previousNotes;
+      el.textContent = 'Não foi possível salvar as anotações.';
+      return;
+    }
     el.textContent = '✓ Salvo';
-    setTimeout(function() { el.textContent = ''; }, 2000);
-  });
-  document.getElementById('save-draft').addEventListener('click', function() {
-    saved.publicDraft = document.getElementById('public-draft').value;
-    saveState(saved);
-    var el = document.getElementById('draft-saved');
-    el.textContent = '✓ Rascunho salvo';
     setTimeout(function() { el.textContent = ''; }, 2000);
   });
 
   // ── ANÁLISES ──
-  document.getElementById('analysis-draft').value = isPatientView
+  var analysisDraft = document.getElementById('analysis-draft');
+  analysisDraft.value = isPatientView
     ? (saved.publishedAt && saved.analysis ? saved.analysis : 'A médica ainda não compartilhou informações desta consulta.')
-    : (saved.analysis || '');
+    : (saved.analysis || saved.publicDraft || '');
+  analysisDraft.readOnly = isPatientView;
   function renderAnalysisFiles() {
     var list = document.getElementById('analysis-files-list');
     list.replaceChildren();
@@ -624,6 +834,261 @@
     });
   }
   renderAnalysisFiles();
+  var examAnalysisForm = document.getElementById('exam-analysis-form');
+  var examAnalysisSelect = document.getElementById('exam-analysis-exam');
+  var examAnalysisType = document.getElementById('exam-analysis-type');
+  var typedAnalysisFields = document.getElementById('exam-analysis-typed-fields');
+  var examAnalysisEditingId = null;
+  var examAnalysisStatusLabels = { ok:'✓ Dentro da meta', attention:'⚠ Atenção', out:'● Fora da meta' };
+  var analysisTypeLabels = { laboratorial:'Laboratorial', bioimpedancia:'Bioimpedância', imagem:'Imagem / ecografia' };
+  var analysisFieldSchemas = {
+    laboratorial:[
+      { key:'valor', label:'Valor', required:true },
+      { key:'unidade', label:'Unidade', required:true },
+      { key:'referencia', label:'Referência', required:true },
+    ],
+    bioimpedancia:[
+      { key:'peso', label:'Peso (kg)' },
+      { key:'imc', label:'IMC' },
+      { key:'gordura', label:'Gordura corporal (%)' },
+      { key:'massaGorda', label:'Massa gorda (kg)' },
+      { key:'musculo', label:'Massa muscular (kg)' },
+      { key:'visceral', label:'Gordura visceral' },
+      { key:'agua', label:'Água corporal (%)' },
+      { key:'metabolismo', label:'Metabolismo basal (kcal)' },
+    ],
+    imagem:[
+      { key:'regiao', label:'Região examinada', required:true },
+      { key:'achados', label:'Achados', required:true, multiline:true },
+      { key:'resultado', label:'Resultado', required:true, multiline:true },
+    ],
+  };
+  function suggestAnalysisType(examName) {
+    var normalized = String(examName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (normalized.includes('bioimpedancia')) return 'bioimpedancia';
+    if (/ecografia|ultrassom|ultrasonografia|doppler|radiografia|tomografia|ressonancia|mamografia|imagem/.test(normalized)) return 'imagem';
+    return 'laboratorial';
+  }
+  function renderTypedAnalysisFields(values) {
+    var type = examAnalysisType.value || 'laboratorial';
+    typedAnalysisFields.replaceChildren();
+    var heading = document.createElement('p');
+    heading.className = 'form-label';
+    heading.textContent = analysisTypeLabels[type] + (type === 'bioimpedancia' ? ' · preencha os campos disponíveis' : '');
+    heading.style.marginBottom = '8px';
+    typedAnalysisFields.appendChild(heading);
+    var grid = document.createElement('div');
+    grid.className = 'exam-form-grid';
+    analysisFieldSchemas[type].forEach(function(field) {
+      var label = document.createElement('label');
+      label.className = 'form-group';
+      if (field.multiline) label.style.gridColumn = '1/-1';
+      var caption = document.createElement('span');
+      caption.className = 'form-label';
+      caption.textContent = field.label + (field.required ? ' *' : '');
+      var control = document.createElement(field.multiline ? 'textarea' : 'input');
+      control.className = field.multiline ? 'form-textarea' : 'form-input';
+      control.dataset.analysisField = field.key;
+      control.value = values && values[field.key] != null ? values[field.key] : '';
+      if (field.required) control.required = true;
+      if (field.multiline) control.rows = 2;
+      label.append(caption, control);
+      grid.appendChild(label);
+    });
+    typedAnalysisFields.appendChild(grid);
+  }
+  function collectTypedAnalysis() {
+    var type = examAnalysisType.value;
+    var values = {};
+    typedAnalysisFields.querySelectorAll('[data-analysis-field]').forEach(function(control) {
+      values[control.dataset.analysisField] = control.value.trim();
+    });
+    var schema = analysisFieldSchemas[type];
+    var missing = schema.filter(function(field) { return field.required && !values[field.key]; });
+    if (missing.length || (type === 'bioimpedancia' && !Object.values(values).some(Boolean))) {
+      return { error:type === 'bioimpedancia' ? 'Informe ao menos um dado da bioimpedância.' : 'Preencha os campos obrigatórios do tipo de análise.', values:values };
+    }
+    var summary = schema.filter(function(field) { return values[field.key]; })
+      .map(function(field) { return field.label + ': ' + values[field.key]; }).join('; ');
+    return { values:values, summary:summary };
+  }
+  function receivedExamCards() {
+    return saved.examCards.filter(function(card) {
+      return card && ((card.type === 'request' && card.status === 'received') ||
+        (card.type === 'result' && card.status === 'shared'));
+    });
+  }
+  function refreshExamAnalysisOptions(selectedId) {
+    var available = receivedExamCards();
+    examAnalysisSelect.replaceChildren();
+    var placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = available.length ? 'Selecionar exame recebido' : 'Nenhum exame recebido';
+    examAnalysisSelect.appendChild(placeholder);
+    available.forEach(function(card) {
+      var option = document.createElement('option');
+      option.value = String(card.id);
+      option.textContent = card.name;
+      option.selected = String(card.id) === String(selectedId || '');
+      examAnalysisSelect.appendChild(option);
+    });
+    return available;
+  }
+  function renderExamAnalyses() {
+    var list = document.getElementById('exam-analyses-list');
+    list.replaceChildren();
+    var analyses = isPatientView && !saved.publishedAt ? [] : saved.examAnalyses;
+    if (!analyses.length) {
+      var empty = document.createElement('p');
+      empty.textContent = isPatientView && !saved.publishedAt
+        ? 'As análises de exames ainda não foram compartilhadas.'
+        : 'Nenhuma análise estruturada de exame registrada.';
+      empty.style.cssText = 'font-size:12px;color:var(--text-muted);grid-column:1/-1;';
+      list.appendChild(empty);
+      return;
+    }
+    analyses.forEach(function(analysis) {
+      var details = document.createElement('details');
+      details.className = 'card';
+      details.style.cssText = 'padding:12px;box-shadow:none;border:1px solid var(--border);';
+      var summary = document.createElement('summary');
+      summary.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;color:var(--vinho);font-size:12px;font-weight:600;';
+      var name = document.createElement('span');
+      name.textContent = analysis.examName || 'Exame';
+      var badge = document.createElement('span');
+      badge.className = 'badge ' + (analysis.status === 'ok' ? 'badge-green' : analysis.status === 'attention' ? 'badge-yellow' : 'badge-red');
+      badge.textContent = examAnalysisStatusLabels[analysis.status] || 'Situação não informada';
+      summary.append(name, badge);
+      var date = document.createElement('p');
+      date.textContent = analysis.date ? new Date(analysis.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
+      date.style.cssText = 'font-size:11px;color:var(--text-muted);margin:8px 0;';
+      var type = document.createElement('p');
+      type.textContent = 'Tipo: ' + (analysisTypeLabels[analysis.type] || 'Laboratorial');
+      type.style.cssText = 'font-size:11px;color:var(--text-muted);margin-bottom:6px;';
+      var objective = document.createElement('p');
+      objective.textContent = analysis.objective ? 'Objetivo / referência: ' + analysis.objective : '';
+      objective.style.cssText = 'font-size:12px;color:var(--text-secondary);margin-bottom:6px;';
+      var result = document.createElement('p');
+      result.textContent = analysis.result || '';
+      result.style.cssText = 'font-size:12px;color:var(--text-primary);white-space:pre-wrap;margin-bottom:6px;';
+      var notes = document.createElement('p');
+      notes.textContent = analysis.notes ? 'Interpretação clínica: ' + analysis.notes : '';
+      notes.style.cssText = 'font-size:12px;color:var(--text-secondary);white-space:pre-wrap;';
+      details.append(summary, date, type);
+      if (analysis.objective) details.appendChild(objective);
+      details.appendChild(result);
+      if (analysis.notes) details.appendChild(notes);
+      if (isDoctorView) {
+        var edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn btn-subtle btn-sm';
+        edit.textContent = 'Editar análise';
+        edit.style.marginTop = '10px';
+        edit.addEventListener('click', function(event) {
+          event.preventDefault();
+          openExamAnalysisForm(analysis);
+        });
+        details.appendChild(edit);
+      }
+      list.appendChild(details);
+    });
+  }
+  function openExamAnalysisForm(analysis) {
+    var options = refreshExamAnalysisOptions(analysis && analysis.examId);
+    examAnalysisEditingId = analysis ? analysis.id : null;
+    if (analysis && !options.some(function(card) { return String(card.id) === String(analysis.examId); })) {
+      var historicalOption = document.createElement('option');
+      historicalOption.value = String(analysis.examId);
+      historicalOption.textContent = analysis.examName + ' (histórico)';
+      examAnalysisSelect.appendChild(historicalOption);
+      historicalOption.selected = true;
+    }
+    examAnalysisForm.reset();
+    if (analysis) {
+      examAnalysisSelect.value = String(analysis.examId);
+      document.getElementById('exam-analysis-date').value = analysis.date || '';
+      document.getElementById('exam-analysis-objective').value = analysis.objective || '';
+      document.getElementById('exam-analysis-status').value = analysis.status || '';
+      document.getElementById('exam-analysis-notes').value = analysis.notes || '';
+      examAnalysisType.value = analysis.type || suggestAnalysisType(analysis.examName);
+      renderTypedAnalysisFields(analysis.structured || {});
+      if (!analysis.structured && analysis.result) {
+        var legacyField = typedAnalysisFields.querySelector('[data-analysis-field="valor"]');
+        if (legacyField) legacyField.value = analysis.result;
+      }
+    } else {
+      examAnalysisSelect.value = options.length ? String(options[0].id) : '';
+      document.getElementById('exam-analysis-date').value = dateOffset(0);
+      var selectedExam = options.find(function(card) { return String(card.id) === examAnalysisSelect.value; });
+      examAnalysisType.value = suggestAnalysisType(selectedExam && selectedExam.name);
+      renderTypedAnalysisFields({});
+    }
+    document.getElementById('exam-analysis-error').hidden = true;
+    examAnalysisForm.hidden = false;
+  }
+  examAnalysisSelect.addEventListener('change', function() {
+    if (examAnalysisEditingId) return;
+    var selectedExam = saved.examCards.find(function(card) { return String(card.id) === String(examAnalysisSelect.value); });
+    examAnalysisType.value = suggestAnalysisType(selectedExam && selectedExam.name);
+    renderTypedAnalysisFields({});
+  });
+  examAnalysisType.addEventListener('change', function() { renderTypedAnalysisFields({}); });
+  document.getElementById('btn-add-exam-analysis').hidden = !isDoctorView;
+  document.getElementById('btn-add-exam-analysis').addEventListener('click', function() {
+    if (!receivedExamCards().length) {
+      document.getElementById('exam-analysis-hint').textContent = 'Receba primeiro um resultado de exame para poder analisá-lo.';
+      return;
+    }
+    openExamAnalysisForm(null);
+  });
+  document.getElementById('cancel-exam-analysis').addEventListener('click', function() { examAnalysisForm.hidden = true; });
+  examAnalysisForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    var error = document.getElementById('exam-analysis-error');
+    error.hidden = true;
+    var examId = examAnalysisSelect.value;
+    var examCard = saved.examCards.find(function(card) { return String(card.id) === String(examId); });
+    var date = document.getElementById('exam-analysis-date').value;
+    var typedResult = collectTypedAnalysis();
+    var result = typedResult.summary;
+    var status = document.getElementById('exam-analysis-status').value;
+    var editingRecord = saved.examAnalyses.find(function(item) { return item.id === examAnalysisEditingId; });
+    var isAvailableExam = receivedExamCards().some(function(card) { return String(card.id) === String(examId); });
+    var isOriginalExam = editingRecord && String(editingRecord.examId) === String(examId);
+    if (typedResult.error || !examId || !date || !result || !status || !examCard || (!isAvailableExam && !isOriginalExam)) {
+      error.textContent = typedResult.error || 'Selecione um exame recebido e informe data, resultado e situação.';
+      error.hidden = false;
+      return;
+    }
+    var previousAnalyses = saved.examAnalyses;
+    var record = {
+      id:examAnalysisEditingId || 'exam-analysis-' + Date.now(),
+      examId:examId,
+      examName:examCard.name,
+      date:date,
+      objective:document.getElementById('exam-analysis-objective').value.trim(),
+      status:status,
+      type:examAnalysisType.value,
+      structured:typedResult.values,
+      result:result,
+      notes:document.getElementById('exam-analysis-notes').value.trim(),
+    };
+    saved.examAnalyses = examAnalysisEditingId
+      ? saved.examAnalyses.map(function(item) { return item.id === examAnalysisEditingId ? record : item; })
+      : saved.examAnalyses.concat(record);
+    if (!saveState(saved)) {
+      saved.examAnalyses = previousAnalyses;
+      error.textContent = 'Não foi possível salvar a análise neste navegador.';
+      error.hidden = false;
+      return;
+    }
+    examAnalysisForm.hidden = true;
+    renderExamAnalyses();
+    document.getElementById('btn-analysis-upload').addEventListener('click', function() {
+      document.getElementById('analysis-files').click();
+    });
+  });
+  renderExamAnalyses();
   document.getElementById('analysis-files').addEventListener('change', function(event) {
     var files = Array.prototype.slice.call(event.target.files || []);
     if (!files.length) return;
@@ -650,23 +1115,68 @@
   }
 
   document.getElementById('btn-load-draft').addEventListener('click', function() {
-    document.getElementById('analysis-draft').value = saved.publicDraft;
+    analysisDraft.value = saved.publicDraft || '';
+  });
+  document.getElementById('btn-save-analysis-draft').addEventListener('click', function() {
+    var previousDraft = saved.publicDraft;
+    saved.publicDraft = analysisDraft.value;
+    var feedback = document.getElementById('analysis-save-feedback');
+    if (!saveState(saved)) {
+      saved.publicDraft = previousDraft;
+      feedback.textContent = 'Não foi possível salvar o rascunho neste navegador.';
+      return;
+    }
+    feedback.textContent = 'Rascunho salvo.';
   });
   document.getElementById('btn-publish').addEventListener('click', function() {
-    saved.analysis = document.getElementById('analysis-draft').value;
+    if (!analysisDraft.value.trim()) {
+      document.getElementById('analysis-save-feedback').textContent = 'Escreva a análise e o plano antes de publicar.';
+      analysisDraft.focus();
+      return;
+    }
+    var previousPublication = { analysis:saved.analysis, publicDraft:saved.publicDraft, publishedAt:saved.publishedAt };
+    saved.analysis = analysisDraft.value;
+    saved.publicDraft = analysisDraft.value;
     saved.publishedAt = new Date().toLocaleString('pt-BR');
-    saveState(saved);
+    var feedback = document.getElementById('analysis-save-feedback');
+    if (!saveState(saved)) {
+      Object.assign(saved, previousPublication);
+      feedback.textContent = 'Não foi possível publicar a análise neste navegador.';
+      return;
+    }
+    var notificationKey = 'lapidar-notification-feed-' + p.id;
+    try {
+      var notificationFeed = JSON.parse(localStorage.getItem(notificationKey) || '[]');
+      if (!Array.isArray(notificationFeed)) throw new Error('Formato de notificações inválido.');
+      notificationFeed.unshift({
+        id:'analysis-' + (state.consultationId || p.id) + '-' + Date.now(),
+        title:'Nova análise da consulta',
+        detail:'A médica compartilhou uma análise e um plano para o próximo contato.',
+        time:new Date().toLocaleString('pt-BR'),
+        unread:true
+      });
+      localStorage.setItem(notificationKey, JSON.stringify(notificationFeed));
+      feedback.textContent = 'Análise publicada e notificação enviada para a paciente.';
+    } catch (notificationError) {
+      console.error('A análise foi salva, mas não foi possível registrar a notificação da paciente.', notificationError);
+      feedback.textContent = 'Análise publicada, mas não foi possível registrar a notificação neste navegador.';
+    }
     var info = document.getElementById('published-info');
     info.style.display = 'block';
     info.textContent = '✓ Análise publicada em ' + saved.publishedAt;
   });
 
-  // ── Finalizar consulta ──
+  // ── Concluir consulta ──
   document.getElementById('btn-finalizar').addEventListener('click', function() {
-    if (confirm('Deseja finalizar esta consulta e voltar para a ficha da paciente?')) {
-      Router.navigate('patient-detail', { patientId: p.id });
+    if (confirm('Deseja marcar esta consulta como concluída?')) {
+      if (!persistConsultationUpdate(saved.details, 'concluida')) {
+        alert('Não foi possível concluir a consulta neste navegador.');
+        return;
+      }
+      renderDetails();
     }
   });
+  renderDetails();
 
   // ── Tabs ──
   var tabsNav = document.getElementById('tabs-nav');
@@ -722,5 +1232,7 @@
   });
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

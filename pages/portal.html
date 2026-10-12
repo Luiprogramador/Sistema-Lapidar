@@ -10,7 +10,9 @@
 <script src="../js/router.js"></script>
 <script>
   const role = Router.getRole();
-  Router.navigate(role === 'patient' ? 'patient-detail' : role === 'secretary' ? 'patients' : 'dashboard');
+  Router.navigate(Router.getHomePage());
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

@@ -17,6 +17,9 @@ const Icons = {
   close:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   chevronL:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>`,
   chevronR:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>`,
+  message:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+  consult:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>`,
+  diary:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,
   home:      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
 };
 
@@ -24,61 +27,162 @@ const ROLE_LABELS = {
   doctor:    'Dra. Andressa Gomide',
   secretary: 'Gabi',
   patient:   'Paciente',
-  admin:     'Administrador',
+  developer: 'Desenvolvedor',
 };
+
+// Perfis de demonstração equivalentes ao seletor do Flutter (papel + isAdmin).
+const DEMO_PROFILES = [
+  { id:'doctor-admin',    label:'Médica administradora', description:'Acesso clínico completo, equipe e sistema' },
+  { id:'doctor',          label:'Médica sem admin', description:'Consultas, agenda e ficha clínica sem administração' },
+  { id:'secretary-admin', label:'Secretária administradora', description:'Operação, financeiro e cadastros do sistema' },
+  { id:'secretary',       label:'Secretária sem admin', description:'Agenda, contatos e financeiro pessoal' },
+  { id:'patient',         label:'Paciente', description:'Diário e informações da própria jornada' },
+  { id:'developer',       label:'Desenvolvedor', description:'Logs e configurações do sistema' },
+];
+
+function getProfileLabel() {
+  const profile = DEMO_PROFILES.find(item => item.id === Router.getProfileId());
+  return profile ? profile.label : 'Perfil Lapidar';
+}
+
+function getUnreadMessagesCount() {
+  try {
+    const messages = loadMessages();
+    if (Router.getRole() === 'patient') {
+      return messages.filter(m => m.patientId === 1 && m.direction === 'enviada' && !m.read).length;
+    }
+    return messages.filter(m => m.direction === 'recebida' && !m.read).length;
+  } catch (error) {
+    return 0;
+  }
+}
+
+function appendSystemAudit({ usuario, acao, tabela, registroId, detalhes }) {
+  const key = 'lapidar-auditoria';
+  let entries = [];
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    entries = JSON.parse(stored);
+    if (!Array.isArray(entries)) throw new TypeError('A tabela de auditoria local está inválida.');
+  }
+  const entry = {
+    id:Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+    usuario:usuario || getProfileLabel(),
+    acao:String(acao || 'edição'),
+    tabela:String(tabela || 'sistema'),
+    registroId:registroId == null ? '' : String(registroId),
+    detalhes:String(detalhes || ''),
+    data:new Date().toISOString(),
+  };
+  localStorage.setItem(key, JSON.stringify([entry, ...entries].slice(0, 2000)));
+  return entry;
+}
 
 const ROLE_MENU = {
   doctor: [
     { page:'dashboard', label:'Dashboard', icon:'dashboard' },
     { page:'patients',  label:'Pacientes', icon:'patients' },
-    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
-    { page:'consultations', label:'Consultas', icon:'agenda' },
-    { page:'journey',   label:'Jornada', icon:'agenda' },
+    { page:'consultations', label:'Consultas', icon:'consult' },
+    { page:'messages',  label:'Mensagens', icon:'message' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'settings',  label:'Configurações', icon:'settings' },
-    { page:'profile',   label:'Meu perfil', icon:'portal' },
   ],
   secretary: [
+    { page:'dashboard', label:'Dashboard', icon:'dashboard' },
     { page:'patients',  label:'Pacientes', icon:'patients' },
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
-    { page:'journey',   label:'Jornada',   icon:'agenda' },
-    { page:'contents',  label:'Conteúdos', icon:'contents' },
+    { page:'messages',  label:'Mensagens', icon:'message' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'contents',  label:'Conteúdos', icon:'contents' },
     { page:'settings',  label:'Configurações', icon:'settings' },
-    { page:'profile',   label:'Meu perfil', icon:'portal' },
-  ],
-  admin: [
-    { page:'dashboard', label:'Dashboard', icon:'dashboard' },
-    { page:'patients', label:'Pacientes', icon:'patients' },
-    { page:'contents', label:'Conteúdos', icon:'contents' },
-    { page:'agenda', label:'Agenda', icon:'agenda' },
-    { page:'financial', label:'Financeiro', icon:'financial' },
-    { page:'settings', label:'Configurações', icon:'settings' },
-    { page:'profile', label:'Meu perfil', icon:'portal' },
   ],
   patient: [
-    { page:'patient-detail', label:'Minha Ficha', icon:'portal' },
-    { page:'habits',    label:'Diário Lapidar', icon:'dashboard' },
+    { page:'habits',    label:'Diário', icon:'diary' },
+    { page:'patient-detail', label:'Minha ficha', icon:'portal' },
+    { page:'consultations', label:'Consultas', icon:'consult' },
     { page:'contents',  label:'Conteúdos', icon:'contents' },
-    { page:'agenda',    label:'Consultas',      icon:'agenda' },
     { page:'settings',  label:'Configurações', icon:'settings' },
-    { page:'profile',   label:'Meu perfil', icon:'portal' },
+  ],
+  developer: [
+    { page:'logs', label:'Logs', icon:'dashboard' },
+    { page:'settings', label:'Configurações', icon:'settings' },
   ],
 };
 
-function renderTopbar() {
+function renderTopbar(activePage) {
   const role = Router.getRole();
-  const notifCount = 3;
+  const patientId = role === 'patient' ? (Router.getSelectedPatient()?.id || 1) : null;
+  const notificationKey = role === 'patient'
+    ? 'lapidar-notification-feed-' + patientId
+    : 'lapidar-notification-feed-' + Router.getProfileId();
+  let notifications = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(notificationKey) || '[]');
+    if (Array.isArray(parsed)) notifications = parsed.filter(notification => notification && typeof notification === 'object');
+  } catch (error) {
+    console.error('Não foi possível carregar as notificações.', error);
+  }
+  const patient = patientId == null ? null : PACIENTES.find(item => item.id === patientId);
+  if (role === 'patient' && patient) {
+    const localNow = new Date();
+    const todayKey = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+    let checkinComplete = false;
+    try {
+      checkinComplete = localStorage.getItem(`lapidar-diario-${patient.id}-${todayKey}`) !== null;
+    } catch (error) {
+      console.error('Não foi possível conferir o check-in de hoje.', error);
+    }
+    notifications = notifications.concat([
+      { title:'Check-in de hoje', detail:checkinComplete ? 'Seu check-in de hoje está registrado.' : 'Registre o check-in de hoje no Diário Lapidar.', targetPage:'habits', unread:!checkinComplete },
+      { title:'Minhas metas', detail:'Acompanhe suas metas e o progresso desta semana.', targetPage:'habits', unread:false },
+      { title:'Consultas e exames', detail:'Consulte os próximos atendimentos e seus exames.', targetPage:'consultations', unread:false },
+      { title:'Mensagens da clínica', detail:'Abra sua conversa com a equipe.', targetPage:'messages', unread:getUnreadMessagesCount() > 0 },
+    ]);
+  } else if (role === 'doctor') {
+    const alerts = (Array.isArray(ALERTAS) ? ALERTAS : []).slice(0, 6);
+    notifications = notifications.concat(alerts.map(alert => ({
+      title:`${alert.paciente} — ${alert.tipo}`,
+      detail:`Protocolo ${alert.protocolo || 'não informado'}. Abra a ficha para revisar este alerta.`,
+      targetPage:'patient-detail',
+      patientId:(PACIENTES.find(item => item.nome === alert.paciente) || {}).id,
+      tab:alert.tipo === 'LDL acima da meta' ? 'risco' : alert.tipo === 'Sem atividade física' ? 'score' : 'painel',
+      unread:true,
+    })));
+  }
+  const notifCount = notifications.filter(notification => notification.unread === true).length;
+  const unreadMessages = getUnreadMessagesCount();
+  const profile = DEMO_PROFILES.find(item => item.id === Router.getProfileId()) || DEMO_PROFILES[0];
+  const pageTitles = {
+    dashboard:'Dashboard', patients:'Pacientes', agenda:'Agenda', consultations:'Consultas',
+    'patient-detail':role === 'patient' ? 'Minha ficha' : 'Ficha da paciente',
+    'patient-registration':'Cadastro de paciente', consultation:'Consulta', messages:'Mensagens',
+    financial:'Financeiro', contents:'Conteúdos', settings:'Configurações', habits:'Diário Lapidar',
+    journey:'Jornada operacional', logs:'Logs do sistema', profile:'Perfil',
+  };
+  const date = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
+  const monday = new Date();
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+  const weekConsultations = (Array.isArray(CONSULTAS) ? CONSULTAS : []).filter(item => {
+    const day = new Date(`${item.data}T12:00:00`);
+    return day >= monday && day < new Date(monday.getTime() + 7 * 86400000);
+  }).length;
+  const notificationMarkup = notifications.map(notification => `
+    <button type="button" class="notif-item ${notification.unread ? 'unread' : ''}" data-notification-page="${escapePatientCardText(notification.targetPage || (role === 'patient' ? 'consultations' : 'patients'))}" data-notification-patient="${Number(notification.patientId) || ''}" data-notification-tab="${escapePatientCardText(notification.tab || '')}">
+      <span class="notif-dot"></span><span><span class="notif-text">${escapePatientCardText(notification.title || notification.text || 'Notificação')}</span><span class="notif-time">${escapePatientCardText(notification.time || '')}</span><span class="notif-detail">${escapePatientCardText(notification.detail || '')}</span></span>
+    </button>
+  `).join('') || '<p class="notif-empty">Nenhuma notificação no momento.</p>';
   return `
   <header class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div class="topbar-brand">
       <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menu">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
-      <div class="topbar-logo" onclick="Router.navigate(Router.getRole()==='patient'?'patient-detail':'dashboard')" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+      <div class="topbar-logo" onclick="Router.navigate(Router.getHomePage())" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
         <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--vinho);">
         <img src="../assets/logo_lapidar_tp.png" alt="" style="height:24px;width:24px;object-fit:contain;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
         <svg style="display:none;" width="24" height="24" viewBox="0 0 40 40" fill="none">
@@ -88,38 +192,44 @@ function renderTopbar() {
         </span>
         Lapidar
       </div>
+      <span class="topbar-mobile-title">${escapePatientCardText(pageTitles[activePage] || 'Lapidar')}</span>
+      <div class="topbar-date-summary"><strong>${escapePatientCardText(date)}</strong><span>${weekConsultations} consultas na semana${role === 'doctor' ? ` · ${ALERTAS.length} alertas` : ''}</span></div>
     </div>
     <div class="topbar-right">
       <div class="topbar-role-select">
-        <span>Perfil:</span>
-        <select id="role-select" aria-label="Perfil de demonstração">
-          <option value="doctor"    ${role==='doctor'   ?'selected':''}>Médica</option>
-          <option value="secretary" ${role==='secretary'?'selected':''}>Secretaria</option>
-          <option value="admin"     ${role==='admin'    ?'selected':''}>Administrador</option>
-          <option value="patient"   ${role==='patient'  ?'selected':''}>Paciente</option>
+        <label for="role-select">Ver como:</label>
+        <select id="role-select" aria-label="Ver como outro perfil">
+          ${DEMO_PROFILES.map(item => `<option value="${item.id}" title="${item.description}" ${item.id === Router.getProfileId() ? 'selected' : ''}>${item.label}</option>`).join('')}
         </select>
       </div>
-      <div style="position:relative;">
-        <button class="topbar-icon-btn" id="notif-btn" aria-label="Notificações">
-          ${Icons.bell}
-          ${notifCount > 0 ? `<span class="notif-badge">${notifCount}</span>` : ''}
+      <div class="topbar-actions">
+        <button class="topbar-icon-btn" id="messages-btn" aria-label="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}" title="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}">
+          ${Icons.message}
+          ${unreadMessages > 0 ? `<span class="notif-badge">${unreadMessages}</span>` : ''}
         </button>
-        <div class="notif-dropdown" id="notif-dropdown">
+        <div class="topbar-notifications">
+          <button class="topbar-icon-btn" id="notif-btn" aria-label="Notificações">
+            ${Icons.bell}
+            ${notifCount > 0 ? `<span class="notif-badge">${notifCount}</span>` : ''}
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
           <div class="notif-header">
-            <h4>Notificações</h4>
+            <div><h4>Notificações</h4><span class="notif-pending">${notifCount} pendência(s)</span></div>
             <button id="mark-all-read">Marcar todas como lidas</button>
           </div>
-          ${[
-            { text:'Carla Mendes — LDL acima da meta', detail:'Resultado de 128 mg/dL. A meta configurada para o acompanhamento é inferior a 100 mg/dL.', time:'há 5 min', unread:true },
-            { text:'Beatriz Lima — Vitamina D baixa (18 ng/mL)', detail:'O exame foi registrado abaixo do valor de referência do protocolo.', time:'há 22 min', unread:true },
-            { text:'4 bioimpedâncias pendentes esta semana', detail:'Ana Paula, Carla, Fernanda e Letícia ainda precisam registrar medidas nesta semana.', time:'há 1h', unread:true },
-            { text:'Próxima consulta: Ana Paula — amanhã 09:00', detail:'Consulta de acompanhamento Lapidar 40+ às 09:00.', time:'há 2h', unread:false },
-          ].map(n => `
-            <details class="notif-item ${n.unread ? 'unread' : ''}">
-              <summary><span class="notif-dot"></span><span><span class="notif-text">${n.text}</span><span class="notif-time">${n.time}</span></span></summary>
-              <p class="notif-detail">${n.detail}</p>
-            </details>
-          `).join('')}
+          ${notificationMarkup}
+          </div>
+        </div>
+        <button class="topbar-icon-btn" id="settings-shortcut" aria-label="Configurações" title="Configurações">${Icons.settings}</button>
+        <div class="topbar-user-menu">
+          <button class="topbar-user-trigger" id="topbar-user-trigger" type="button" aria-expanded="false" aria-controls="topbar-user-dropdown">
+            <span class="avatar">${escapePatientCardText(profile.label.slice(0, 1))}</span><span class="topbar-user-copy"><strong>${escapePatientCardText(profile.label)}</strong><small>${escapePatientCardText(role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor')}</small></span><span aria-hidden="true">⌄</span>
+          </button>
+          <div class="topbar-user-dropdown" id="topbar-user-dropdown" hidden>
+            <button type="button" data-user-action="profile">Perfil</button>
+            <button type="button" data-user-action="settings">Configurações</button>
+            <button type="button" data-user-action="logout">Sair</button>
+          </div>
         </div>
       </div>
     </div>
@@ -129,32 +239,14 @@ function renderTopbar() {
 function renderSidebar(activePage) {
   const role = Router.getRole();
   const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
-  let userName = ROLE_LABELS[role] || 'Perfil Lapidar';
-  let avatarUrl = '';
-  try {
-    const profile = JSON.parse(localStorage.getItem('lapidar-profile-' + role) || 'null');
-    if (profile && typeof profile === 'object') {
-      userName = profile.displayName || profile.name || userName;
-      avatarUrl = typeof profile.avatar === 'string' ? profile.avatar : '';
-    }
-  } catch (error) {
-    console.error('Não foi possível carregar o resumo do perfil.', error);
-  }
-  const safeUserName = String(userName).replace(/[&<>"']/g, character => ({
-    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
-  }[character]));
-  const safeAvatarUrl = /^data:image\/(png|jpeg);base64,/i.test(avatarUrl) ? avatarUrl : '';
-  const avatarLetter = safeUserName.charAt(0) || 'L';
-  const userDetails = {
-    doctor: 'CRM 12345/MG · Medicina Integrativa',
-    secretary: 'Secretária · Clínica Lapidar',
-    patient: 'Paciente · Acompanhamento Lapidar',
-    admin: 'Administração · Clínica Lapidar',
-  }[role] || 'Perfil Lapidar';
 
   return `
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
   <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-mark">L</span>
+      <span>Gestão Clínica</span>
+    </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Menu</div>
       ${menu.map(item => `
@@ -166,43 +258,11 @@ function renderSidebar(activePage) {
       `).join('')}
     </div>
     <div class="sidebar-footer">
-      <div class="sidebar-profile">
-        <button class="sidebar-user sidebar-profile-trigger" id="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="profile-card">
-          <span class="avatar">${safeAvatarUrl ? `<img src="${safeAvatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : avatarLetter}</span>
-          <span class="sidebar-user-info">
-            <span class="sidebar-user-name">${safeUserName}</span>
-            <span class="sidebar-user-role">${role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'admin' ? 'Administrador' : 'Paciente'}</span>
-          </span>
-          <span class="sidebar-profile-chevron" aria-hidden="true">⌃</span>
-        </button>
-        <div class="sidebar-profile-card" id="profile-card" role="group" aria-label="Perfil de ${safeUserName}" hidden>
-          <span class="avatar avatar-lg">${safeAvatarUrl ? `<img src="${safeAvatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : avatarLetter}</span>
-          <div class="sidebar-profile-card-name">${safeUserName}</div>
-          <div class="sidebar-profile-card-role">${userDetails}</div>
-          <div class="sidebar-profile-card-note">Perfil de demonstração</div>
-        </div>
-      </div>
-      <button class="btn btn-subtle btn-sm btn-full" style="margin-top:12px;" id="logout-btn">
+      <button class="btn btn-subtle btn-sm btn-full" id="logout-btn">
         ${Icons.logout} Sair
       </button>
     </div>
   </nav>`;
-}
-
-function renderBottomBar(activePage) {
-  const role = Router.getRole();
-  const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
-  // show max 4 items on bottom bar
-  const items = menu.slice(0, 4);
-  return `
-  <div class="bottom-bar">
-    ${items.map(item => `
-      <button class="bottom-nav-item ${activePage === item.page ? 'active' : ''}" data-page="${item.page}">
-        ${Icons[item.icon]}
-        <span>${item.label}</span>
-      </button>
-    `).join('')}
-  </div>`;
 }
 
 function getProtocolBadge(protocolo) {
@@ -231,75 +291,135 @@ function getStatusBadge(status) {
   return `<span class="badge ${map[status] || 'badge-gray'}">${status}</span>`;
 }
 
+function escapePatientCardText(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[char]));
+}
+
 function renderPatientCard(p, index = 0) {
+  const goals = Array.isArray(p.metas) ? p.metas : [];
+  const completedGoals = Math.max(0, Math.min(Number(p.metasConcluidas) || 0, goals.length));
+  const pct = goals.length ? Math.round((completedGoals / goals.length) * 100) : 0;
+  const hasWeight = p.pesoAtual !== null && p.pesoAtual !== undefined && p.pesoAtual !== '' && Number.isFinite(Number(p.pesoAtual));
+  const hasWeightStart = p.pesoInicial !== null && p.pesoInicial !== undefined && p.pesoInicial !== '' && Number.isFinite(Number(p.pesoInicial));
+  const hasWeightGoal = p.meta !== null && p.meta !== undefined && p.meta !== '' && Number.isFinite(Number(p.meta));
+  const allergyList = Array.isArray(p.alergias) ? p.alergias : [];
+  const allergySummary = allergyList.length ? allergyList.join(', ') : 'Não informadas';
+  const inactive = p.ativo === false || p.status === 'Inativa';
+  const profileButton = Router.getRole() === 'secretary'
+    ? `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver contatos de ${escapePatientCardText(p.nome)}">Ver contatos</button>`
+    : `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver perfil de ${escapePatientCardText(p.nome)}">Ver perfil</button>`;
   if (Router.getRole() === 'secretary') {
     return `
     <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
       <div class="card-patient-header">
-        <div class="avatar avatar-lg">${p.iniciais}</div>
+        <div class="avatar avatar-lg">${escapePatientCardText(p.iniciais)}</div>
         <div style="flex:1;min-width:0;">
-          <div class="card-patient-name">${p.nome}</div>
-          <div class="card-patient-meta">${p.idade} anos · ${p.consultaAtual}</div>
-          <div style="margin-top:4px;">${getProtocolBadge(p.protocolo)}</div>
+          <div class="card-patient-name">${escapePatientCardText(p.nome)}</div>
+          <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);">${p.telefone}</div>
-      <div style="font-size:12px;color:var(--text-muted);">Próxima consulta: ${p.proximaConsulta}</div>
+      <div style="font-size:12px;color:var(--text-secondary);">${escapePatientCardText(p.telefone)}</div>
+      <div style="font-size:12px;color:var(--text-secondary);">${escapePatientCardText(p.email || 'E-mail não informado')}</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:4px;">${profileButton}</div>
     </div>`;
   }
 
-  const pct = p.metas.length > 0 ? Math.round((p.metasConcluidas / p.metas.length) * 100) : 0;
-  const pesoLoss = (p.pesoInicial - p.pesoAtual).toFixed(1);
+  const pesoLoss = hasWeight && hasWeightStart ? (Number(p.pesoInicial) - Number(p.pesoAtual)).toFixed(1) : null;
   return `
   <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
     <div class="card-patient-header">
-      <div class="avatar avatar-lg">${p.iniciais}</div>
+      <div class="avatar avatar-lg">${escapePatientCardText(p.iniciais)}</div>
       <div style="flex:1;min-width:0;">
-        <div class="card-patient-name">${p.nome}</div>
-        <div class="card-patient-meta">${p.idade} anos · ${p.consultaAtual}</div>
+        <div class="card-patient-name">${escapePatientCardText(p.nome)}</div>
+        <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
+        <div class="card-patient-meta">${escapePatientCardText(p.idade)} anos · ${escapePatientCardText(p.consultaAtual)}</div>
         <div style="margin-top:4px;">${getProtocolBadge(p.protocolo)}</div>
       </div>
     </div>
     <div style="display:flex;gap:16px;font-size:12px;">
       <div>
         <div style="color:var(--text-muted);">Peso atual</div>
-        <div style="font-weight:600;color:var(--vinho);">${p.pesoAtual} kg</div>
+        <div style="font-weight:600;color:var(--vinho);">${hasWeight ? `${Number(p.pesoAtual)} kg` : 'Não informado'}</div>
       </div>
       <div>
         <div style="color:var(--text-muted);">Perda total</div>
-        <div style="font-weight:600;color:var(--oliva);">−${pesoLoss} kg</div>
+        <div style="font-weight:600;color:var(--oliva);">${pesoLoss === null ? '—' : `${pesoLoss} kg`}</div>
       </div>
       <div>
         <div style="color:var(--text-muted);">Meta</div>
-        <div style="font-weight:600;color:var(--text-secondary);">${p.meta} kg</div>
+        <div style="font-weight:600;color:var(--text-secondary);">${hasWeightGoal ? `${Number(p.meta)} kg` : 'Sem meta de peso'}</div>
       </div>
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;">
         <span>Metas atingidas</span>
-        <span>${pct}%</span>
+        <span>${goals.length ? `${pct}%` : 'Sem metas definidas'}</span>
       </div>
-      <div class="progress-bar">
+      ${goals.length ? `<div class="progress-bar">
         <div class="progress-fill" style="width:${pct}%;"></div>
-      </div>
+      </div>` : ''}
     </div>
+    <div style="font-size:12px;color:var(--text-muted);">Alergias: ${escapePatientCardText(allergySummary)}</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:4px;">${profileButton}</div>
   </div>`;
 }
 
-/* ── Inicialização global do shell (topbar + sidebar + bottombar) ── */
+/* ── Inicialização global do shell (topbar + sidebar) ── */
 function initShell(activePage) {
-  document.getElementById('topbar-container').innerHTML = renderTopbar();
+  document.getElementById('topbar-container').innerHTML = renderTopbar(activePage);
   document.getElementById('sidebar-container').innerHTML = renderSidebar(activePage);
-  document.getElementById('bottombar-container').innerHTML = renderBottomBar(activePage);
 
   // Role selector
   const roleSelect = document.getElementById('role-select');
   if (roleSelect) {
     roleSelect.addEventListener('change', e => {
-      Router.setRole(e.target.value);
-      Router.navigate(e.target.value === 'patient' ? 'patient-detail' : e.target.value === 'secretary' ? 'patients' : 'dashboard');
+      Router.setProfile(e.target.value);
+      Router.navigate(Router.getHomePage());
     });
   }
+
+  const messagesBtn = document.getElementById('messages-btn');
+  if (messagesBtn) messagesBtn.addEventListener('click', () => Router.navigate(Router.getRole() === 'developer' ? 'logs' : 'messages'));
+
+  const settingsShortcut = document.getElementById('settings-shortcut');
+  if (settingsShortcut) settingsShortcut.addEventListener('click', () => Router.navigate('settings'));
+
+  const userTrigger = document.getElementById('topbar-user-trigger');
+  const userDropdown = document.getElementById('topbar-user-dropdown');
+  if (userTrigger && userDropdown) {
+    userTrigger.addEventListener('click', () => {
+      const expanded = userTrigger.getAttribute('aria-expanded') === 'true';
+      userTrigger.setAttribute('aria-expanded', String(!expanded));
+      userDropdown.hidden = expanded;
+    });
+    userDropdown.addEventListener('click', event => {
+      const action = event.target.closest('[data-user-action]')?.dataset.userAction;
+      if (!action) return;
+      userTrigger.setAttribute('aria-expanded', 'false');
+      userDropdown.hidden = true;
+      if (action === 'profile') Router.navigate('profile');
+      if (action === 'settings') Router.navigate('settings');
+      if (action === 'logout') Router.navigate('login');
+    });
+    document.addEventListener('click', event => {
+      if (!userTrigger.contains(event.target) && !userDropdown.contains(event.target)) {
+        userTrigger.setAttribute('aria-expanded', 'false');
+        userDropdown.hidden = true;
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-notification-page]').forEach(item => {
+    item.addEventListener('click', () => {
+      const params = {};
+      const patientId = Number(item.dataset.notificationPatient);
+      if (patientId) params.patientId = patientId;
+      if (item.dataset.notificationTab) params.tab = item.dataset.notificationTab;
+      Router.navigate(item.dataset.notificationPage, params);
+    });
+  });
 
   // Hamburger
   const hamburger = document.getElementById('hamburger-btn');
@@ -321,39 +441,10 @@ function initShell(activePage) {
     btn.addEventListener('click', () => Router.navigate(btn.dataset.page));
   });
 
-  // Bottom bar navigation
-  document.querySelectorAll('.bottom-nav-item[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => Router.navigate(btn.dataset.page));
-  });
-
   // Logout
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => Router.navigate('login'));
-  }
-
-  // Profile card
-  const profileTrigger = document.getElementById('profile-trigger');
-  const profileCard = document.getElementById('profile-card');
-  if (profileTrigger && profileCard) {
-    profileTrigger.addEventListener('click', () => {
-      const isOpen = profileTrigger.getAttribute('aria-expanded') === 'true';
-      profileTrigger.setAttribute('aria-expanded', String(!isOpen));
-      profileCard.hidden = isOpen;
-    });
-    document.addEventListener('click', e => {
-      if (!profileTrigger.contains(e.target) && !profileCard.contains(e.target)) {
-        profileTrigger.setAttribute('aria-expanded', 'false');
-        profileCard.hidden = true;
-      }
-    });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !profileCard.hidden) {
-        profileTrigger.setAttribute('aria-expanded', 'false');
-        profileCard.hidden = true;
-        profileTrigger.focus();
-      }
-    });
   }
 
   // Notifications
@@ -375,9 +466,25 @@ function initShell(activePage) {
   const markAllBtn = document.getElementById('mark-all-read');
   if (markAllBtn) {
     markAllBtn.addEventListener('click', () => {
+      const isPatient = Router.getRole() === 'patient';
+      const key = isPatient
+        ? 'lapidar-notification-feed-' + (Router.getSelectedPatient()?.id || 1)
+        : 'lapidar-notification-feed-' + Router.getProfileId();
+      try {
+        const notifications = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(notifications)) throw new Error('Formato de notificações inválido.');
+        notifications.forEach(notification => { if (notification) notification.unread = false; });
+        localStorage.setItem(key, JSON.stringify(notifications));
+      } catch (error) {
+        console.error('Não foi possível marcar as notificações como lidas.', error);
+        alert('Não foi possível atualizar as notificações neste navegador.');
+        return;
+      }
       document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
-      const badge = document.querySelector('.notif-badge');
+      const badge = document.querySelector('#notif-btn .notif-badge');
       if (badge) badge.style.display = 'none';
+      const pending = document.querySelector('.notif-pending');
+      if (pending) pending.textContent = '0 pendência(s)';
     });
   }
 }
@@ -399,30 +506,22 @@ function showPatientQuickModal(id) {
       <div class="modal" style="max-width:540px;">
         <div class="modal-header" style="background:var(--vinho-xlight);border-bottom:1px solid var(--border);">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div class="avatar avatar-lg" style="background:var(--vinho);color:var(--bege);font-family:var(--font-serif);font-size:18px;">${p.iniciais}</div>
+            <div class="avatar avatar-lg" style="background:var(--vinho);color:var(--bege);font-family:var(--font-serif);font-size:18px;">${escapePatientCardText(p.iniciais)}</div>
             <div>
-              <div style="font-family:var(--font-serif);font-size:18px;font-weight:600;color:var(--vinho);">${p.nome}</div>
-              <div style="font-size:12px;color:var(--text-muted);">${p.idade} anos · ${p.nascimento}</div>
+              <div style="font-family:var(--font-serif);font-size:18px;font-weight:600;color:var(--vinho);">${escapePatientCardText(p.nome)}</div>
+              <div style="font-size:12px;color:var(--text-muted);">Perfil de contato</div>
             </div>
           </div>
           <button class="modal-close" onclick="closePatientQuickModal()">${Icons.close}</button>
         </div>
         <div class="modal-body" style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">
-          <div><strong>Telefone:</strong> ${p.telefone}</div>
-          <div><strong>Protocolo:</strong> ${p.protocolo}</div>
-          <div><strong>Consulta atual:</strong> ${p.consultaAtual}</div>
-          <div><strong>Próxima consulta:</strong> ${p.proximaConsulta}</div>
-          <div><strong>Peso inicial:</strong> ${p.pesoInicial} kg</div>
-          <div><strong>Meta:</strong> ${p.meta} kg</div>
-          <div><strong>TRH:</strong> ${p.trh}</div>
-          <div><strong>Contraceptivo:</strong> ${p.contraceptivo}</div>
-          <div style="grid-column:1/-1;"><strong>Objetivo:</strong> ${p.objetivo}</div>
-          <div style="grid-column:1/-1;"><strong>Origem:</strong> ${p.origemLead || 'Não informada'}</div>
+          <div><strong>Telefone:</strong> ${escapePatientCardText(p.telefone)}</div>
+          <div><strong>E-mail:</strong> ${escapePatientCardText(p.email || 'Não informado')}</div>
+          <div><strong>Nascimento:</strong> ${escapePatientCardText(p.nascimento || 'Não informado')}</div>
         </div>
         <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn btn-subtle btn-sm" onclick="closePatientQuickModal()">Fechar</button>
-          <button class="btn btn-subtle btn-sm" onclick="closePatientQuickModal();Router.navigate('journey',{patientId:${p.id}})">Jornada</button>
-          <button class="btn btn-primary btn-sm" onclick="closePatientQuickModal();Router.navigate('patient-registration',{patientId:${p.id}})">Ficha cadastral</button>
+          <button class="btn btn-primary btn-sm" onclick="closePatientQuickModal();Router.navigate('journey',{patientId:${Number(p.id)}})">Jornada operacional</button>
         </div>
       </div>`;
     modal.classList.add('open');

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
 <body>
 <div id="topbar-container"></div>
@@ -57,6 +58,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Transações</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-transaction" type="button" hidden>＋ Nova transação</button>
+        <button class="btn btn-subtle btn-sm" id="manage-financial-categories" type="button" hidden>Gerenciar categorias</button>
       </div>
       <div class="filter-chips">
         <button class="filter-chip active" data-status="Todos">Todos</button>
@@ -77,13 +79,14 @@
         <thead>
           <tr>
             <th>Data</th>
-            <th>Paciente / Referência</th>
+            <th>Referência</th>
             <th>Origem</th>
             <th>Destino</th>
             <th>Tipo</th>
             <th>Plano</th>
             <th>Valor</th>
             <th>Parcela</th>
+            <th>Progresso</th>
             <th>Responsável</th>
             <th>Status</th>
             <th id="transaction-actions-header" hidden>Ações</th>
@@ -95,7 +98,6 @@
   </div>
 </main>
 
-<div id="bottombar-container"></div>
 <div class="modal-overlay" id="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
   <div class="modal" style="max-width:680px;">
     <div class="modal-header">
@@ -105,18 +107,37 @@
     <form id="transaction-form">
       <div class="modal-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
         <label class="form-group"><span class="form-label">Data</span><input class="form-input" type="date" id="tx-date" required></label>
-        <label class="form-group"><span class="form-label">Paciente / Referência</span><input class="form-input" id="tx-patient" required maxlength="100"></label>
-        <label class="form-group"><span class="form-label">Tipo</span><select class="form-select" id="tx-type"><option>Receita</option><option>Despesa</option></select></label>
+        <label class="form-group"><span class="form-label">Referência (opcional)</span><input class="form-input" id="tx-patient" maxlength="100"></label>
+        <label class="form-group"><span class="form-label">Natureza</span><select class="form-select" id="tx-type"><option>Receita</option><option>Despesa</option></select></label>
+        <label class="form-group"><span class="form-label">Tipo de lançamento</span><select class="form-select" id="tx-launch-type" required></select></label>
         <label class="form-group"><span class="form-label">Valor (R$)</span><input class="form-input" id="tx-value" type="number" min="0.01" step="0.01" required></label>
-        <label class="form-group"><span class="form-label">Origem</span><input class="form-input" id="tx-origin" required maxlength="80"></label>
+        <label class="form-group"><span class="form-label">Origem (ID do usuário)</span><input class="form-input" id="tx-origin" required maxlength="80"></label>
         <label class="form-group"><span class="form-label">Destino</span><input class="form-input" id="tx-destination" required maxlength="80"></label>
-        <label class="form-group"><span class="form-label">Plano / Categoria</span><input class="form-input" id="tx-plan" required maxlength="80"></label>
-        <label class="form-group"><span class="form-label">Parcela</span><input class="form-input" id="tx-installment" maxlength="20"></label>
+        <label class="form-group"><span class="form-label">Categoria</span><select class="form-select" id="tx-plan" required></select></label>
+        <label class="form-group"><span class="form-label">Número de parcelas</span><input class="form-input" id="tx-installment-count" type="number" min="1" max="60" step="1" value="1" required></label>
+        <label class="form-group"><span class="form-label">Data do primeiro pagamento</span><input class="form-input" id="tx-payment-date" type="date" required></label>
+        <label class="form-group"><span class="form-label">Forma de pagamento</span><select class="form-select" id="tx-payment-method"><option value="Pix">Pix</option><option value="Cartão de crédito">Cartão de crédito</option><option value="Cartão de débito">Cartão de débito</option><option value="Transferência">Transferência</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Não informado">Não informado</option></select></label>
         <label class="form-group"><span class="form-label">Responsável</span><input class="form-input" id="tx-user" required maxlength="80"></label>
         <label class="form-group"><span class="form-label">Status</span><select class="form-select" id="tx-status"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select></label>
       </div>
+
       <div class="modal-footer"><button class="btn btn-subtle" id="cancel-transaction" type="button">Cancelar</button><button class="btn btn-primary" type="submit">Salvar transação</button></div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="installments-modal" role="dialog" aria-modal="true" aria-labelledby="installments-title">
+    <div class="modal" style="max-width:760px;max-height:90vh;overflow-y:auto;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="installments-title">Parcelas</h2>
+        <button class="modal-close" id="close-installments" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="installments-summary" style="margin-bottom:12px;color:var(--text-secondary);font-size:13px;"></p>
+        <div class="table-wrapper"><table class="data-table"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th>Pagamento</th><th>Ação</th></tr></thead><tbody id="installments-body"></tbody></table></div>
+        <p id="installments-feedback" role="status" style="margin-top:8px;color:var(--text-secondary);font-size:12px;"></p>
+      </div>
+      <div class="modal-footer"><button class="btn btn-subtle" id="close-installments-footer" type="button">Fechar</button></div>
   </div>
 </div>
 
@@ -131,7 +152,7 @@
   initShell('financial');
   const currentRole = Router.getRole();
   const isSecretaryView = currentRole === 'secretary';
-  const isAdminView = currentRole === 'admin';
+  const isAdminView = Router.can('seeClinicFinance');
   const currentEmployee = currentRole === 'doctor' ? 'Dra. Andressa Gomide' : 'Secretaria';
   let editingTransactionId = null;
   let transactions = TRANSACOES.map((transaction, index) => ({ ...transaction, id:transaction.id || 'demo-' + index }));
@@ -141,6 +162,120 @@
   } catch (error) {
     console.error('Não foi possível carregar as transações locais.', error);
   }
+  transactions.forEach(transaction => {
+    transaction.tipoLancamento = transaction.tipoLancamento || transaction.tipo || 'Receita';
+  });
+
+  function dateToIso(date) {
+    const parts = String(date || '').split('/');
+    return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : '';
+  }
+  function dateToDisplay(date) {
+    const parts = String(date || '').split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : '';
+  }
+  function addMonths(date, amount) {
+    const value = new Date(date + 'T00:00:00');
+    const day = value.getDate();
+    value.setDate(1);
+    value.setMonth(value.getMonth() + amount);
+    const lastDay = new Date(value.getFullYear(), value.getMonth() + 1, 0).getDate();
+    value.setDate(Math.min(day, lastDay));
+    return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+  }
+  function ensurePaymentSchedule(transaction) {
+    if (Array.isArray(transaction.payments) && transaction.payments.length) return transaction.payments;
+    const match = String(transaction.parcelas || '').match(/(\d+)\s*\/\s*(\d+)/);
+    const count = Math.max(1, Math.min(60, Number(match && match[2]) || 1));
+    const paidCount = transaction.status === 'pago' ? Math.min(count, Number(match && match[1]) || count) : 0;
+    const firstDueDate = dateToIso(transaction.data);
+    const totalCents = Math.round((Number(transaction.valor) || 0) * 100);
+    transaction.payments = Array.from({ length:count }, (_, index) => {
+      const amountCents = index === count - 1
+        ? totalCents - Math.floor(totalCents / count) * (count - 1)
+        : Math.floor(totalCents / count);
+      const paid = index < paidCount;
+      return {
+        number:index + 1,
+        total:count,
+        amount:amountCents / 100,
+        dueDate:firstDueDate ? addMonths(firstDueDate, index) : '',
+        status:paid ? 'pago' : 'pendente',
+        paidAt:paid ? firstDueDate : '',
+        paymentMethod:paid ? (transaction.paymentMethod || 'Não informado') : ''
+      };
+    });
+    return transaction.payments;
+  }
+  function paymentProgress(transaction) {
+    const payments = ensurePaymentSchedule(transaction);
+    return { paid:payments.filter(payment => payment.status === 'pago').length, total:payments.length };
+  }
+  function saveTransactions() {
+    try {
+      localStorage.setItem('lapidar-transacoes', JSON.stringify(transactions));
+      refreshPaymentTotals();
+      return true;
+    } catch (error) {
+      console.error('Não foi possível salvar as transações.', error);
+      alert('Não foi possível salvar. O armazenamento local pode estar cheio.');
+      return false;
+    }
+  }
+  function getTransactionCategories() {
+    const fallback = ['Consulta', 'Exames', 'Planos', 'Despesas operacionais', 'Materiais clínicos'];
+    try {
+      const catalogs = JSON.parse(localStorage.getItem('lapidar-system-catalogs-v1') || '{}');
+      const configured = catalogs['Categorias financeiras'];
+      return [...new Set((Array.isArray(configured) ? configured : fallback)
+        .concat(transactions.map(transaction => transaction.plano).filter(Boolean)))];
+    } catch (error) {
+      console.error('Não foi possível carregar as categorias financeiras.', error);
+      return [...new Set(fallback.concat(transactions.map(transaction => transaction.plano).filter(Boolean)))];
+    }
+  }
+  function getTransactionTypes() {
+    const fallback = ['Receita', 'Despesa'];
+    try {
+      const catalogs = JSON.parse(localStorage.getItem('lapidar-system-catalogs-v1') || '{}');
+      const configured = catalogs['Tipos de lançamento'];
+      return [...new Set((Array.isArray(configured) ? configured : fallback)
+        .concat(transactions.map(transaction => transaction.tipoLancamento).filter(Boolean)))];
+    } catch (error) {
+      console.error('Não foi possível carregar os tipos de lançamento.', error);
+      return [...new Set(fallback.concat(transactions.map(transaction => transaction.tipoLancamento).filter(Boolean)))];
+    }
+  }
+  function populateTransactionTypeSelect(selectedValue) {
+    const select = document.getElementById('tx-launch-type');
+    const types = getTransactionTypes();
+    select.replaceChildren();
+    types.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      select.appendChild(option);
+    });
+    select.value = selectedValue && types.includes(selectedValue) ? selectedValue : types[0] || '';
+  }
+  function populateCategorySelect(selectedValue) {
+    const select = document.getElementById('tx-plan');
+    const categories = getTransactionCategories();
+    select.replaceChildren();
+    categories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      select.appendChild(option);
+    });
+    if (selectedValue && !categories.includes(selectedValue)) {
+      const option = document.createElement('option');
+      option.value = selectedValue;
+      option.textContent = selectedValue;
+      select.appendChild(option);
+    }
+    select.value = selectedValue || categories[0] || '';
+  }
   if (!isAdminView) {
     transactions = transactions.filter(transaction => transaction.usuario === currentEmployee);
     document.getElementById('financial-subtitle').textContent = isSecretaryView
@@ -148,7 +283,8 @@
       : 'Receitas e despesas vinculadas ao seu perfil profissional';
   }
   document.getElementById('btn-add-transaction').hidden = !isAdminView;
-  document.getElementById('transaction-actions-header').hidden = !isAdminView;
+  document.getElementById('manage-financial-categories').hidden = !isAdminView;
+  document.getElementById('transaction-actions-header').hidden = false;
   if (isSecretaryView) {
     document.getElementById('financial-subtitle').textContent = 'Financeiro operacional · pagamentos e pendências';
     document.getElementById('finance-summary').hidden = true;
@@ -172,15 +308,28 @@
     return value.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
   }
 
+  function refreshPaymentTotals() {
+    const totalPaid = transactions.filter(transaction => transaction.tipo === 'Receita')
+      .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
+        .filter(payment => payment.status === 'pago').reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
+    const totalPending = transactions.filter(transaction => transaction.tipo === 'Receita')
+      .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
+        .filter(payment => payment.status === 'pendente').reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
+    document.getElementById('received-total').textContent = formatCurrency(totalPaid);
+    document.getElementById('pending-total').textContent = formatCurrency(totalPending);
+  }
+
   const monthlyRevenue = transactions
     .filter(transaction => transaction.tipo === 'Receita' && transaction.data.endsWith('/09/2026'))
     .reduce((sum, transaction) => sum + transaction.valor, 0);
   const receivedRevenue = transactions
-    .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pago')
-    .reduce((sum, transaction) => sum + transaction.valor, 0);
+    .filter(transaction => transaction.tipo === 'Receita')
+    .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
+      .filter(payment => payment.status === 'pago').reduce((total, payment) => total + payment.amount, 0), 0);
   const pendingRevenue = transactions
-    .filter(transaction => transaction.tipo === 'Receita' && transaction.status === 'pendente')
-    .reduce((sum, transaction) => sum + transaction.valor, 0);
+    .filter(transaction => transaction.tipo === 'Receita')
+    .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
+      .filter(payment => payment.status === 'pendente').reduce((total, payment) => total + payment.amount, 0), 0);
   const annualRevenue = isAdminView
     ? receitaMensal.reduce((sum, month) => sum + month.value, 0)
     : monthlyRevenue;
@@ -199,7 +348,7 @@
   // Transactions
   let activeStatus = 'Todos';
   const filterFields = [
-    ['filter-type', 'tipo'],
+    ['filter-type', 'tipoLancamento'],
     ['filter-origin', 'origem'],
     ['filter-destination', 'destino'],
     ['filter-user', 'usuario'],
@@ -235,23 +384,34 @@
         (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
     });
 
-    document.getElementById('transactions-body').innerHTML = filtered.map(t => `
-      <tr>
+    document.getElementById('transactions-body').innerHTML = filtered.map(t => {
+      const progress = paymentProgress(t);
+      const overdue = ensurePaymentSchedule(t).filter(payment =>
+        payment.status !== 'pago' && payment.dueDate && payment.dueDate < new Date().toISOString().slice(0,10)
+      ).length;
+      return `<tr>
         <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(t.data)}</td>
-        <td>${escapeHTML(t.paciente)}</td>
+        <td>${escapeHTML(t.paciente || '—')}</td>
         <td>${escapeHTML(t.origem)}</td>
         <td>${escapeHTML(t.destino)}</td>
-        <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${t.tipo}</span></td>
+        <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${escapeHTML(t.tipoLancamento || t.tipo)}</span><br><small>${escapeHTML(t.tipo)}</small></td>
         <td>${getProtocolBadge(escapeHTML(t.plano))}</td>
-        <td style="font-weight:600;color:var(--vinho);">R$ ${t.valor.toLocaleString('pt-BR')}</td>
-        <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(t.parcelas)}</td>
+        <td style="font-weight:600;color:var(--vinho);">R$ ${Number(t.valor || 0).toLocaleString('pt-BR')}</td>
+        <td style="color:var(--text-muted);font-size:12px;">${progress.total} parcela(s)</td>
+        <td style="color:var(--text-muted);font-size:12px;">${progress.paid}/${progress.total} paga(s)${overdue ? `<br><span class="badge badge-yellow">${overdue} em atraso</span>` : ''}</td>
         <td>${escapeHTML(t.usuario)}</td>
         <td>${getStatusBadge(t.status)}</td>
-        ${isAdminView ? `<td><button class="btn btn-subtle btn-sm" type="button" data-edit-transaction="${escapeHTML(t.id)}">Editar</button></td>` : ''}
-      </tr>
-    `).join('') || `<tr><td colspan="${isAdminView ? 11 : 10}" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>`;
+        <td class="transaction-row-actions">
+          ${isAdminView ? `<button class="btn btn-subtle btn-sm" type="button" data-edit-transaction="${escapeHTML(t.id)}">Editar</button>` : ''}
+          <button class="btn btn-subtle btn-sm" type="button" data-view-installments="${escapeHTML(t.id)}">Parcelas</button>
+        </td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="12" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>`;
     document.querySelectorAll('[data-edit-transaction]').forEach(button => {
       button.addEventListener('click', () => openTransactionEditor(button.dataset.editTransaction));
+    });
+    document.querySelectorAll('[data-view-installments]').forEach(button => {
+      button.addEventListener('click', () => openInstallments(button.dataset.viewInstallments));
     });
   }
 
@@ -262,18 +422,33 @@
   }
 
   function openTransactionEditor(id) {
+    if (!isAdminView) return;
     const transaction = id ? transactions.find(item => String(item.id) === String(id)) : null;
+    const payments = transaction ? ensurePaymentSchedule(transaction) : [];
+    const hasPaidPayments = payments.some(payment => payment.status === 'pago');
     editingTransactionId = transaction ? transaction.id : null;
     document.getElementById('transaction-modal-title').textContent = transaction ? 'Editar transação' : 'Nova transação';
     const [day, month, year] = (transaction ? transaction.data : new Date().toLocaleDateString('pt-BR')).split('/');
     document.getElementById('tx-date').value = year + '-' + month + '-' + day;
-    document.getElementById('tx-patient').value = transaction ? transaction.paciente : '';
+    document.getElementById('tx-patient').value = transaction ? transaction.paciente || '' : '';
     document.getElementById('tx-type').value = transaction ? transaction.tipo : 'Receita';
+    populateTransactionTypeSelect(transaction ? transaction.tipoLancamento : '');
     document.getElementById('tx-value').value = transaction ? transaction.valor : '';
+    document.getElementById('tx-value').disabled = hasPaidPayments;
+    document.getElementById('tx-value').title = hasPaidPayments ? 'Não é possível alterar o total após registrar pagamentos.' : '';
     document.getElementById('tx-origin').value = transaction ? transaction.origem : '';
+    document.getElementById('tx-origin').readOnly = !transaction;
+    document.getElementById('tx-origin').title = transaction ? '' : 'Preenchido com o identificador do perfil conectado.';
+    if (!transaction) document.getElementById('tx-origin').value = Router.getProfileId();
     document.getElementById('tx-destination').value = transaction ? transaction.destino : '';
-    document.getElementById('tx-plan').value = transaction ? transaction.plano : '';
-    document.getElementById('tx-installment').value = transaction ? transaction.parcelas : '';
+    populateCategorySelect(transaction ? transaction.plano : '');
+    document.getElementById('tx-installment-count').value = transaction ? payments.length : 1;
+    document.getElementById('tx-installment-count').disabled = hasPaidPayments;
+    document.getElementById('tx-installment-count').title = hasPaidPayments ? 'Não é possível alterar a quantidade após registrar pagamentos.' : '';
+    document.getElementById('tx-payment-date').value = transaction && payments[0] && payments[0].dueDate
+      ? payments[0].dueDate : new Date().toISOString().slice(0,10);
+    document.getElementById('tx-payment-method').value = transaction && payments[0]
+      ? payments[0].paymentMethod || 'Não informado' : 'Pix';
     document.getElementById('tx-user').value = transaction ? transaction.usuario : '';
     document.getElementById('tx-status').value = transaction ? transaction.status : 'pago';
     document.getElementById('transaction-modal').classList.add('open');
@@ -282,30 +457,137 @@
     document.getElementById('transaction-modal').classList.remove('open');
   }
   document.getElementById('btn-add-transaction').addEventListener('click', () => openTransactionEditor(null));
+  document.getElementById('manage-financial-categories').addEventListener('click', () => Router.navigate('settings', { settingsSection:'catalogs', catalogName:'Categorias financeiras' }));
   document.getElementById('close-transaction-modal').addEventListener('click', closeTransactionEditor);
   document.getElementById('cancel-transaction').addEventListener('click', closeTransactionEditor);
+  function openInstallments(id) {
+    const transaction = transactions.find(item => String(item.id) === String(id));
+    if (!transaction) return;
+    const payments = ensurePaymentSchedule(transaction);
+    const progress = paymentProgress(transaction);
+    document.getElementById('installments-title').textContent = 'Parcelas — ' + (transaction.paciente || transaction.plano);
+    document.getElementById('installments-summary').textContent =
+      `${progress.paid} de ${progress.total} parcelas pagas · Total ${formatCurrency(Number(transaction.valor) || 0)}`;
+    document.getElementById('installments-feedback').textContent = '';
+    const body = document.getElementById('installments-body');
+    body.innerHTML = payments.map(payment => {
+      const overdue = payment.status !== 'pago' && payment.dueDate && payment.dueDate < new Date().toISOString().slice(0,10);
+      const paymentState = payment.status === 'pago'
+        ? `Pago em ${escapeHTML(payment.paidAt ? dateToDisplay(payment.paidAt) : 'data não informada')} · ${escapeHTML(payment.paymentMethod || 'forma não informada')}`
+        : overdue ? 'Em atraso' : 'Pendente';
+      return `<tr data-payment-number="${payment.number}">
+        <td>${payment.number}/${payment.total}</td>
+        <td>${escapeHTML(payment.dueDate ? dateToDisplay(payment.dueDate) : '—')}</td>
+        <td>${formatCurrency(payment.amount)}</td>
+        <td>${payment.status === 'pago' ? '<span class="badge badge-green">Pago</span>' : `<span class="badge ${overdue ? 'badge-yellow' : 'badge-gray'}">${overdue ? 'Em atraso' : 'Pendente'}</span>`}</td>
+        <td>${paymentState}${payment.status !== 'pago' ? `<div style="display:grid;gap:5px;min-width:150px;margin-top:5px;"><input class="form-input" type="date" data-paid-at aria-label="Data de pagamento da parcela ${payment.number}"><select class="form-select" data-payment-method aria-label="Forma de pagamento da parcela ${payment.number}"><option>Pix</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Transferência</option><option>Dinheiro</option><option>Boleto</option></select></div>` : ''}</td>
+        <td>${isAdminView ? payment.status === 'pago'
+          ? `<button class="btn btn-subtle btn-sm" type="button" data-mark-pending="${payment.number}">Desfazer</button>`
+          : `<button class="btn btn-primary btn-sm" type="button" data-mark-paid="${payment.number}">Registrar pagamento</button>`
+          : '—'}</td>
+      </tr>`;
+    }).join('');
+    body.querySelectorAll('[data-mark-paid]').forEach(button => {
+      button.addEventListener('click', () => {
+        const row = button.closest('tr');
+        const payment = transaction.payments.find(item => item.number === Number(button.dataset.markPaid));
+        const paidAt = row.querySelector('[data-paid-at]').value;
+        const method = row.querySelector('[data-payment-method]').value;
+        if (!paidAt) {
+          document.getElementById('installments-feedback').textContent = 'Informe a data em que esta parcela foi paga.';
+          return;
+        }
+        const previous = JSON.stringify({ payments:transaction.payments, status:transaction.status, parcelas:transaction.parcelas });
+        payment.status = 'pago';
+        payment.paidAt = paidAt;
+        payment.paymentMethod = method;
+        transaction.status = transaction.payments.every(item => item.status === 'pago') ? 'pago' : 'pendente';
+        const updatedProgress = paymentProgress(transaction);
+        transaction.parcelas = `${updatedProgress.paid}/${updatedProgress.total}`;
+        if (!saveTransactions()) {
+          Object.assign(transaction, JSON.parse(previous));
+          return;
+        }
+        renderTransactions();
+        openInstallments(id);
+      });
+    });
+    body.querySelectorAll('[data-mark-pending]').forEach(button => {
+      button.addEventListener('click', () => {
+        const payment = transaction.payments.find(item => item.number === Number(button.dataset.markPending));
+        const previous = JSON.stringify({ payments:transaction.payments, status:transaction.status, parcelas:transaction.parcelas });
+        payment.status = 'pendente';
+        payment.paidAt = '';
+        payment.paymentMethod = '';
+        transaction.status = 'pendente';
+        const updatedProgress = paymentProgress(transaction);
+        transaction.parcelas = `${updatedProgress.paid}/${updatedProgress.total}`;
+        if (!saveTransactions()) {
+          Object.assign(transaction, JSON.parse(previous));
+          return;
+        }
+        renderTransactions();
+        openInstallments(id);
+      });
+    });
+    document.getElementById('installments-modal').classList.add('open');
+  }
+  function closeInstallments() {
+    document.getElementById('installments-modal').classList.remove('open');
+  }
+  document.getElementById('close-installments').addEventListener('click', closeInstallments);
+  document.getElementById('close-installments-footer').addEventListener('click', closeInstallments);
+  document.getElementById('installments-modal').addEventListener('click', event => {
+    if (event.target.id === 'installments-modal') closeInstallments();
+  });
   document.getElementById('transaction-form').addEventListener('submit', event => {
     event.preventDefault();
     if (!isAdminView) return;
     const [year, month, day] = document.getElementById('tx-date').value.split('-');
+    const existing = transactions.find(item => String(item.id) === String(editingTransactionId));
+    const existingPayments = existing ? ensurePaymentSchedule(existing) : [];
+    const hasPaidPayments = existingPayments.some(payment => payment.status === 'pago');
+    const installmentCount = hasPaidPayments
+      ? existingPayments.length
+      : Math.max(1, Math.min(60, Number(document.getElementById('tx-installment-count').value) || 1));
+    const totalCents = Math.round(Number(document.getElementById('tx-value').value) * 100);
+    const firstPaymentDate = document.getElementById('tx-payment-date').value;
+    const paymentMethod = document.getElementById('tx-payment-method').value;
+    const requestedStatus = document.getElementById('tx-status').value;
+    const payments = hasPaidPayments ? existingPayments : Array.from({ length:installmentCount }, (_, index) => {
+      const amountCents = index === installmentCount - 1
+        ? totalCents - Math.floor(totalCents / installmentCount) * (installmentCount - 1)
+        : Math.floor(totalCents / installmentCount);
+      const paid = requestedStatus === 'pago' && index === 0;
+      return {
+        number:index + 1,
+        total:installmentCount,
+        amount:amountCents / 100,
+        dueDate:firstPaymentDate ? addMonths(firstPaymentDate, index) : '',
+        status:paid ? 'pago' : 'pendente',
+        paidAt:paid ? firstPaymentDate : '',
+        paymentMethod:paid ? paymentMethod : ''
+      };
+    });
     const updated = {
       id:editingTransactionId || 'tx-' + Date.now(),
       data:day + '/' + month + '/' + year,
       paciente:document.getElementById('tx-patient').value.trim(),
       tipo:document.getElementById('tx-type').value,
-      valor:Number(document.getElementById('tx-value').value),
+      tipoLancamento:document.getElementById('tx-launch-type').value,
+      valor:totalCents / 100,
       origem:document.getElementById('tx-origin').value.trim(),
       destino:document.getElementById('tx-destination').value.trim(),
       plano:document.getElementById('tx-plan').value.trim(),
-      parcelas:document.getElementById('tx-installment').value.trim() || '—',
+      parcelas:`${payments.filter(payment => payment.status === 'pago').length}/${payments.length}`,
       usuario:document.getElementById('tx-user').value.trim(),
-      status:document.getElementById('tx-status').value,
+      status:requestedStatus === 'cancelado' ? 'cancelado' : payments.every(payment => payment.status === 'pago') ? 'pago' : 'pendente',
+      payments,
     };
-    const index = transactions.findIndex(item => String(item.id) === String(editingTransactionId));
-    if (index < 0) transactions.push(updated);
-    else transactions[index] = updated;
+    const nextTransactions = transactions.map(item => String(item.id) === String(editingTransactionId) ? updated : item);
+    if (!editingTransactionId) nextTransactions.push(updated);
     try {
-      localStorage.setItem('lapidar-transacoes', JSON.stringify(transactions));
+      localStorage.setItem('lapidar-transacoes', JSON.stringify(nextTransactions));
       location.reload();
     } catch (error) {
       console.error('Não foi possível salvar a transação.', error);
@@ -331,5 +613,7 @@
   renderTransactions();
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

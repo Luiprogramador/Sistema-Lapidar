@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
 <body>
 <div id="topbar-container"></div>
@@ -30,7 +31,7 @@
   <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
     <div class="search-bar" style="flex:1;min-width:200px;max-width:360px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" class="search-input" id="search-input" placeholder="Buscar por nome...">
+      <input type="text" class="search-input" id="search-input" placeholder="Buscar paciente pelo nome...">
     </div>
     <div class="filter-chips" id="proto-filters">
       <button class="filter-chip active" data-proto="Todos">Todos</button>
@@ -39,7 +40,16 @@
       <button class="filter-chip" data-proto="Lapidar Fertilidade">Lapidar Fertilidade</button>
       <button class="filter-chip" data-proto="Pocket">Pocket</button>
     </div>
+    <label for="patient-status-filter" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+      Status
+      <select id="patient-status-filter" class="form-input" style="width:auto;min-width:150px;">
+        <option value="Todas">Todas</option>
+        <option value="Ativa">Ativas</option>
+        <option value="Inativa">Inativas</option>
+      </select>
+    </label>
   </div>
+  <p id="patients-count" class="page-subtitle" aria-live="polite" style="margin:-12px 0 16px;"></p>
 
   <!-- Grid de cards -->
   <div class="grid-responsive-3" id="patients-grid" style="gap:16px;"></div>
@@ -51,7 +61,6 @@
   </div>
 </main>
 
-<div id="bottombar-container"></div>
 
 <!-- Modal nova paciente -->
 <div class="modal-overlay" id="modal-paciente">
@@ -71,6 +80,10 @@
         <div class="form-group">
           <label class="form-label">Telefone *</label>
           <input type="tel" class="form-input" id="new-p-tel" placeholder="(00) 00000-0000">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="new-p-email">E-mail *</label>
+          <input type="email" class="form-input" id="new-p-email" placeholder="nome@exemplo.com" autocomplete="email" required>
         </div>
         <div class="form-group">
           <label class="form-label">CPF</label>
@@ -104,7 +117,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Meta de peso (kg)</label>
-          <input type="number" class="form-input" id="new-p-meta" placeholder="Ex: 65.0" step="0.1">
+          <input type="number" class="form-input" id="new-p-meta" placeholder="Opcional" min="1" step="0.1">
         </div>
         <div class="form-group">
           <label class="form-label">TRH</label>
@@ -133,6 +146,15 @@
           <label class="form-label">Observações</label>
           <textarea class="form-textarea" id="new-p-obs" placeholder="Observações relevantes..."></textarea>
         </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="new-p-allergies">Alergias</label>
+          <input type="text" class="form-input" id="new-p-allergies" placeholder="Separe por vírgulas; deixe em branco se não informado">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="new-p-goals">Metas personalizadas (opcional)</label>
+          <textarea class="form-textarea" id="new-p-goals" rows="3" placeholder="Uma por linha: nome | frequência desejada&#10;Ex.: Caminhada | 3x/semana&#10;Sono regular | diariamente"></textarea>
+          <small class="text-muted">Não é necessário cadastrar meta de peso ou qualquer meta que não tenha sido combinada com a paciente.</small>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -150,19 +172,44 @@
     Router.navigate('patient-detail');
   } else {
   initShell('patients');
+  const contactOnlyRegistration = Router.getRole() === 'secretary';
+  const activePatientCount = PACIENTES.filter(patient => patient.ativo !== false && patient.status !== 'Inativa').length;
+  document.querySelector('.page-header .page-subtitle').textContent =
+    `${PACIENTES.length} de ${PACIENTES.length} pacientes · ${activePatientCount} ativas`;
+  if (contactOnlyRegistration) {
+    document.querySelector('.page-header .page-subtitle').textContent =
+      `${PACIENTES.length} de ${PACIENTES.length} pacientes · ${activePatientCount} ativas · Contatos e jornada operacional`;
+    document.getElementById('save-paciente').textContent = 'Salvar dados de contato';
+    ['new-p-consulta','new-p-obj','new-p-proto','new-p-peso','new-p-meta','new-p-trh','new-p-contra','new-p-lead','new-p-obs','new-p-allergies','new-p-goals']
+      .forEach(id => { document.getElementById(id).closest('.form-group').hidden = true; });
+  }
 
   let searchTerm = '';
-  let activeProto = 'Todos';
+  let activeProto = Router.getState().filterProtocol || 'Todos';
+  let activeStatus = Router.getState().filterStatus || 'Todas';
+  const statusFilter = document.getElementById('patient-status-filter');
+  if (!['Todas', 'Ativa', 'Inativa'].includes(activeStatus)) activeStatus = 'Todas';
+  statusFilter.value = activeStatus;
+  if (!Array.from(document.querySelectorAll('#proto-filters .filter-chip')).some(button => button.dataset.proto === activeProto)) {
+    activeProto = 'Todos';
+  }
+  document.querySelectorAll('#proto-filters .filter-chip').forEach(button => {
+    button.classList.toggle('active', button.dataset.proto === activeProto);
+  });
 
   function filterAndRender() {
     const filtered = PACIENTES.filter(p => {
       const matchName  = p.nome.toLowerCase().includes(searchTerm.toLowerCase());
       const matchProto = activeProto === 'Todos' || p.protocolo === activeProto;
-      return matchName && matchProto;
+      const inactive = p.ativo === false || p.status === 'Inativa';
+      const matchStatus = activeStatus === 'Todas' || (activeStatus === 'Inativa' ? inactive : !inactive);
+      return matchName && matchProto && matchStatus;
     });
 
     const grid = document.getElementById('patients-grid');
     const empty = document.getElementById('empty-state');
+    document.getElementById('patients-count').textContent =
+      `Lista de pacientes · ${filtered.length} ${filtered.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`;
 
     if (filtered.length === 0) {
       grid.innerHTML = '';
@@ -170,6 +217,14 @@
     } else {
       empty.classList.add('hidden');
       grid.innerHTML = filtered.map((p, i) => renderPatientCard(p, i)).join('');
+      grid.querySelectorAll('[data-patient-profile]').forEach(button => {
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          const patientId = Number(button.dataset.patientProfile);
+          if (Router.getRole() === 'secretary') showPatientQuickModal(patientId);
+          else Router.navigate('patient-detail', { patientId });
+        });
+      });
     }
   }
 
@@ -187,6 +242,10 @@
       btn.classList.add('active');
       filterAndRender();
     });
+    statusFilter.addEventListener('change', () => {
+      activeStatus = statusFilter.value;
+      filterAndRender();
+    });
   });
 
   // Modal
@@ -198,22 +257,43 @@
   document.getElementById('save-paciente').addEventListener('click', () => {
     const nome = document.getElementById('new-p-nome').value.trim();
     const tel = document.getElementById('new-p-tel').value.trim();
+    const email = document.getElementById('new-p-email').value.trim();
     const proto = document.getElementById('new-p-proto').value;
     const peso = parseFloat(document.getElementById('new-p-peso').value);
     const nasc = document.getElementById('new-p-nasc').value;
+    const metaPesoInput = document.getElementById('new-p-meta').value.trim();
+    const metaPeso = metaPesoInput ? Number(metaPesoInput) : null;
+    const birth = nasc ? new Date(nasc + 'T00:00:00') : null;
+    const today = new Date();
 
-    if (!nome || !tel || !nasc || !proto || isNaN(peso)) {
-      alert('Por favor, preencha os campos obrigatórios (Nome, Telefone, Nascimento, Protocolo e Peso Inicial).');
+    if (!nome || !tel || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !nasc ||
+        !contactOnlyRegistration && (!proto || !Number.isFinite(peso) || peso <= 0) ||
+        !birth || Number.isNaN(birth.getTime()) || birth > today ||
+        !contactOnlyRegistration && metaPesoInput && (!Number.isFinite(metaPeso) || metaPeso <= 0)) {
+      alert(contactOnlyRegistration
+        ? 'Informe nome, telefone, e-mail válido e uma data de nascimento válida.'
+        : 'Informe nome, telefone, e-mail válido, data de nascimento válida, protocolo e peso inicial válido. A meta de peso é opcional.');
       return;
     }
 
     const initials = nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const birth = new Date(nasc + 'T00:00:00');
     const now = new Date();
     let idade = now.getFullYear() - birth.getFullYear();
     if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) idade--;
-
-    const metaPeso = parseFloat(document.getElementById('new-p-meta').value) || (peso - 6);
+    const goals = document.getElementById('new-p-goals').value.split(/\r?\n/)
+      .map(line => line.split('|').map(part => part.trim()))
+      .filter(parts => parts[0])
+      .map(([name, frequency], index) => ({
+        id:'goal-' + Date.now() + '-' + index,
+        nome:name,
+        freqDesejada:frequency || 'Conforme combinado',
+        meta:1,
+        realizado:0,
+        unidade:'vezes',
+        desc:'',
+      }));
+    const allergies = document.getElementById('new-p-allergies').value
+      .split(',').map(value => value.trim()).filter(Boolean);
 
     const newPatient = {
       id: PACIENTES.length + 1,
@@ -223,34 +303,33 @@
       nascimento: nasc ? formatDate(nasc) : '01/01/1985',
       cpf: document.getElementById('new-p-cpf').value.trim(),
       telefone: tel || '(11) 99999-9999',
-      objetivo: document.getElementById('new-p-obj').value || 'Equilíbrio metabólico e saúde feminina',
-      protocolo: proto,
-      consultaAtual: document.getElementById('new-p-consulta').value.trim() || '1ª Consulta',
-      pesoInicial: peso,
-      pesoAtual: peso,
-      meta: metaPeso,
-      trh: document.getElementById('new-p-trh').value,
-      contraceptivo: document.getElementById('new-p-contra').value || 'Não',
+      email: email,
+      objetivo: contactOnlyRegistration ? 'A definir' : document.getElementById('new-p-obj').value.trim() || 'A definir',
+      alergias: allergies,
+      protocolo: contactOnlyRegistration ? 'A definir' : proto,
+      consultaAtual: contactOnlyRegistration ? 'A definir' : document.getElementById('new-p-consulta').value.trim() || '1ª Consulta',
+      pesoInicial: contactOnlyRegistration ? null : peso,
+      pesoAtual: contactOnlyRegistration ? null : peso,
+      meta: contactOnlyRegistration ? null : metaPeso,
+      trh: contactOnlyRegistration ? 'Não informado' : document.getElementById('new-p-trh').value,
+      contraceptivo: contactOnlyRegistration ? 'Não informado' : document.getElementById('new-p-contra').value || 'Não',
       circunferenciaAbdominal: '82 cm',
       pressao: '120/80 mmHg',
-      metas: ['Atingir peso meta', 'Melhora da constância diária'],
+      metas: goals.map(goal => goal.nome),
       metasConcluidas: 0,
-      origemLead: document.getElementById('new-p-lead').value || 'Indicação',
-      observacoes: document.getElementById('new-p-obs').value || 'Paciente recém-cadastrada no sistema.',
-      ultimaConsulta: new Date().toLocaleDateString('pt-BR'),
-      proximaConsulta: dateOffset(14),
-      bioimpedancia: [
+      origemLead: contactOnlyRegistration ? '' : document.getElementById('new-p-lead').value || 'Indicação',
+      observacoes: contactOnlyRegistration ? '' : document.getElementById('new-p-obs').value || 'Paciente recém-cadastrada no sistema.',
+      ultimaConsulta: contactOnlyRegistration ? '—' : new Date().toLocaleDateString('pt-BR'),
+      proximaConsulta: contactOnlyRegistration ? 'A agendar' : dateOffset(14),
+      bioimpedancia: contactOnlyRegistration ? [] : [
         { data: new Date().toLocaleDateString('pt-BR'), peso: peso, musculo: Math.round(peso*0.38*10)/10, gordura: Math.round(peso*0.42*10)/10, imc: parseFloat((peso/2.6).toFixed(1)), txGordura: 42.0, aguaCorporal: 44.0, gorduraVisceral: 10, tmb: 1500, nota: 6.0 }
       ],
       scoreLabels: ['Saciedade','Fome','Energia','Sono','Humor','Libido','Fogachos','Perda urinária','Constipação','Atividade física','Adesão'],
-      scoreAtual:   [6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
-      scoreAnterior:[6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
-      riscoCV: { nivel:'Baixo', ldl: 110, metaLdl: 130, naoHdl: 130, metaNaoHdl: 160, reducaoLdl: 0, has: 'Não', dm: 'Não', tabagismo: 'Não fumante', historiaFamiliar: 'Não', fatores: [], sugestoes: ['Manter hábitos saudáveis'], preventScore: '1.2% risco 10a', metaAtingida: true },
+      scoreAtual:   contactOnlyRegistration ? Array(11).fill(null) : [6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
+      scoreAnterior:contactOnlyRegistration ? Array(11).fill(null) : [6, 6, 6, 6, 7, 6, 8, 8, 7, 6, 7],
+      riscoCV: { nivel:'', ldl:null, metaLdl:null, naoHdl:null, metaNaoHdl:null, reducaoLdl:null, dopplerCarotidas:null, lpa:null, metaLpa:null, pcrUs:null, metaPcrUs:null, has:'', dm:'', tabagismo:'', historiaFamiliar:'', fatores:[], sugestoes:[] },
       medicamentos: [],
-      metasPersonalizadas: [
-        { id: 'm_musc', nome: 'Musculação', freqDesejada: '3x/semana', meta: 3, realizado: 0, unidade: 'treinos' },
-        { id: 'm_cardio', nome: 'Cardio', freqDesejada: '2x/semana', meta: 2, realizado: 0, unidade: 'sessões' }
-      ],
+      metasPersonalizadas: goals,
       arquivos: [],
       timeline: [
         { tipo: 'Consulta', data: new Date().toLocaleDateString('pt-BR'), icone: '🩺', titulo: 'Cadastro e Marco Zero', desc: 'Paciente cadastrada no Método Lapidar.' }
@@ -258,7 +337,14 @@
     };
 
     PACIENTES.unshift(newPatient);
-    try { localStorage.setItem('lapidar-pacientes', JSON.stringify(PACIENTES)); } catch(e) {}
+    try {
+      localStorage.setItem('lapidar-pacientes', JSON.stringify(PACIENTES));
+    } catch (error) {
+      PACIENTES.shift();
+      console.error('Não foi possível salvar a paciente cadastrada.', error);
+      alert('Não foi possível salvar o cadastro neste navegador. Verifique o espaço disponível.');
+      return;
+    }
     modal.classList.remove('open');
     filterAndRender();
     showPatientQuickModal(newPatient.id);
@@ -268,5 +354,7 @@
   filterAndRender();
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

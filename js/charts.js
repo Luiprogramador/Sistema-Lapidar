@@ -92,12 +92,20 @@ function drawDonutChart(canvas, data) {
 
   const W = rect.width;
   const H = rect.height;
+  if (W <= 16 || H <= 16) {
+    ctx.clearRect(0, 0, W, H);
+    return;
+  }
   const cx = W / 2;
   const cy = H / 2;
   const outerR = Math.min(W, H) / 2 - 8;
   const innerR = outerR * 0.56;
 
   const total = data.reduce((s, d) => s + d.value, 0);
+  if (total <= 0) {
+    ctx.clearRect(0, 0, W, H);
+    return;
+  }
   let startAngle = -Math.PI / 2;
   const gapAngle = 0.025;
 

@@ -15,19 +15,19 @@ prototipo/
 ├── css/
 │   ├── variables.css           Tokens de design (cores, fontes, espaçamentos)
 │   ├── base.css                Reset global e tipografia
-│   ├── layout.css              Shell: topbar, sidebar, bottom bar, responsividade
+│   ├── layout.css              Shell: topbar, sidebar e responsividade
 │   ├── components.css          Sistema de componentes (cards, botões, modais, tabs)
 │   └── animations.css          Micro-animações e transições
 └── js/
 │   ├── data.js                 Mock data: 8 pacientes completos, catálogo com 22 exames, check-in diário
 │   ├── charts.js               Gráficos via Canvas 2D API (barras, donut, radar 11 eixos, sparklines)
 │   ├── router.js               Navegação entre páginas via localStorage
-│   └── components.js           Topbar, sidebar, bottom bar, modal de leitura rápida
+│   └── components.js           Topbar, sidebar e modal de leitura rápida
 └── pages/
     ├── login.html              Tela de login (layout split com logo oficial)
     ├── dashboard.html          Dashboard com gráficos e alertas clínicos
     ├── patients.html           Lista de pacientes, popup rápido e cadastro
-    ├── patient-detail.html     Ficha da paciente (8 abas + impressão de relatório PDF)
+    ├── patient-detail.html     Ficha da paciente (11 abas, incluindo consultas, jornada operacional e relatório para impressão)
     ├── habits.html             Diário Lapidar (check-in diário, metas personalizadas, bloco 40+)
     ├── consultation.html       Workspace de consulta (checklist, 22 exames com 3 status, anotações)
     ├── journey.html            Jornada operacional (visão geral com timeline e checklist com fases pós-ciclo)
@@ -71,4 +71,4 @@ O seletor no topbar alterna entre três perfis, cada um com menu e conteúdo ada
 - Todo conteúdo dinâmico é gerado via `innerHTML` ou `appendChild` dentro de `<script>` — nunca template literals soltos no HTML.
 - Estado persistido no `localStorage` com chaves prefixadas `lapidar-`.
 - Gráficos são redesenhados no evento `resize` e na troca de aba via `requestAnimationFrame`.
-- O shell (topbar + sidebar + bottom bar) é inicializado em cada página com `initShell('nome-da-pagina')`.
+- O shell (topbar + sidebar) é inicializado em cada página com `initShell('nome-da-pagina')`.

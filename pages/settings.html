@@ -9,358 +9,1439 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
-    .settings-section {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: var(--space-5);
-      margin-bottom: 16px;
+    html { font-size: clamp(10px, 1.223vw, 16px); }
+    body { min-width: 320px; background: var(--bege); }
+    #sidebar-container, .sidebar { display: none !important; }
+    .topbar .hamburger-btn { display: none; }
+    .main-content.settings-main { width: 100%; min-height: 100vh; margin: 0; padding: calc(var(--topbar-height) + 1.75rem) clamp(17px, 2.2vw, 29px) 1.5rem; }
+    .settings-main .page-header { display: block; margin: 0; }
+    .settings-main .page-title { color: var(--text-primary); font-size: 2.375rem; font-weight: 700; line-height: 1.15; }
+    .settings-main .page-subtitle { margin-top: .25rem; color: var(--text-secondary); font-size: 1rem; line-height: 1.4; }
+    .settings-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin: 2.15rem 0 2.3rem; }
+    .settings-tabs.account-active { margin-top: 2.45rem; }
+    .settings-tabs.preferences-active { margin-bottom: 2.55rem; }
+    .settings-tab, .catalog-tab {
+      display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+      min-height: 2.25rem; padding: .42rem .78rem; border: 1px solid var(--border);
+      border-radius: .48rem; background: transparent; color: var(--text-primary);
+      font-size: .75rem; font-weight: 650; line-height: 1.2; white-space: nowrap;
     }
-    .settings-section h3 {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vinho);
-      margin-bottom: 16px;
+    .settings-tab svg { width: 1rem; height: 1rem; color: var(--vinho); }
+    .settings-tab[aria-selected="true"], .catalog-tab[aria-pressed="true"] {
+      border-color: var(--vinho); background: var(--vinho); color: var(--white);
     }
-    .toggle-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
+    .settings-tab[aria-selected="true"] svg { color: inherit; }
+    .settings-view[hidden] { display: none !important; }
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; align-items: stretch; }
+    .preferences-grid { margin-top: .5rem; }
+    .settings-card {
+      min-width: 0; padding: 1.75rem 1.5rem; border: 1px solid var(--border);
+      border-radius: 1rem; background: #fffdfa; box-shadow: 0 .35rem 0 rgba(53, 35, 26, .08);
     }
-    .toggle-row:last-child { border-bottom: none; }
-    .toggle-switch {
-      position: relative; width: 40px; height: 22px; flex-shrink: 0;
+    .settings-card-head { display: flex; align-items: center; gap: .9rem; min-width: 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+    .settings-icon {
+      display: grid; place-items: center; flex: 0 0 2.8rem; width: 2.8rem; height: 2.8rem;
+      border: 1px solid #dfd0ce; border-radius: .75rem; background: #f0e8e6; color: var(--vinho);
     }
-    .toggle-switch input { display: none; }
-    .toggle-track {
-      position: absolute; inset: 0;
-      border-radius: 11px;
-      background: var(--border-dark);
-      cursor: pointer;
-      transition: background 0.2s;
+    .settings-icon svg { width: 1.4rem; height: 1.4rem; }
+    .settings-card-head h2 { margin: 0; color: var(--text-primary); font-size: 1.18rem; font-weight: 750; line-height: 1.3; }
+    .settings-card-head p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .95rem; line-height: 1.4; }
+    .account-grid .settings-card { min-height: 33.125rem; padding-bottom: 1.1rem; }
+    .account-grid .settings-card-head { padding-bottom: 1.05rem; }
+    .profile-edit { padding-top: 1.2rem; }
+    .profile-photo-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+    .profile-avatar {
+      display: grid; place-items: center; flex: 0 0 4.9rem; width: 4.9rem; height: 4.9rem;
+      overflow: hidden; border-radius: 50%; background: var(--vinho); color: #fffaf1;
+      font-size: 1.55rem; font-weight: 750;
     }
-    .toggle-track::after {
-      content: '';
-      position: absolute;
-      top: 2px; left: 2px;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      transition: left 0.2s;
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .file-input-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .outline-button, .primary-button, .text-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+      min-height: 3.4rem; padding: .75rem 1rem; border: 1px solid var(--border);
+      border-radius: .75rem; background: #fffdfa; color: var(--vinho); font-size: .95rem; font-weight: 700;
     }
-    .toggle-switch input:checked + .toggle-track { background: var(--vinho); }
-    .toggle-switch input:checked + .toggle-track::after { left: 20px; }
-    .proto-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
+    .outline-button svg, .primary-button svg, .text-button svg { width: 1.1rem; height: 1.1rem; flex: 0 0 auto; }
+    .primary-button { border-color: var(--vinho); background: var(--vinho); color: #fffaf1; }
+    .text-button { min-height: 2.35rem; padding: .35rem .55rem; border-color: transparent; background: transparent; font-size: .75rem; font-weight: 600; }
+    .profile-field { position: relative; display: block; margin-top: .8rem; }
+    .profile-field > span { position: absolute; z-index: 1; top: -.48rem; left: 1rem; padding: 0 .3rem; background: #fffdfa; color: #7d7070; font-size: .75rem; }
+    .profile-field input {
+      width: 100%; height: 3.55rem; padding: .7rem 1rem; border: 1px solid var(--border);
+      border-radius: .8rem; background: #fff; color: var(--text-secondary); font-size: 1rem;
     }
-    .proto-row:last-child { border-bottom: none; }
+    .profile-save-row { display: flex; justify-content: flex-end; margin-top: 1rem; }
+    .profile-save-row .primary-button { min-height: 3.1rem; }
+    .account-details { display: grid; gap: 1.1rem; padding: 1.8rem 0 .95rem; }
+    .account-detail { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; color: var(--text-secondary); font-size: .95rem; line-height: 1.35; }
+    .account-detail strong { color: var(--text-primary); font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+    .google-link {
+      display: flex; align-items: center; gap: .8rem; padding: .85rem 1rem;
+      border: 1px solid var(--border); border-radius: .8rem; background: #faf3e9;
+    }
+    .google-link > svg { width: 1.3rem; height: 1.3rem; flex: 0 0 auto; color: var(--vinho); }
+    .google-copy { flex: 1; min-width: 0; }
+    .google-copy strong, .google-copy span { display: block; }
+    .google-copy strong { font-size: .9rem; }
+    .google-copy span { color: var(--text-secondary); font-size: .8rem; line-height: 1.35; }
+    .account-grid .google-link { padding-block: .95rem; }
+    .google-link .outline-button { min-height: 3.45rem; padding-inline: 1.35rem; background: #fff; }
+    .account-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+    .account-actions .outline-button { min-height: 3.2rem; }
+
+    .preferences-grid .settings-card { min-height: 50rem; padding: 1.25rem 1.5rem; }
+    .patient-settings .preferences-grid .settings-card { min-height: 42rem; }
+    .preferences-grid .settings-card-head { padding-bottom: 1rem; }
+    .preference-label { display: flex; justify-content: space-between; gap: .75rem; color: var(--text-primary); font-size: .82rem; font-weight: 700; }
+    .font-scale { margin: .85rem 0 1.4rem; }
+    .font-scale input { width: calc(100% - 36px); height: .35rem; margin: 1.3rem 18px 0; accent-color: var(--vinho); }
+    .preference-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 4.6rem; }
+    .preference-copy { min-width: 0; }
+    .preference-copy strong, .preference-copy span { display: block; }
+    .preference-copy strong { color: var(--text-primary); font-size: .82rem; font-weight: 700; line-height: 1.4; }
+    .preference-copy span { color: var(--text-secondary); font-size: .68rem; line-height: 1.35; }
+    .switch { position: relative; display: block; flex: 0 0 2.45rem; width: 2.45rem; height: 1.48rem; }
+    .switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .switch-track { position: absolute; inset: 0; border: 1px solid #9a8386; border-radius: 1rem; background: #f0e3e3; cursor: pointer; }
+    .switch-track::after { content: ""; position: absolute; top: .18rem; left: .2rem; width: 1.05rem; height: 1.05rem; border-radius: 50%; background: #89797d; transition: transform .16s ease, background .16s ease; }
+    .switch input:checked + .switch-track { border-color: #b5949b; background: #b5949b; }
+    .switch input:checked + .switch-track::after { transform: translateX(.96rem); background: var(--vinho); }
+    .select-label { display: block; margin: .4rem 0 .3rem; color: var(--text-primary); font-size: .82rem; font-weight: 700; }
+    .settings-select { width: 100%; height: 3.1rem; min-height: 0; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .55rem; background: #fff; color: var(--text-primary); font-size: .75rem; }
+    .settings-help { margin-top: .35rem; color: var(--text-secondary); font-size: .7rem; line-height: 1.45; }
+    .preferences-reset { margin-top: .65rem; }
+    .notification-list { display: grid; gap: .32rem; padding-top: .9rem; }
+    .notification-list .preference-row { min-height: 4.25rem; }
+
+    .system-grid .settings-card { min-height: 62rem; padding: 1.5rem; }
+    .system-grid .settings-card-head { padding-bottom: .95rem; }
+    .identity-name { display: flex; align-items: center; gap: .4rem; margin-top: .65rem; }
+    .identity-name input { width: 100%; min-width: 0; height: 2.2rem; padding: .4rem .65rem; border: 1px solid var(--border); border-radius: .5rem; background: #fff; }
+    .identity-apply { display: flex; justify-content: flex-end; }
+    .system-logo-block { margin-top: .75rem; }
+    .system-logo-block > strong, .system-colors > strong { display: block; font-size: .9rem; }
+    .logo-control { display: flex; align-items: center; gap: .55rem; margin-top: .35rem; }
+    .logo-preview { width: 1.6rem; height: 4.2rem; border-radius: 1rem; background: var(--vinho); object-fit: contain; }
+    .logo-control .outline-button { min-height: 2rem; padding: .35rem .65rem; border-radius: .55rem; font-size: .8rem; }
+    .system-colors { margin-top: .55rem; }
+    .system-colors > p { margin: .2rem 0 .35rem; color: var(--text-secondary); font-size: .75rem; }
+    .color-row { display: flex; align-items: center; gap: .55rem; min-height: 3.2rem; }
+    .color-swatch { flex: 0 0 2.4rem; width: 2.4rem; height: 2.4rem; padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: .48rem; background: transparent; cursor: pointer; }
+    .color-swatch input { width: 160%; height: 160%; margin: -30%; border: 0; opacity: 0; cursor: pointer; }
+    .color-name strong, .color-name span { display: block; }
+    .color-name strong { font-size: .82rem; line-height: 1.25; }
+    .color-name span { color: var(--text-secondary); font-size: .7rem; line-height: 1.25; }
+    .system-presets { margin-top: .6rem; padding-top: .8rem; border-top: 1px solid var(--border); }
+    .system-presets-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .system-presets-head strong { font-size: .82rem; }
+    .system-presets p { margin: .35rem 0; color: var(--text-secondary); font-size: .72rem; }
+    .system-google-status { display: inline-block; margin-top: 1.4rem; padding: .32rem .6rem; border: 1px solid #9d8f8d; border-radius: .4rem; background: #d8d2cf; color: var(--text-primary); font-size: .78rem; font-weight: 700; }
+    .system-google-description { margin: .7rem 0; color: var(--text-secondary); font-size: .78rem; line-height: 1.5; }
+    .system-google .primary-button { min-height: 2rem; padding: .4rem .7rem; border-radius: .5rem; font-size: .8rem; }
+
+    .catalog-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; align-items: stretch; }
+    .catalog-grid .settings-card { min-height: 49.7rem; padding: 1.3rem 1.5rem; }
+    .catalog-grid .settings-card-head { padding-bottom: .8rem; }
+    .catalog-grid .settings-card-head h2 { font-size: 1.12rem; }
+    .catalog-grid .settings-card-head p { font-size: .82rem; }
+    .catalog-grid .settings-icon { flex-basis: 2.8rem; width: 2.8rem; height: 2.8rem; border-radius: .55rem; }
+    .catalog-grid .settings-icon svg { width: 1.4rem; height: 1.4rem; }
+    .catalog-tabs { display: flex; flex-wrap: wrap; column-gap: .35rem; row-gap: 1.35rem; margin: 1.3rem 0 .65rem; }
+    .catalog-tab { min-height: 2.2rem; padding: .3rem .7rem; border-radius: .38rem; font-size: .9rem; }
+    .catalog-description { margin: .2rem 0 .55rem; color: var(--text-secondary); font-size: .75rem; line-height: 1.4; }
+    .catalog-add { display: flex; gap: .3rem; }
+    .catalog-add input, .catalog-search, .protocol-search {
+      width: 100%; min-width: 0; height: 3.4rem; padding: .45rem .65rem;
+      min-height: 0; border: 1px solid var(--border); border-radius: .55rem; background: #fff; color: var(--text-primary); font-size: .85rem;
+    }
+    .catalog-add .primary-button { min-height: 3.4rem; padding: .3rem .7rem; border-radius: 1rem; font-size: .8rem; white-space: nowrap; }
+    .catalog-search, .protocol-search { margin-top: .45rem; }
+    .catalog-items, .protocol-items { margin-top: .45rem; }
+    .catalog-items { max-height: 16rem; overflow-y: auto; scrollbar-width: none; }
+    .catalog-items::-webkit-scrollbar { display: none; }
+    .catalog-item, .protocol-item { display: flex; align-items: center; justify-content: space-between; gap: .35rem; min-height: 4rem; border-bottom: 1px solid #e2d4c8; }
+    .catalog-item-name { min-width: 0; color: var(--text-secondary); font-size: .82rem; }
+    .catalog-item-name span { display: block; margin-top: .08rem; color: #887a78; font-size: .68rem; }
+    .catalog-item-actions { display: flex; flex: 0 0 auto; gap: .15rem; }
+    .icon-button { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: .3rem; color: var(--text-secondary); }
+    .icon-button:hover { background: #f0e8e6; color: var(--vinho); }
+    .icon-button svg { width: .8rem; height: .8rem; }
+    .protocol-card-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .protocol-card-head .primary-button { min-height: 1.9rem; padding: .35rem .65rem; border-radius: .48rem; font-size: .78rem; white-space: nowrap; }
+    .protocol-search { padding-left: 1.8rem; }
+    .protocol-item { min-height: 4rem; justify-content: flex-start; }
+    .protocol-dot { flex: 0 0 .65rem; width: .65rem; height: .65rem; border-radius: 50%; background: var(--vinho); }
+    .protocol-copy { flex: 1; min-width: 0; }
+    .protocol-copy strong, .protocol-copy span { display: block; }
+    .protocol-copy strong { color: var(--text-secondary); font-size: .82rem; font-weight: 500; }
+    .protocol-copy span { margin-top: .05rem; color: #887a78; font-size: .68rem; }
+    .protocol-lock { width: .8rem; height: .8rem; color: var(--text-secondary); }
+    .checklist-card { min-height: 11.5rem !important; }
+    .checklist-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+    .checklist-actions .outline-button, .checklist-actions .primary-button { min-height: 1.9rem; padding: .3rem .6rem; border-radius: .45rem; font-size: .78rem; }
+    .checklist-editor { display: grid; gap: .55rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--border); }
+    .checklist-editor[hidden] { display: none; }
+    .checklist-editor label { display: grid; gap: .3rem; color: var(--text-secondary); font-size: .75rem; font-weight: 600; }
+    .checklist-editor select, .checklist-editor input, .checklist-editor textarea { width: 100%; min-width: 0; padding: .55rem .65rem; border: 1px solid var(--border); border-radius: .45rem; background: var(--white); color: var(--text-primary); font: inherit; }
+    .checklist-editor textarea { min-height: 9rem; resize: vertical; line-height: 1.5; }
+    .checklist-editor-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .checklist-editor-actions button { min-height: 2.1rem; padding: .35rem .65rem; border-radius: .45rem; font-size: .75rem; }
+    .checklist-help { margin: 0; color: var(--text-secondary); font-size: .72rem; line-height: 1.4; }
+    .staff-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin-top: .75rem; }
+    .staff-form label { display: grid; gap: .3rem; color: var(--text-secondary); font-size: .75rem; font-weight: 600; }
+    .staff-form input, .staff-form select { width: 100%; min-width: 0; min-height: 2.5rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: .45rem; background: var(--white); color: var(--text-primary); font: inherit; }
+    .staff-form .staff-span { grid-column: 1 / -1; }
+    .staff-checkbox { display: flex !important; align-items: center; gap: .5rem !important; }
+    .staff-checkbox input { width: auto; min-height: auto; }
+    .staff-actions, .staff-row-actions { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+    .staff-list { margin-top: .8rem; }
+    .staff-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
+    .staff-row-copy { min-width: 0; }
+    .staff-row-copy strong, .staff-row-copy span { display: block; overflow-wrap: anywhere; }
+    .staff-row-copy strong { color: var(--text-primary); font-size: .82rem; }
+    .staff-row-copy span { margin-top: .15rem; color: var(--text-secondary); font-size: .7rem; }
+    .staff-log { max-height: 14rem; overflow: auto; margin-top: .5rem; }
+    .staff-log-row { padding: .55rem 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: .72rem; line-height: 1.4; overflow-wrap: anywhere; }
+    .staff-log-row strong { color: var(--text-primary); }
+    @media (max-width: 520px) { .staff-form { grid-template-columns: minmax(0, 1fr); } }
+    .settings-feedback { min-height: 1rem; margin: .4rem 0 0; color: var(--oliva); font-size: .65rem; }
+    .settings-feedback:empty { display: none; }
+    .high-contrast { --text-primary: #10080b; --text-secondary: #24191e; --border: #70565c; }
+    .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    .easy-interaction button, .easy-interaction input, .easy-interaction select { min-height: max(2.6rem, 2.8em); }
+    @media (max-width: 700px) {
+      .main-content.settings-main { padding: calc(var(--topbar-height) + 1.2rem) 1.2rem 1.2rem; }
+      .settings-main .page-title { font-size: 2rem; }
+      .settings-tabs { gap: .4rem; margin: 1.5rem 0; }
+      .settings-tab { flex: 1 1 auto; }
+      .settings-grid, .catalog-grid { grid-template-columns: minmax(0, 1fr); }
+      .settings-card, .preferences-grid .settings-card, .system-grid .settings-card, .catalog-grid .settings-card { min-height: 0; }
+      .account-grid .settings-card { min-height: 0; }
+      .profile-field input { font-size: 1rem; }
+      .system-grid .settings-card { padding: 1.3rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .settings-main *, .settings-main *::before, .settings-main *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
-<main class="main-content page-enter">
-  <div class="page-header">
+<main class="main-content settings-main page-enter">
+  <header class="page-header">
     <h1 class="page-title">Configurações</h1>
-    <p class="page-subtitle">Preferências e recursos disponíveis para o seu perfil</p>
-  </div>
+    <p class="page-subtitle">Sua conta, preferências e ajustes do sistema</p>
+  </header>
 
-  <div style="max-width:680px;">
-    <!-- Dados da Clínica -->
-    <div class="settings-section" id="admin-clinic-section">
-      <h3>Dados da Clínica</h3>
-      <div style="display:flex;flex-direction:column;gap:12px;" id="clinic-fields"></div>
-    </div>
+  <nav class="settings-tabs account-active" id="settings-tabs" aria-label="Seções de configurações">
+    <button class="settings-tab" type="button" data-view="account" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5 20v-1.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V20z"/></svg>Minha conta
+    </button>
+    <button class="settings-tab" type="button" data-view="preferences" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h2m4 0h10M4 18h6m4 0h6"/><path d="M14 4v4M6 10v4m6 2v4"/></svg>Preferências
+    </button>
+    <button class="settings-tab admin-only" type="button" data-view="system" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 3 8.2 7 10 4-1.8 7-5.2 7-10V6z"/><circle cx="12" cy="11" r="2.4"/><path d="M8.5 17a3.5 3.5 0 0 1 7 0"/></svg>Sistema
+    </button>
+    <button class="settings-tab admin-only" type="button" data-view="catalogs" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 8h2m4 0h2M8 12h2m4 0h2M8 16h2m4 0h2"/></svg>Cadastros
+    </button>
+  </nav>
 
-    <div class="settings-section" id="google-settings-section">
-      <h3>Integrações</h3>
-      <div class="toggle-row">
-        <div><p style="font-size:13px;color:var(--text-primary);">Vincular ao Google</p><p style="font-size:11px;color:var(--text-muted);">Demonstração local: não realiza autenticação nem sincronização com uma conta real.</p></div>
-        <button class="btn btn-subtle btn-sm" id="google-connect-btn" type="button">Vincular conta</button>
+  <section class="settings-view account-grid settings-grid" data-panel="account">
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20v-1.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V20z"/></svg></span>
+        <div><h2>Dados pessoais</h2><p>Foto, nome, e-mail e telefone da sua conta</p></div>
+      </header>
+      <form class="profile-edit" id="profile-form">
+        <div class="profile-photo-row">
+          <div class="profile-avatar" id="profile-avatar" aria-label="Foto do perfil"></div>
+          <label class="outline-button" for="profile-photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.3"/></svg>Adicionar foto
+          </label>
+          <input class="file-input-hidden" id="profile-photo" type="file" accept="image/png,image/jpeg">
+        </div>
+        <label class="profile-field"><span>Nome completo</span><input id="profile-name" maxlength="80" autocomplete="name" required></label>
+        <label class="profile-field"><span>E-mail</span><input id="profile-email" type="email" maxlength="120" autocomplete="email" required></label>
+        <label class="profile-field"><span id="phone-label">Telefone</span><input id="profile-phone" type="tel" maxlength="30" autocomplete="tel" placeholder="Telefone"></label>
+        <div class="profile-save-row">
+          <button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Salvar alterações</button>
+        </div>
+        <p class="settings-feedback" id="profile-feedback" role="status"></p>
+      </form>
+    </article>
+
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.2"/></svg></span>
+        <div><h2>Conta e segurança</h2><p>Como você acessa o sistema</p></div>
+      </header>
+      <div class="account-details" id="account-details"></div>
+      <div class="google-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.2-1.2"/></svg>
+        <div class="google-copy"><strong id="google-account-name">Conta Google</strong><span>Entre com um toque, sem digitar a senha.</span></div>
+        <button class="outline-button" type="button" id="google-account-toggle">Vincular</button>
       </div>
-      <p id="google-connection-status" role="status" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></p>
-    </div>
-
-    <div class="settings-section" id="personal-settings-section">
-      <h3>Preferências pessoais</h3>
-      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Estas opções são exclusivas deste perfil e ficam salvas neste navegador.</p>
-      <div id="personal-preferences-list"></div>
-    </div>
-
-    <div class="settings-section" id="medical-settings-section">
-      <h3>Configuração médica</h3>
-      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Listas demonstrativas editáveis pela médica e persistidas neste navegador.</p>
-      <label class="form-group"><span class="form-label">Protocolos</span><textarea class="form-textarea" id="setting-protocols" rows="3"></textarea></label>
-      <label class="form-group"><span class="form-label">Tipos de consulta</span><textarea class="form-textarea" id="setting-consultation-types" rows="3"></textarea></label>
-      <label class="form-group"><span class="form-label">Tags de pacientes e equipe</span><textarea class="form-textarea" id="setting-tags" rows="3"></textarea></label>
-      <label class="form-group"><span class="form-label">Templates de checklist (um item por linha)</span><textarea class="form-textarea" id="setting-checklist" rows="5"></textarea></label>
-      <label class="form-group"><span class="form-label">Medicamentos e suplementos (nome | categoria, incluindo anticoncepcionais)</span><textarea class="form-textarea" id="setting-medications" rows="5"></textarea></label>
-    </div>
-
-    <div class="settings-section" id="user-settings-section">
-      <h3>Usuários e vínculos</h3>
-      <p style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px;">Cadastre um usuário por linha no formato: nome | função | médica vinculada | tags. A troca de perfil continua sendo apenas demonstrativa.</p>
-      <textarea class="form-textarea" id="setting-users" rows="5" aria-label="Lista de usuários"></textarea>
-    </div>
-
-    <!-- Alertas -->
-    <div class="settings-section" id="admin-alerts-section">
-      <h3>Alertas e Notificações</h3>
-      <div id="alerts-list"></div>
-    </div>
-
-    <!-- Ebook -->
-    <div class="settings-section" id="medical-content-section">
-      <h3>Ebook e Materiais</h3>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Configure o material educativo enviado às pacientes</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm">Gerenciar Envios</button>
-        <button class="btn btn-subtle btn-sm">Ver Postagens</button>
+      <div class="account-actions">
+        <button class="outline-button" type="button" id="change-password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12a8 8 0 1 1 2.3 5.6"/><path d="M4 17v-4h4m4-5v4l2.5 1.5"/></svg>Alterar senha</button>
+        <button class="outline-button" type="button" id="sign-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3"/><path d="M13 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/></svg>Sair da conta</button>
       </div>
-    </div>
+      <p class="settings-feedback" id="account-feedback" role="status"></p>
+    </article>
+  </section>
 
-    <!-- Save -->
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button class="btn btn-primary" id="btn-save">Salvar Configurações</button>
-      <span style="font-size:12px;color:var(--oliva);display:none;" id="saved-msg">Salvo neste navegador</span>
-    </div>
-  </div>
+  <section class="settings-view settings-grid preferences-grid" data-panel="preferences" hidden>
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1.4"/><path d="M5 7h14m-7 0v14m-5-8 5-2 5 2m-8 7 3-4 3 4"/></svg></span>
+        <div><h2>Acessibilidade</h2><p>Ajustes de leitura e interação, salvos na sua conta</p></div>
+      </header>
+      <div class="font-scale">
+        <label class="preference-label" for="font-size"><span>Tamanho do texto</span><output id="font-size-value">100%</output></label>
+        <input id="font-size" type="range" min="80" max="180" step="10" value="100">
+      </div>
+      <div class="preference-row"><div class="preference-copy"><strong>Alto contraste</strong><span>Reforça textos e bordas em toda a interface</span></div><label class="switch"><input type="checkbox" data-accessibility="highContrast" aria-label="Alto contraste"><span class="switch-track"></span></label></div>
+      <div class="preference-row"><div class="preference-copy"><strong>Reduzir animações</strong><span>Transições mais simples e sem movimento extra</span></div><label class="switch"><input type="checkbox" data-accessibility="reduceMotion" aria-label="Reduzir animações"><span class="switch-track"></span></label></div>
+      <div class="preference-row"><div class="preference-copy"><strong>Interação facilitada</strong><span>Alvos de toque e espaçamentos maiores</span></div><label class="switch"><input type="checkbox" data-accessibility="easyInteraction" aria-label="Interação facilitada"><span class="switch-track"></span></label></div>
+      <div class="preference-row"><div class="preference-copy"><strong>Leitor de tela</strong><span>Prioriza rótulos para tecnologias assistivas</span></div><label class="switch"><input type="checkbox" data-accessibility="screenReader" aria-label="Leitor de tela"><span class="switch-track"></span></label></div>
+      <label class="select-label" for="color-vision">Daltonismo</label>
+      <select class="settings-select" id="color-vision">
+        <option value="none">Nenhum</option><option value="protanopia">Protanopia</option><option value="deuteranopia">Deuteranopia</option><option value="tritanopia">Tritanopia</option>
+      </select>
+      <p class="settings-help">Os estados do sistema (na meta, atenção, crítico) sempre combinam cor, ícone e texto.</p>
+      <button class="text-button preferences-reset" type="button" id="reset-accessibility"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Restaurar padrão</button>
+    </article>
+
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4"/></svg></span>
+        <div><h2>Notificações</h2><p>Sobre o que o sistema avisa você</p></div>
+      </header>
+      <div class="notification-list" id="notification-list"></div>
+    </article>
+  </section>
+
+  <section class="settings-view settings-grid system-grid" data-panel="system" hidden>
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M8.5 10h.01M15.5 10h.01M9 15c1.8-2 4.2-2 6 0"/><path d="M12 4v2"/></svg></span>
+        <div><h2>Identidade do sistema</h2><p>Nome, logo e cores — valem para todos os perfis</p></div>
+      </header>
+      <label class="profile-field identity-name"><span>Nome do sistema</span><input id="system-name" maxlength="60"></label>
+      <div class="identity-apply"><button class="text-button" id="apply-system-name" type="button">Aplicar nome</button></div>
+      <div class="system-logo-block">
+        <strong>Logo</strong>
+        <div class="logo-control">
+          <img class="logo-preview" id="system-logo-preview" alt="">
+          <label class="outline-button" for="system-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5"/></svg>Enviar nova logo</label>
+          <input class="file-input-hidden" type="file" id="system-logo" accept="image/png,image/jpeg,image/svg+xml">
+        </div>
+      </div>
+      <div class="system-colors">
+        <strong>Cores do sistema</strong><p>Toque em uma cor para trocá-la.</p>
+        <div id="system-color-list"></div>
+      </div>
+      <div class="system-presets">
+        <div class="system-presets-head"><strong>Predefinições de cores</strong><button class="text-button" type="button" id="save-color-preset">Salvar cores atuais</button></div>
+        <p id="preset-description">Ajuste as cores acima e salve como predefinição para reaplicar quando quiser.</p>
+        <button class="text-button" type="button" id="reset-system-colors">Voltar às cores padrão</button>
+        <button class="text-button" type="button" id="reset-system-identity">Restaurar identidade padrão</button>
+      </div>
+      <p class="settings-feedback" id="system-feedback" role="status"></p>
+    </article>
+
+    <article class="settings-card system-google">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.2-1.2"/></svg></span>
+        <div><h2>Integração com o Google</h2><p>Login com Google e agenda sincronizada</p></div>
+      </header>
+      <p class="system-google-status" id="system-google-status">Não vinculada</p>
+      <p class="system-google-description">Vincule a conta Google da clínica para entrar com um toque e sincronizar as consultas com o Google Agenda.</p>
+      <button class="primary-button" type="button" id="system-google-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.2-1.2"/></svg>Vincular conta Google</button>
+    </article>
+  </section>
+
+  <section class="settings-view catalog-grid" data-panel="catalogs" hidden>
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 13 11 22 2 13V4h9z"/><circle cx="7" cy="8" r="1"/></svg></span>
+        <div><h2>Cadastros do sistema</h2><p>Tags, objetivos, origens e tipos de exame usados nos formulários</p></div>
+      </header>
+      <div class="catalog-tabs" id="catalog-tabs"></div>
+      <p class="catalog-description">Aparecem no cadastro da paciente, nos filtros e nos conteúdos</p>
+      <form class="catalog-add" id="catalog-form">
+        <input id="catalog-new-item" autocomplete="off" placeholder="Novo(a) condição de saúde" aria-label="Novo item do cadastro">
+        <button class="primary-button" type="submit">＋ Adicionar</button>
+      </form>
+      <input class="catalog-search" id="catalog-search" type="search" placeholder="⌕  Buscar na lista..." aria-label="Buscar na lista">
+      <div class="catalog-items" id="catalog-items"></div>
+      <p class="settings-feedback" id="catalog-feedback" role="status"></p>
+    </article>
+
+    <article class="settings-card">
+      <header class="settings-card-head protocol-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 8 5-8 5-8-5z"/><path d="m4 12 8 5 8-5M4 16l8 5 8-5"/></svg></span>
+        <div><h2>Protocolos</h2><p id="protocol-count">4 protocolo(s) cadastrados</p></div>
+        <button class="primary-button" type="button" id="add-protocol">＋ Novo protocolo</button>
+      </header>
+      <input class="protocol-search" id="protocol-search" type="search" placeholder="⌕  Buscar protocolo..." aria-label="Buscar protocolo">
+      <div class="protocol-items" id="protocol-items"></div>
+    </article>
+
+    <article class="settings-card checklist-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 6 2 2 3-3m3 2h7M4 13l2 2 3-3m3 2h7M4 20l2 2 3-3m3 2h7"/></svg></span>
+        <div><h2>Checklist da consulta</h2><p id="checklist-summary">Etapas e modelos usados nas consultas</p></div>
+      </header>
+      <div class="checklist-actions">
+        <button class="primary-button" type="button" id="edit-checklist">◉ Criar / editar etapas</button>
+        <button class="outline-button" type="button" id="checklist-templates">▣ Modelos (templates)</button>
+      </div>
+      <form class="checklist-editor" id="checklist-editor" hidden>
+        <label for="checklist-template-select">Modelo de checklist
+          <select id="checklist-template-select"></select>
+        </label>
+        <div class="checklist-editor-actions">
+          <button class="outline-button" type="button" id="load-checklist-template">Carregar modelo</button>
+        </div>
+        <label for="checklist-steps">Etapas (uma por linha)
+          <textarea id="checklist-steps" maxlength="5000" required></textarea>
+        </label>
+        <p class="checklist-help">As etapas salvas serão usadas como padrão nas consultas. Itens já adicionados individualmente a uma consulta permanecem nela.</p>
+        <label for="checklist-template-name">Salvar também como novo modelo
+          <input id="checklist-template-name" maxlength="60" placeholder="Ex.: Consulta de retorno">
+        </label>
+        <div class="checklist-editor-actions">
+          <button class="primary-button" type="submit" id="save-checklist-steps">Salvar etapas</button>
+          <button class="outline-button" type="button" id="save-checklist-template">Salvar como modelo</button>
+        </div>
+        <p class="settings-feedback" id="checklist-feedback" role="status"></p>
+      </form>
+    </article>
+
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <span class="settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5v1"/></svg></span>
+        <div><h2>Equipe e permissões</h2><p>Cadastre perfis de acesso e consulte o histórico local de alterações</p></div>
+      </header>
+      <form id="staff-form" class="staff-form">
+        <label class="staff-span">Nome completo<input id="staff-name" maxlength="100" autocomplete="name" required></label>
+        <label>E-mail<input id="staff-email" type="email" maxlength="120" autocomplete="email" required></label>
+        <label>Telefone<input id="staff-phone" type="tel" maxlength="30" autocomplete="tel"></label>
+        <label class="staff-span">Função
+          <select id="staff-role" required>
+            <option value="Secretária">Secretária</option>
+            <option value="Contador(a)">Contador(a)</option>
+            <option value="Desenvolvedor(a)">Desenvolvedor(a)</option>
+            <option value="Admin do sistema">Admin do sistema</option>
+            <option value="Gestor(a) de conteúdo">Gestor(a) de conteúdo</option>
+            <option value="Outra">Outra</option>
+          </select>
+        </label>
+        <label id="staff-other-role-field" class="staff-span" hidden>Descreva a função<input id="staff-other-role" maxlength="80"></label>
+        <label class="staff-checkbox staff-span"><input id="staff-is-doctor" type="checkbox"> Este funcionário também é médico</label>
+        <label id="staff-crm-field" class="staff-span" hidden>CRM<input id="staff-crm" maxlength="30" placeholder="UF e número"></label>
+        <label id="staff-specialty-field" class="staff-span" hidden>Especialidade<input id="staff-specialty" maxlength="100"></label>
+        <div class="staff-actions staff-span">
+          <button class="primary-button" type="submit" id="save-staff">Cadastrar funcionário</button>
+          <button class="outline-button" type="button" id="cancel-staff-edit" hidden>Cancelar edição</button>
+        </div>
+      </form>
+      <p class="settings-feedback" id="staff-feedback" role="status"></p>
+      <div class="staff-list" id="staff-list"></div>
+      <details style="margin-top:.8rem;">
+        <summary style="cursor:pointer;color:var(--vinho);font-size:.8rem;font-weight:650;">Ver log de alterações</summary>
+        <div class="staff-log" id="staff-log"></div>
+      </details>
+      <p class="checklist-help" style="margin-top:.6rem;">Os cadastros e logs ficam salvos apenas neste navegador e não criam contas reais nem alteram a autenticação do protótipo.</p>
+    </article>
+  </section>
 </main>
-
-<div id="bottombar-container"></div>
 
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  initSettings();
+  (function initSettingsPage() {
+    initShell('settings');
 
-  function initSettings() {
-  initShell('settings');
+    const role = Router.getRole();
+    const settingsRouteState = Router.getState();
+    const isPatient = role === 'patient';
+    if (isPatient) document.body.classList.add('patient-settings');
+    const canCustomize = Router.can('customizeSystem');
+    const settingsKey = 'lapidar-settings-v1';
+    const profileKey = 'lapidar-profile-' + role;
+    const preferenceKey = 'lapidar-accessibility-' + role;
+    const notificationKey = 'lapidar-notifications-' + role;
+    const systemKey = 'lapidar-system-identity-v1';
+    const catalogsKey = 'lapidar-system-catalogs-v1';
+    const protocolsKey = 'lapidar-system-protocols-v1';
+    const defaultChecklist = [
+      'Verificar pressão arterial',
+      'Registrar peso e medidas',
+      'Revisar medicamentos e suplementos',
+      'Analisar histórico desde a última consulta',
+      'Revisar metas e objetivos da paciente'
+    ];
+    const defaultChecklistTemplates = {
+      'Primeira consulta': defaultChecklist,
+      'Consulta de retorno': [
+        'Verificar pressão arterial',
+        'Registrar peso e medidas',
+        'Revisar medicamentos e suplementos',
+        'Analisar evolução desde a última consulta',
+        'Revisar metas e objetivos da paciente'
+      ]
+    };
 
-  var SETTINGS_KEY = 'lapidar-settings-v1';
-
-  // Defaults
-  var settings = {
-    clinicName:    'Clínica Lapidar',
-    doctorName:    'Dra. Andressa Gomide',
-    crm:           'CRM 12345/MG · RQE 24717',
-    email:         'contato@clinicalapidar.com.br',
-    phone:         '(11) 99999-0000',
-    habitCheckin:  true,
-    ldlAlert:      true,
-    vitDAlert:      true,
-    protocols: ['Lapidar 40+', 'Lapidar SOP', 'Lapidar Fertilidade', 'Pocket'],
-    consultationTypes: ['Retorno', 'Primeira consulta', 'Bioimpedância', 'Exames'],
-    tags: ['Retorno prioritário', 'Exame pendente', 'Acompanhamento semanal'],
-    checklistTemplate: ['Verificar pressão arterial', 'Registrar peso e medidas', 'Revisar medicamentos e suplementos', 'Analisar histórico desde a última consulta', 'Revisar metas e objetivos da paciente'],
-    medicationCatalog: [],
-    users: ['Dra. Andressa Gomide | médica | — | responsável clínica', 'Gabi | secretária | Dra. Andressa Gomide | atendimento'],
-  };
-
-  // Load from localStorage
-  try {
-    var raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      Object.assign(settings, parsed);
-    }
-  } catch(e) {
-    console.error('Não foi possível carregar as configurações salvas.', e);
-  }
-
-  const currentRole = Router.getRole();
-  const GOOGLE_KEY = 'lapidar-google-connected-' + currentRole;
-  const PREFERENCES_KEY = 'lapidar-preferences-' + currentRole;
-  document.getElementById('admin-clinic-section').hidden = currentRole !== 'admin';
-  document.getElementById('user-settings-section').hidden = currentRole !== 'admin';
-  document.getElementById('admin-alerts-section').hidden = currentRole !== 'admin';
-  document.getElementById('medical-settings-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
-  document.getElementById('medical-content-section').hidden = currentRole !== 'doctor' && currentRole !== 'admin';
-  document.getElementById('setting-protocols').value = settings.protocols.join('\n');
-  document.getElementById('setting-consultation-types').value = settings.consultationTypes.join('\n');
-  document.getElementById('setting-tags').value = settings.tags.join('\n');
-  document.getElementById('setting-checklist').value = settings.checklistTemplate.join('\n');
-  document.getElementById('setting-medications').value = settings.medicationCatalog.join('\n');
-  document.getElementById('setting-users').value = settings.users.join('\n');
-
-  var googleConnected = localStorage.getItem(GOOGLE_KEY) === 'true';
-  if (localStorage.getItem(GOOGLE_KEY) === null && currentRole === 'admin') {
-    googleConnected = Boolean(settings.googleConnected);
-  }
-  var googleStatus = document.getElementById('google-connection-status');
-  var googleButton = document.getElementById('google-connect-btn');
-  function renderGoogleStatus() {
-    googleStatus.textContent = googleConnected
-      ? 'Conta vinculada em modo de demonstração neste perfil.'
-      : 'Nenhuma conta Google vinculada neste perfil.';
-    googleButton.textContent = googleConnected ? 'Desvincular conta' : 'Vincular conta';
-  }
-  renderGoogleStatus();
-  googleButton.addEventListener('click', function() {
-    var nextConnectionState = !googleConnected;
-    try {
-      localStorage.setItem(GOOGLE_KEY, String(nextConnectionState));
-      googleConnected = nextConnectionState;
-      renderGoogleStatus();
-    } catch (error) {
-      console.error('Não foi possível atualizar o vínculo com o Google.', error);
-      googleStatus.textContent = 'Não foi possível atualizar o vínculo neste navegador.';
-    }
-  });
-
-  var preferenceDefsByRole = {
-    doctor: [
-      { key:'appointmentReminders', label:'Lembretes de consultas', sub:'Avisos sobre a agenda clínica.', checked:true },
-      { key:'consultationExamUpdates', label:'Atualizações de exames nas consultas', sub:'Avisos sobre arquivos associados aos atendimentos.', checked:true },
-    ],
-    secretary: [
-      { key:'appointmentChanges', label:'Alterações na agenda', sub:'Avisos sobre mudanças nos horários das consultas.', checked:true },
-      { key:'newAppointments', label:'Novas consultas', sub:'Avisos sobre novos agendamentos.', checked:true },
-    ],
-    patient: [
-      { key:'appointmentReminders', label:'Lembretes de consultas', sub:'Receba lembretes dos seus próximos atendimentos.', checked:true },
-      { key:'habitCheckin', label:'Lembrete do Diário Lapidar', sub:'Lembrete para preencher seu check-in diário.', checked:true },
-    ],
-    admin: [
-      { key:'systemAlerts', label:'Alertas do sistema', sub:'Avisos importantes sobre o funcionamento do sistema.', checked:true },
-      { key:'accessUpdates', label:'Atualizações de acesso', sub:'Avisos sobre alterações nos usuários e permissões.', checked:true },
-    ],
-  };
-  var personalPreferences = {};
-  try {
-    var savedPreferences = JSON.parse(localStorage.getItem(PREFERENCES_KEY) || 'null');
-    if (savedPreferences && typeof savedPreferences === 'object') personalPreferences = savedPreferences;
-  } catch (error) {
-    console.error('Não foi possível carregar as preferências pessoais.', error);
-  }
-  var personalPreferenceEls = {};
-  var personalPreferencesList = document.getElementById('personal-preferences-list');
-  preferenceDefsByRole[currentRole].forEach(function(def) {
-    var row = document.createElement('div');
-    row.className = 'toggle-row';
-    var info = document.createElement('div');
-    var label = document.createElement('p');
-    label.style.cssText = 'font-size:13px;color:var(--text-primary);margin-bottom:2px;';
-    label.textContent = def.label;
-    var description = document.createElement('p');
-    description.style.cssText = 'font-size:11px;color:var(--text-muted);';
-    description.textContent = def.sub;
-    info.append(label, description);
-    var switchLabel = document.createElement('label');
-    switchLabel.className = 'toggle-switch';
-    var input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = typeof personalPreferences[def.key] === 'boolean' ? personalPreferences[def.key] : def.checked;
-    input.setAttribute('aria-label', def.label);
-    personalPreferenceEls[def.key] = input;
-    var track = document.createElement('div');
-    track.className = 'toggle-track';
-    switchLabel.append(input, track);
-    row.append(info, switchLabel);
-    personalPreferencesList.appendChild(row);
-  });
-
-  // Clinic fields
-  var clinicFieldDefs = [
-    { key:'clinicName', label:'Nome da Clínica' },
-    { key:'doctorName', label:'Profissional' },
-    { key:'crm',        label:'CRM / Registro' },
-    { key:'email',      label:'E-mail', type:'email' },
-    { key:'phone',      label:'Telefone / WhatsApp', type:'tel' },
-  ];
-  var clinicFieldEls = {};
-  var clinicFields = document.getElementById('clinic-fields');
-  clinicFieldDefs.forEach(function(def) {
-    var group = document.createElement('div');
-    group.className = 'form-group';
-    var lbl = document.createElement('label');
-    lbl.className = 'form-label';
-    lbl.textContent = def.label;
-    var input = document.createElement('input');
-    input.type = def.type || 'text';
-    input.className = 'form-input';
-    input.value = settings[def.key];
-    clinicFieldEls[def.key] = input;
-    group.appendChild(lbl);
-    group.appendChild(input);
-    clinicFields.appendChild(group);
-  });
-
-  // Toggles
-  var alertDefs = [
-    { key:'habitCheckin', label:'Check diário de hábitos', sub:'Receber aviso de pacientes sem check' },
-    { key:'ldlAlert',     label:'Alerta LDL acima da meta', sub:'Notificar quando LDL > meta do protocolo' },
-    { key:'vitDAlert',    label:'Alerta Vitamina D baixa', sub:'Notificar dosagem < 30 ng/mL' },
-  ];
-  var toggleEls = {};
-  var alertsList = document.getElementById('alerts-list');
-  alertDefs.forEach(function(def) {
-    var row = document.createElement('div');
-    row.className = 'toggle-row';
-    var info = document.createElement('div');
-    info.innerHTML =
-      '<p style="font-size:13px;color:var(--text-primary);margin-bottom:2px;">' + def.label + '</p>' +
-      '<p style="font-size:11px;color:var(--text-muted);">' + def.sub + '</p>';
-    var sw = document.createElement('label');
-    sw.className = 'toggle-switch';
-    var inp = document.createElement('input');
-    inp.type = 'checkbox';
-    inp.checked = settings[def.key];
-    toggleEls[def.key] = inp;
-    var track = document.createElement('div');
-    track.className = 'toggle-track';
-    sw.appendChild(inp);
-    sw.appendChild(track);
-    row.appendChild(info);
-    row.appendChild(sw);
-    alertsList.appendChild(row);
-  });
-
-  // Save
-  document.getElementById('btn-save').addEventListener('click', function() {
-    try {
-      if (currentRole === 'admin' || currentRole === 'doctor') {
-        if (currentRole === 'admin') {
-          clinicFieldDefs.forEach(function(def) {
-            settings[def.key] = clinicFieldEls[def.key].value;
-          });
-          alertDefs.forEach(function(def) {
-            settings[def.key] = toggleEls[def.key].checked;
-          });
-          settings.users = document.getElementById('setting-users').value.split('\n').map(value => value.trim()).filter(Boolean);
-        }
-        settings.protocols = document.getElementById('setting-protocols').value.split('\n').map(value => value.trim()).filter(Boolean);
-        settings.consultationTypes = document.getElementById('setting-consultation-types').value.split('\n').map(value => value.trim()).filter(Boolean);
-        settings.tags = document.getElementById('setting-tags').value.split('\n').map(value => value.trim()).filter(Boolean);
-        settings.checklistTemplate = document.getElementById('setting-checklist').value.split('\n').map(value => value.trim()).filter(Boolean);
-        settings.medicationCatalog = document.getElementById('setting-medications').value.split('\n').map(value => value.trim()).filter(Boolean);
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    function readJson(key, fallback) {
+      try {
+        const saved = localStorage.getItem(key);
+        return saved ? Object.assign({}, fallback, JSON.parse(saved)) : Object.assign({}, fallback);
+      } catch (error) {
+        console.error('Não foi possível carregar as configurações salvas.', error);
+        return Object.assign({}, fallback);
       }
-      Object.keys(personalPreferenceEls).forEach(function(key) {
-        personalPreferences[key] = personalPreferenceEls[key].checked;
-      });
-      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(personalPreferences));
-      var msg = document.getElementById('saved-msg');
-      msg.style.display = 'inline';
-      setTimeout(function() { msg.style.display = 'none'; }, 2500);
-    } catch(error) {
-      console.error('Não foi possível salvar as configurações.', error);
-      alert('Não foi possível salvar. Verifique o armazenamento do navegador.');
     }
-  });
-  }
+    function writeJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    function notify(element, message, error) {
+      element.textContent = message;
+      if (error) console.error(message, error);
+    }
+    function initials(name) {
+      const words = name.trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return '';
+      return (words[0].charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : '')).toUpperCase();
+    }
+
+    const defaultProfiles = {
+      doctor: { name: 'Dra. Andressa Gomide', email: 'andressa.gomide@lapidar.com.br', phone: '', avatar: '' },
+      secretary: { name: 'Gabi', email: 'gabi@lapidar.com.br', phone: '', avatar: '' },
+      patient: { name: 'Ana Paula Ferreira', email: 'ana.ferreira@email.com', phone: '(11) 9 8765-1234', avatar: '' }
+    };
+    const profile = readJson(profileKey, defaultProfiles[role] || defaultProfiles.doctor);
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const profilePhone = document.getElementById('profile-phone');
+    const avatarHost = document.getElementById('profile-avatar');
+    profileName.value = profile.name;
+    profileEmail.value = profile.email;
+    profilePhone.value = profile.phone;
+    document.getElementById('phone-label').textContent = profile.phone ? 'Telefone' : '';
+
+    function renderAvatar() {
+      avatarHost.replaceChildren();
+      if (profile.avatar) {
+        const image = document.createElement('img');
+        image.src = profile.avatar;
+        image.alt = 'Foto de ' + profile.name;
+        avatarHost.appendChild(image);
+      } else {
+        avatarHost.textContent = initials(profile.name);
+      }
+    }
+    renderAvatar();
+    profileName.addEventListener('input', function() {
+      if (!profile.avatar) avatarHost.textContent = initials(profileName.value || profile.name);
+    });
+    document.getElementById('profile-photo').addEventListener('change', function(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!/^image\/(png|jpeg)$/.test(file.type) || file.size > 500 * 1024) {
+        notify(document.getElementById('profile-feedback'), 'Escolha uma imagem JPG ou PNG de até 500 KB.');
+        event.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = function(error) { notify(document.getElementById('profile-feedback'), 'Não foi possível ler a foto selecionada.', error); };
+      reader.onload = function() { profile.avatar = reader.result; renderAvatar(); };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById('profile-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      profile.name = profileName.value.trim();
+      profile.email = profileEmail.value.trim();
+      profile.phone = profilePhone.value.trim();
+      document.getElementById('phone-label').textContent = profile.phone ? 'Telefone' : '';
+      renderAvatar();
+      try {
+        writeJson(profileKey, profile);
+        document.getElementById('account-details').querySelector('[data-account="email"] strong').textContent = profile.email;
+        notify(document.getElementById('profile-feedback'), 'Alterações salvas neste navegador.');
+      } catch (error) {
+        notify(document.getElementById('profile-feedback'), 'Não foi possível salvar as alterações.', error);
+      }
+    });
+
+    const adminLevel = canCustomize ? 'Administradora do sistema' : 'Padrão';
+    const accountFacts = isPatient ? [
+      ['Perfil', 'Paciente'], ['Acesso', profile.email], ['Nível de permissão', 'Padrão'],
+      ['Dados que você vê', 'Somente os seus'], ['Forma de entrada', 'E-mail e senha'], ['Sessão atual', 'Navegador (web)']
+    ] : role === 'secretary' ? [
+      ['Perfil', 'Secretária'], ['Acesso', profile.email], ['Nível de permissão', adminLevel],
+      ['Dados que você vê', 'Contato e agenda das pacientes'], ['Forma de entrada', 'E-mail e senha'], ['Sessão atual', 'Navegador (web)']
+    ] : [
+      ['Perfil', 'Médica'], ['Acesso', profile.email], ['Nível de permissão', adminLevel],
+      ['Dados que você vê', 'Ficha clínica completa'], ['Forma de entrada', 'E-mail e senha'], ['Sessão atual', 'Navegador (web)']
+    ];
+    const factsHost = document.getElementById('account-details');
+    accountFacts.forEach(function(fact) {
+      const row = document.createElement('div');
+      row.className = 'account-detail';
+      row.dataset.account = fact[0] === 'Acesso' ? 'email' : '';
+      const label = document.createElement('span');
+      const value = document.createElement('strong');
+      label.textContent = fact[0];
+      value.textContent = fact[1];
+      row.append(label, value);
+      factsHost.appendChild(row);
+    });
+
+    const googleKey = 'lapidar-google-connected-' + role;
+    let googleConnected = localStorage.getItem(googleKey) === 'true';
+    function setGoogleButton(button, connected) {
+      button.textContent = connected ? 'Desvincular' : 'Vincular';
+    }
+    const accountGoogleButton = document.getElementById('google-account-toggle');
+    const systemGoogleButton = document.getElementById('system-google-toggle');
+    const systemGoogleStatus = document.getElementById('system-google-status');
+    setGoogleButton(accountGoogleButton, googleConnected);
+    function renderSystemGoogle() {
+      systemGoogleStatus.textContent = googleConnected ? 'Vinculada' : 'Não vinculada';
+      systemGoogleButton.lastChild.textContent = googleConnected ? 'Desvincular conta Google' : 'Vincular conta Google';
+    }
+    renderSystemGoogle();
+    function toggleGoogle() {
+      const nextState = !googleConnected;
+      try {
+        localStorage.setItem(googleKey, String(nextState));
+        googleConnected = nextState;
+        setGoogleButton(accountGoogleButton, googleConnected);
+        renderSystemGoogle();
+      } catch (error) {
+        notify(document.getElementById('account-feedback'), 'Não foi possível atualizar o vínculo com o Google.', error);
+      }
+    }
+    accountGoogleButton.addEventListener('click', toggleGoogle);
+    systemGoogleButton.addEventListener('click', toggleGoogle);
+    document.getElementById('change-password').addEventListener('click', function() {
+      notify(document.getElementById('account-feedback'), 'A alteração de senha está disponível na demonstração.');
+    });
+    document.getElementById('sign-out').addEventListener('click', function() {
+      if (window.confirm('Deseja sair da conta?')) Router.navigate('login');
+    });
+
+    if (!canCustomize) {
+      document.querySelectorAll('.admin-only').forEach(function(tab) { tab.hidden = true; });
+    }
+    document.getElementById('settings-tabs').addEventListener('click', function(event) {
+      const tab = event.target.closest('[data-view]');
+      if (!tab || tab.hidden) return;
+      document.querySelectorAll('.settings-tab').forEach(function(item) {
+        item.setAttribute('aria-selected', String(item === tab));
+      });
+      const tabs = document.getElementById('settings-tabs');
+      tabs.classList.toggle('account-active', tab.dataset.view === 'account');
+      tabs.classList.toggle('preferences-active', tab.dataset.view === 'preferences');
+      document.querySelectorAll('.settings-view').forEach(function(panel) {
+        panel.hidden = panel.dataset.panel !== tab.dataset.view;
+      });
+    });
+    const requestedSettingsSection = settingsRouteState.settingsSection;
+    if (requestedSettingsSection && canCustomize) {
+      const requestedTab = document.querySelector('.settings-tab[data-view="' + requestedSettingsSection + '"]');
+      if (requestedTab && !requestedTab.hidden) {
+        requestedTab.click();
+        Router.setState({ settingsSection:null, catalogName:null });
+      }
+    }
+
+    const accessibilityDefaults = {
+      fontSize: 100, highContrast: false, reduceMotion: false, easyInteraction: false,
+      screenReader: false, colorVision: 'none'
+    };
+    const accessibility = readJson(preferenceKey, accessibilityDefaults);
+    const fontSize = document.getElementById('font-size');
+    const fontOutput = document.getElementById('font-size-value');
+    function applyAccessibility() {
+      fontOutput.value = accessibility.fontSize + '%';
+      fontOutput.textContent = accessibility.fontSize + '%';
+      document.documentElement.style.fontSize = 'clamp(10px, calc(1.223vw * ' + (accessibility.fontSize / 100) + '), 16px)';
+      document.body.classList.toggle('high-contrast', accessibility.highContrast);
+      document.body.classList.toggle('easy-interaction', accessibility.easyInteraction);
+      document.body.classList.toggle('reduce-motion', accessibility.reduceMotion);
+      document.body.dataset.colorVision = accessibility.colorVision;
+      if (accessibility.reduceMotion) document.documentElement.style.setProperty('--transition', 'none');
+      else document.documentElement.style.removeProperty('--transition');
+    }
+    function saveAccessibility() {
+      try { writeJson(preferenceKey, accessibility); }
+      catch (error) { notify(document.getElementById('profile-feedback'), 'Não foi possível salvar as preferências de acessibilidade.', error); }
+      applyAccessibility();
+    }
+    fontSize.value = accessibility.fontSize;
+    document.querySelectorAll('[data-accessibility]').forEach(function(input) {
+      input.checked = Boolean(accessibility[input.dataset.accessibility]);
+      input.addEventListener('change', function() {
+        accessibility[input.dataset.accessibility] = input.checked;
+        saveAccessibility();
+      });
+    });
+    fontSize.addEventListener('input', function() {
+      accessibility.fontSize = Number(fontSize.value);
+      saveAccessibility();
+    });
+    const visionSelect = document.getElementById('color-vision');
+    visionSelect.value = accessibility.colorVision;
+    visionSelect.addEventListener('change', function() {
+      accessibility.colorVision = visionSelect.value;
+      saveAccessibility();
+    });
+    document.getElementById('reset-accessibility').addEventListener('click', function() {
+      Object.assign(accessibility, accessibilityDefaults);
+      fontSize.value = accessibility.fontSize;
+      visionSelect.value = accessibility.colorVision;
+      document.querySelectorAll('[data-accessibility]').forEach(function(input) { input.checked = false; });
+      saveAccessibility();
+    });
+    applyAccessibility();
+
+    const doctorNotifications = [
+      ['appointmentComplete', 'Formulário respondido', 'Quando uma paciente envia o check-in do diário'],
+      ['examSent', 'Exames enviados', 'Quando a paciente anexa um exame solicitado'],
+      ['clinicalAlerts', 'Alertas clínicos', 'Exames pendentes, LDL, vitamina D e atividade física'],
+      ['tuesdayReminder', 'Lembretes de terça-feira', 'Contatos da consulta semanal'],
+      ['weeklyEmail', 'Resumo semanal por e-mail', 'Enviado toda segunda-feira'],
+      ['rescheduled', 'Consultas remarcadas ou canceladas', 'Quando a agenda muda depois de confirmada'],
+      ['newPatient', 'Novas pacientes cadastradas', 'Aviso a cada cadastro feito pela equipe'],
+      ['goalComplete', 'Metas concluídas', 'Quando uma paciente conclui uma meta do tratamento'],
+      ['newMessage', 'Novas mensagens', 'Aviso quando chega uma mensagem']
+    ];
+    const patientNotifications = [
+      ['appointmentReminder', 'Lembretes de consulta', 'Um dia antes de cada consulta'],
+      ['examRequested', 'Exames solicitados', 'Quando a médica pede um novo exame'],
+      ['newMessage', 'Novas mensagens', 'Aviso quando chega uma mensagem']
+    ];
+    const notificationDefs = isPatient ? patientNotifications : doctorNotifications;
+    const notifications = readJson(notificationKey, {});
+    const notificationHost = document.getElementById('notification-list');
+    notificationDefs.forEach(function(definition) {
+      const row = document.createElement('div');
+      row.className = 'preference-row';
+      const copy = document.createElement('div');
+      copy.className = 'preference-copy';
+      const title = document.createElement('strong');
+      const description = document.createElement('span');
+      title.textContent = definition[1];
+      description.textContent = definition[2];
+      copy.append(title, description);
+      const label = document.createElement('label');
+      label.className = 'switch';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = typeof notifications[definition[0]] === 'boolean' ? notifications[definition[0]] : true;
+      input.setAttribute('aria-label', definition[1]);
+      const track = document.createElement('span');
+      track.className = 'switch-track';
+      input.addEventListener('change', function() {
+        notifications[definition[0]] = input.checked;
+        try { writeJson(notificationKey, notifications); }
+        catch (error) { notify(document.getElementById('profile-feedback'), 'Não foi possível salvar as notificações.', error); }
+      });
+      label.append(input, track);
+      row.append(copy, label);
+      notificationHost.appendChild(row);
+    });
+
+    const defaultColors = {
+      primary: '#5B2333', accent: '#C6A15B', page: '#FAF3E9', card: '#FFFDFA',
+      title: '#1C1418', text: '#1C1418', secondary: '#473A3F', border: '#CFBCAE'
+    };
+    const colorDefinitions = [
+      ['primary', 'Cor principal', 'Menu lateral, barra superior, botões e seleções'],
+      ['accent', 'Cor de destaque', 'Detalhes dourados, selos e destaques'],
+      ['page', 'Fundo da página', 'Cor de fundo atrás dos cartões'],
+      ['card', 'Fundo dos cartões', 'Cartões, janelas e campos'],
+      ['title', 'Títulos', 'Títulos de páginas e de cartões'],
+      ['text', 'Texto', 'Textos e valores principais'],
+      ['secondary', 'Texto secundário', 'Legendas e textos de apoio'],
+      ['border', 'Bordas e divisórias', 'Contornos de cartões e linhas']
+    ];
+    const systemIdentity = readJson(systemKey, { name: 'Gestão Clínica', logo: '', colors: defaultColors, colorPreset: null });
+    systemIdentity.colors = Object.assign({}, defaultColors, systemIdentity.colors || {});
+    document.getElementById('system-name').value = systemIdentity.name;
+    const logoPreview = document.getElementById('system-logo-preview');
+    function renderLogo() {
+      if (systemIdentity.logo) logoPreview.src = systemIdentity.logo;
+      else logoPreview.removeAttribute('src');
+      logoPreview.style.visibility = 'visible';
+    }
+    renderLogo();
+    function applySystemColors() {
+      const vars = { primary: '--vinho', accent: '--dourado', page: '--bege', card: '--white', title: '--text-primary', text: '--text-primary', secondary: '--text-secondary', border: '--border' };
+      Object.keys(vars).forEach(function(key) {
+        document.documentElement.style.setProperty(vars[key], systemIdentity.colors[key]);
+      });
+    }
+    function renderColors() {
+      const host = document.getElementById('system-color-list');
+      host.replaceChildren();
+      colorDefinitions.forEach(function(definition) {
+        const row = document.createElement('label');
+        row.className = 'color-row';
+        const swatch = document.createElement('span');
+        swatch.className = 'color-swatch';
+        swatch.style.backgroundColor = systemIdentity.colors[definition[0]];
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = systemIdentity.colors[definition[0]];
+        input.setAttribute('aria-label', definition[1]);
+        input.addEventListener('input', function() {
+          systemIdentity.colors[definition[0]] = input.value.toUpperCase();
+          swatch.style.backgroundColor = input.value;
+          applySystemColors();
+        });
+        input.addEventListener('change', function() {
+          try { writeJson(systemKey, systemIdentity); }
+          catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível salvar a cor selecionada.', error); }
+        });
+        swatch.appendChild(input);
+        const copy = document.createElement('span');
+        copy.className = 'color-name';
+        const name = document.createElement('strong');
+        const description = document.createElement('span');
+        name.textContent = definition[1];
+        description.textContent = definition[2];
+        copy.append(name, description);
+        row.append(swatch, copy);
+        host.appendChild(row);
+      });
+    }
+    renderColors();
+    applySystemColors();
+    document.getElementById('apply-system-name').addEventListener('click', function() {
+      systemIdentity.name = document.getElementById('system-name').value.trim() || 'Gestão Clínica';
+      try {
+        writeJson(systemKey, systemIdentity);
+        notify(document.getElementById('system-feedback'), 'Nome do sistema aplicado.');
+      } catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível salvar o nome do sistema.', error); }
+    });
+    document.getElementById('system-logo').addEventListener('change', function(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!/^image\/(png|jpeg|svg\+xml)$/.test(file.type) || file.size > 1024 * 1024) {
+        notify(document.getElementById('system-feedback'), 'Escolha uma imagem PNG, JPG ou SVG de até 1 MB.');
+        event.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = function(error) { notify(document.getElementById('system-feedback'), 'Não foi possível ler a logo selecionada.', error); };
+      reader.onload = function() {
+        systemIdentity.logo = reader.result;
+        renderLogo();
+        try { writeJson(systemKey, systemIdentity); }
+        catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível salvar a logo.', error); }
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById('save-color-preset').addEventListener('click', function() {
+      systemIdentity.colorPreset = Object.assign({}, systemIdentity.colors);
+      try {
+        writeJson(systemKey, systemIdentity);
+        document.getElementById('preset-description').textContent = 'Predefinição de cores salva. Você pode reaplicá-la quando quiser.';
+      } catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível salvar a predefinição.', error); }
+    });
+    document.getElementById('reset-system-colors').addEventListener('click', function() {
+      systemIdentity.colors = Object.assign({}, systemIdentity.colorPreset || defaultColors);
+      renderColors();
+      applySystemColors();
+      try { writeJson(systemKey, systemIdentity); }
+      catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível restaurar as cores.', error); }
+    });
+    document.getElementById('reset-system-identity').addEventListener('click', function() {
+      systemIdentity.name = 'Gestão Clínica';
+      systemIdentity.logo = '';
+      systemIdentity.colors = Object.assign({}, defaultColors);
+      systemIdentity.colorPreset = null;
+      document.getElementById('system-name').value = systemIdentity.name;
+      document.getElementById('preset-description').textContent = 'Ajuste as cores acima e salve como predefinição para reaplicar quando quiser.';
+      renderLogo();
+      renderColors();
+      applySystemColors();
+      try { writeJson(systemKey, systemIdentity); }
+      catch (error) { notify(document.getElementById('system-feedback'), 'Não foi possível restaurar a identidade do sistema.', error); }
+    });
+
+    const catalogDefaults = {
+      'Condições de saúde (tags)': ['Alzheimer', 'Diabetes', 'Dislipidemia', 'Hipertensão', 'SOP'],
+      'Objetivos': ['Emagrecimento', 'Ganho de massa', 'Melhora da fertilidade'],
+      'Origem do lead': ['Indicação', 'Instagram', 'Google'],
+      'Tipos de exame': ['Hemograma', 'Glicemia', 'Colesterol total'],
+      'Tags de conteúdo': ['Nutrição', 'Saúde hormonal', 'Hábitos'],
+      'Tipos de consulta (extras)': ['Retorno', 'Bioimpedância'],
+      'Medicamentos': ['Metformina', 'Vitamina D'],
+      'Suplementos': ['Ômega 3', 'Magnésio'],
+      'Categorias financeiras': ['Consulta', 'Exames'],
+      'Tipos de lançamento': ['Receita', 'Despesa'],
+      'Grupos de etapas do checklist': ['Pré-consulta', 'Consulta', 'Pós-consulta']
+    };
+    const catalogState = readJson(catalogsKey, catalogDefaults);
+    const categoryNames = Object.keys(catalogDefaults);
+    const requestedCatalog = settingsRouteState.catalogName;
+    let activeCategory = categoryNames.includes(requestedCatalog) ? requestedCatalog : categoryNames[0];
+    const categoryHost = document.getElementById('catalog-tabs');
+    const catalogItemsHost = document.getElementById('catalog-items');
+    const catalogSearch = document.getElementById('catalog-search');
+    const newItemInput = document.getElementById('catalog-new-item');
+    function renderCatalogTabs() {
+      categoryHost.replaceChildren();
+      categoryNames.forEach(function(category) {
+        const button = document.createElement('button');
+        button.className = 'catalog-tab';
+        button.type = 'button';
+        button.textContent = category;
+        button.setAttribute('aria-pressed', String(activeCategory === category));
+        button.addEventListener('click', function() {
+          activeCategory = category;
+          newItemInput.placeholder = 'Novo(a) ' + category.replace(/\s*\(.*\)/, '').toLowerCase();
+          renderCatalogTabs();
+          renderCatalogItems();
+        });
+        categoryHost.appendChild(button);
+      });
+    }
+    function renderCatalogItems() {
+      catalogItemsHost.replaceChildren();
+      const query = catalogSearch.value.trim().toLocaleLowerCase('pt-BR');
+      (catalogState[activeCategory] || []).filter(function(item) { return item.toLocaleLowerCase('pt-BR').includes(query); })
+        .forEach(function(item) {
+          const row = document.createElement('div');
+          row.className = 'catalog-item';
+          const copy = document.createElement('div');
+          copy.className = 'catalog-item-name';
+          copy.textContent = item;
+          const usage = document.createElement('span');
+          usage.textContent = item === 'Diabetes' ? '8 em uso' : '4 em uso';
+          copy.appendChild(usage);
+          const actions = document.createElement('div');
+          actions.className = 'catalog-item-actions';
+          const edit = document.createElement('button');
+          edit.className = 'icon-button';
+          edit.type = 'button';
+          edit.setAttribute('aria-label', 'Editar ' + item);
+          edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5z"/><path d="m13.5 7 3.5 3.5"/></svg>';
+          edit.addEventListener('click', function() {
+            const updated = window.prompt('Editar cadastro', item);
+            if (updated && updated.trim()) replaceCatalogItem(item, updated.trim());
+          });
+          const remove = document.createElement('button');
+          remove.className = 'icon-button';
+          remove.type = 'button';
+          remove.setAttribute('aria-label', 'Excluir ' + item);
+          remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16m-10 4v7m4-7v7M6 7l1 14h10l1-14M9 7V4h6v3"/></svg>';
+          remove.addEventListener('click', function() {
+            if (!window.confirm('Excluir "' + item + '" deste cadastro?')) return;
+            catalogState[activeCategory] = catalogState[activeCategory].filter(function(value) { return value !== item; });
+            saveCatalogs();
+          });
+          actions.append(edit, remove);
+          row.append(copy, actions);
+          catalogItemsHost.appendChild(row);
+        });
+    }
+    function saveCatalogs() {
+      try { writeJson(catalogsKey, catalogState); renderCatalogItems(); }
+      catch (error) { notify(document.getElementById('catalog-feedback'), 'Não foi possível salvar o cadastro.', error); }
+    }
+    function replaceCatalogItem(oldValue, newValue) {
+      const list = catalogState[activeCategory];
+      const index = list.indexOf(oldValue);
+      if (index >= 0) list[index] = newValue;
+      saveCatalogs();
+    }
+    newItemInput.placeholder = 'Novo(a) condição de saúde';
+    renderCatalogTabs();
+    renderCatalogItems();
+    catalogSearch.addEventListener('input', renderCatalogItems);
+    document.getElementById('catalog-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const value = newItemInput.value.trim();
+      if (!value) { newItemInput.focus(); return; }
+      if ((catalogState[activeCategory] || []).some(function(item) { return item.toLocaleLowerCase('pt-BR') === value.toLocaleLowerCase('pt-BR'); })) {
+        notify(document.getElementById('catalog-feedback'), 'Esse item já existe neste cadastro.');
+        return;
+      }
+      catalogState[activeCategory] = (catalogState[activeCategory] || []).concat(value);
+      newItemInput.value = '';
+      saveCatalogs();
+    });
+
+    const defaultProtocols = [
+      { name: 'Lapidar 40+', patients: 8, color: '#5B2333' },
+      { name: 'Lapidar SOP', patients: 6, color: '#C6A15B' },
+      { name: 'Lapidar Fertilidade', patients: 6, color: '#4E7D5E' },
+      { name: 'Pocket', patients: 6, color: '#963F51' }
+    ];
+    let protocols = [];
+    try {
+      const saved = localStorage.getItem(protocolsKey);
+      protocols = saved ? JSON.parse(saved) : defaultProtocols;
+      if (!Array.isArray(protocols)) throw new TypeError('A lista de protocolos salva não é válida.');
+    } catch (error) {
+      console.error('Não foi possível carregar os protocolos.', error);
+      protocols = defaultProtocols.slice();
+    }
+    const protocolHost = document.getElementById('protocol-items');
+    const protocolSearch = document.getElementById('protocol-search');
+    function renderProtocols() {
+      protocolHost.replaceChildren();
+      const query = protocolSearch.value.trim().toLocaleLowerCase('pt-BR');
+      const filtered = protocols.filter(function(protocol) { return protocol.name.toLocaleLowerCase('pt-BR').includes(query); });
+      document.getElementById('protocol-count').textContent = protocols.length + ' protocolo(s) cadastrado(s)';
+      filtered.forEach(function(protocol) {
+        const row = document.createElement('div');
+        row.className = 'protocol-item';
+        const dot = document.createElement('span');
+        dot.className = 'protocol-dot';
+        dot.style.backgroundColor = protocol.color;
+        const copy = document.createElement('div');
+        copy.className = 'protocol-copy';
+        const title = document.createElement('strong');
+        const description = document.createElement('span');
+        title.textContent = protocol.name;
+        description.textContent = protocol.patients + ' paciente(s) - protocolo de fábrica';
+        copy.append(title, description);
+        const lock = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        lock.setAttribute('viewBox', '0 0 24 24');
+        lock.setAttribute('fill', 'none');
+        lock.setAttribute('stroke', 'currentColor');
+        lock.setAttribute('stroke-width', '1.8');
+        lock.classList.add('protocol-lock');
+        lock.innerHTML = '<rect x="5" y="10" width="14" height="11" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+        lock.setAttribute('aria-label', 'Protocolo padrão');
+        row.append(dot, copy, lock);
+        protocolHost.appendChild(row);
+      });
+    }
+    function saveProtocols() {
+      try { writeJson(protocolsKey, protocols); renderProtocols(); }
+      catch (error) { notify(document.getElementById('catalog-feedback'), 'Não foi possível salvar os protocolos.', error); }
+    }
+    protocolSearch.addEventListener('input', renderProtocols);
+    renderProtocols();
+    document.getElementById('add-protocol').addEventListener('click', function() {
+      const name = window.prompt('Nome do novo protocolo');
+      if (!name || !name.trim()) return;
+      protocols.push({ name: name.trim(), patients: 0, color: defaultProtocols[protocols.length % defaultProtocols.length].color });
+      saveProtocols();
+    });
+    const checklistEditor = document.getElementById('checklist-editor');
+    const checklistTemplateSelect = document.getElementById('checklist-template-select');
+    const checklistStepsField = document.getElementById('checklist-steps');
+    const checklistTemplateName = document.getElementById('checklist-template-name');
+    const checklistFeedback = document.getElementById('checklist-feedback');
+    let checklistSettings = {};
+    try {
+      const savedSettings = localStorage.getItem(settingsKey);
+      checklistSettings = savedSettings ? JSON.parse(savedSettings) : {};
+      if (!checklistSettings || Array.isArray(checklistSettings) || typeof checklistSettings !== 'object') {
+        throw new TypeError('As configurações salvas não têm o formato esperado.');
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar as configurações do checklist.', error);
+      checklistSettings = {};
+      notify(checklistFeedback, 'Não foi possível carregar as configurações salvas do checklist.', error);
+    }
+
+    function getChecklistTemplates() {
+      const savedTemplates = checklistSettings.checklistTemplates;
+      return savedTemplates && typeof savedTemplates === 'object' && !Array.isArray(savedTemplates)
+        ? Object.assign({}, defaultChecklistTemplates, savedTemplates)
+        : Object.assign({}, defaultChecklistTemplates);
+    }
+    function renderChecklistTemplates() {
+      const templates = getChecklistTemplates();
+      const previousValue = checklistTemplateSelect.value;
+      checklistTemplateSelect.replaceChildren();
+      Object.keys(templates).forEach(function(name) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        checklistTemplateSelect.appendChild(option);
+      });
+      if (Object.prototype.hasOwnProperty.call(templates, previousValue)) {
+        checklistTemplateSelect.value = previousValue;
+      }
+      const currentSteps = Array.isArray(checklistSettings.checklistTemplate)
+        ? checklistSettings.checklistTemplate
+        : defaultChecklist;
+      document.getElementById('checklist-summary').textContent =
+        currentSteps.length + ' etapa(s) ativas · ' + Object.keys(templates).length + ' modelo(s)';
+    }
+    function openChecklistEditor(showTemplates) {
+      checklistEditor.hidden = false;
+      if (showTemplates) {
+        renderChecklistTemplates();
+        checklistStepsField.value = '';
+        checklistTemplateName.value = '';
+      } else {
+        checklistStepsField.value = (Array.isArray(checklistSettings.checklistTemplate)
+          ? checklistSettings.checklistTemplate
+          : defaultChecklist).join('\n');
+      }
+      checklistFeedback.textContent = '';
+      (showTemplates ? checklistTemplateSelect : checklistStepsField).focus();
+    }
+    function readChecklistSteps() {
+      const steps = checklistStepsField.value.split(/\r?\n/).map(function(step) { return step.trim(); }).filter(Boolean);
+      if (!steps.length) {
+        notify(checklistFeedback, 'Adicione pelo menos uma etapa ao checklist.');
+        checklistStepsField.focus();
+        return null;
+      }
+      if (steps.some(function(step) { return step.length > 100; })) {
+        notify(checklistFeedback, 'Cada etapa pode ter no máximo 100 caracteres.');
+        checklistStepsField.focus();
+        return null;
+      }
+      return steps;
+    }
+    function persistChecklistSettings(message) {
+      try {
+        writeJson(settingsKey, checklistSettings);
+        renderChecklistTemplates();
+        notify(checklistFeedback, message);
+      } catch (error) {
+        notify(checklistFeedback, 'Não foi possível salvar as configurações do checklist.', error);
+      }
+    }
+    document.getElementById('edit-checklist').addEventListener('click', function() {
+      openChecklistEditor(false);
+    });
+    document.getElementById('checklist-templates').addEventListener('click', function() {
+      openChecklistEditor(true);
+    });
+    document.getElementById('load-checklist-template').addEventListener('click', function() {
+      const template = getChecklistTemplates()[checklistTemplateSelect.value];
+      if (!Array.isArray(template)) {
+        notify(checklistFeedback, 'O modelo selecionado não contém etapas válidas.');
+        return;
+      }
+      checklistStepsField.value = template.join('\n');
+      checklistTemplateName.value = '';
+      notify(checklistFeedback, 'Modelo carregado. Salve as etapas para aplicá-las às novas consultas.');
+    });
+    checklistEditor.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const steps = readChecklistSteps();
+      if (!steps) return;
+      checklistSettings.checklistTemplate = steps;
+      persistChecklistSettings('Etapas salvas e aplicadas às novas consultas.');
+    });
+    document.getElementById('save-checklist-template').addEventListener('click', function() {
+      const steps = readChecklistSteps();
+      if (!steps) return;
+      const name = checklistTemplateName.value.trim();
+      if (!name) {
+        notify(checklistFeedback, 'Informe um nome para o novo modelo.');
+        checklistTemplateName.focus();
+        return;
+      }
+      checklistSettings.checklistTemplates = getChecklistTemplates();
+      checklistSettings.checklistTemplates[name] = steps;
+      checklistSettings.checklistTemplate = steps;
+      persistChecklistSettings('Modelo salvo e aplicado às novas consultas.');
+      checklistTemplateSelect.value = name;
+    });
+    renderChecklistTemplates();
+
+    const staffStorageKey = 'lapidar-staff-management-v1';
+    const staffForm = document.getElementById('staff-form');
+    const staffList = document.getElementById('staff-list');
+    const staffLog = document.getElementById('staff-log');
+    const staffFeedback = document.getElementById('staff-feedback');
+    const staffDoctorCheckbox = document.getElementById('staff-is-doctor');
+    const staffCrmField = document.getElementById('staff-crm-field');
+    const staffCrmInput = document.getElementById('staff-crm');
+    const staffSpecialtyField = document.getElementById('staff-specialty-field');
+    const staffSpecialtyInput = document.getElementById('staff-specialty');
+    const staffRoleInput = document.getElementById('staff-role');
+    const staffOtherRoleField = document.getElementById('staff-other-role-field');
+    const staffOtherRoleInput = document.getElementById('staff-other-role');
+    let editingStaffId = null;
+    let staffState = { employees:[], logs:[] };
+    try {
+      const storedStaff = localStorage.getItem(staffStorageKey);
+      if (storedStaff) {
+        const parsedStaff = JSON.parse(storedStaff);
+        if (!parsedStaff || Array.isArray(parsedStaff) || !Array.isArray(parsedStaff.employees) || !Array.isArray(parsedStaff.logs)) {
+          throw new TypeError('O cadastro da equipe salvo não tem o formato esperado.');
+        }
+        staffState = parsedStaff;
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar o cadastro da equipe.', error);
+      notify(staffFeedback, 'Não foi possível carregar os dados da equipe salvos neste navegador.', error);
+    }
+    const hasSystemAdmin = employee => Boolean(employee && (employee.isAdmin || /admin do sistema|administrador do sistema/i.test(employee.role || '')));
+    if (!staffState.employees.some(employee => hasSystemAdmin(employee) && employee.active !== false)) {
+      const systemAdmin = {
+        id:'system-admin', name:'Dra. Andressa Gomide', email:'admin-demo@lapidar.invalid',
+        phone:'', role:'Admin do sistema', isAdmin:true, isDoctor:true, crm:'MG 12345',
+        specialty:'Medicina Integrativa', active:true, protected:true
+      };
+      staffState.employees.unshift(systemAdmin);
+      try {
+        writeJson(staffStorageKey, staffState);
+      } catch (error) {
+        console.error('Não foi possível garantir o cadastro administrativo inicial.', error);
+        notify(staffFeedback, 'Não foi possível salvar o perfil administrativo inicial neste navegador.', error);
+      }
+    }
+    function toggleDoctorFields() {
+      const isDoctor = staffDoctorCheckbox.checked;
+      staffCrmField.hidden = !isDoctor;
+      staffCrmInput.required = isDoctor;
+      staffSpecialtyField.hidden = !isDoctor;
+      staffOtherRoleField.hidden = staffRoleInput.value !== 'Outra';
+      staffOtherRoleInput.required = staffRoleInput.value === 'Outra';
+    }
+    function accessDescription(employee) {
+      if (hasSystemAdmin(employee)) return 'Acesso administrativo e configurações do sistema';
+      if (employee.isDoctor) return 'Acesso clínico de médica';
+      if (/secret/i.test(employee.role || '')) return 'Agenda, contato da paciente e operações permitidas à secretaria';
+      if (/contador/i.test(employee.role || '')) return 'Acesso financeiro demonstrativo';
+      if (/desenvolvedor/i.test(employee.role || '')) return 'Logs do sistema e configurações';
+      if (/conteúdo/i.test(employee.role || '')) return 'Gestão de conteúdos';
+      return 'Acesso a definir conforme a função e as permissões reais do sistema';
+    }
+    function renderStaff() {
+      staffList.replaceChildren();
+      if (!staffState.employees.length) {
+        const empty = document.createElement('p');
+        empty.className = 'checklist-help';
+        empty.textContent = 'Nenhum funcionário cadastrado.';
+        staffList.appendChild(empty);
+      }
+      staffState.employees.forEach(function(employee) {
+        const row = document.createElement('div');
+        row.className = 'staff-row';
+        const copy = document.createElement('div');
+        copy.className = 'staff-row-copy';
+        const name = document.createElement('strong');
+        const details = document.createElement('span');
+        name.textContent = employee.name + (employee.isDoctor ? ' · Médica(o)' : '') + (employee.active === false ? ' · Inativo' : '');
+        details.textContent = [employee.role, employee.email, employee.phone, employee.isDoctor && employee.crm ? 'CRM ' + employee.crm : '', employee.isDoctor && employee.specialty ? employee.specialty : ''].filter(Boolean).join(' · ');
+        const profile = document.createElement('p');
+        profile.className = 'checklist-help';
+        profile.hidden = true;
+        profile.textContent = 'Perfil: ' + accessDescription(employee) + (employee.active === false ? ' · cadastro inativo' : ' · cadastro ativo');
+        copy.appendChild(profile);
+        copy.append(name, details);
+        const actions = document.createElement('div');
+        actions.className = 'staff-row-actions';
+        const view = document.createElement('button');
+        view.type = 'button';
+        view.className = 'outline-button';
+        view.textContent = 'Ver perfil';
+        view.addEventListener('click', function() { profile.hidden = !profile.hidden; });
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'outline-button';
+        edit.textContent = 'Editar';
+        edit.setAttribute('aria-label', 'Editar ' + employee.name);
+        edit.addEventListener('click', function() { editStaff(employee); });
+        const status = document.createElement('button');
+        status.type = 'button';
+        status.className = 'outline-button';
+        status.textContent = employee.active === false ? 'Ativar' : 'Marcar inativo';
+        status.setAttribute('aria-label', (employee.active === false ? 'Ativar ' : 'Marcar inativo ') + employee.name);
+        status.addEventListener('click', function() { toggleStaffStatus(employee.id); });
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'outline-button';
+        remove.textContent = 'Excluir';
+        remove.setAttribute('aria-label', 'Excluir ' + employee.name);
+        remove.addEventListener('click', function() { deleteStaff(employee.id); });
+        actions.append(view, edit, status, remove);
+        row.append(copy, actions);
+        staffList.appendChild(row);
+      });
+      staffLog.replaceChildren();
+      if (!staffState.logs.length) {
+        const emptyLog = document.createElement('p');
+        emptyLog.className = 'checklist-help';
+        emptyLog.textContent = 'Nenhuma alteração registrada.';
+        staffLog.appendChild(emptyLog);
+      }
+      staffState.logs.forEach(function(entry) {
+        const row = document.createElement('div');
+        row.className = 'staff-log-row';
+        const time = new Date(entry.at);
+        row.textContent = time.toLocaleString('pt-BR') + ' · ' + entry.action + ' · ID do registro: ' + entry.recordId + ' · ID do log: ' + entry.id;
+        staffLog.appendChild(row);
+      });
+    }
+    function persistStaff(nextState, action, recordId) {
+      const log = {
+        id:'staff-log-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        at:new Date().toISOString(),
+        action:action,
+        recordId:recordId
+      };
+      nextState.logs = [{ ...log }, ...nextState.logs].slice(0, 200);
+      try {
+        writeJson(staffStorageKey, nextState);
+        staffState = nextState;
+        let auditFailed = false;
+        try {
+          appendSystemAudit({
+            usuario:getProfileLabel(),
+            acao:/cadastro/i.test(action) ? 'Criação' : /exclusão/i.test(action) ? 'Exclusão' : 'Edição',
+            tabela:'funcionarios',
+            registroId:recordId,
+            detalhes:action
+          });
+        } catch (auditError) {
+          auditFailed = true;
+          console.error('A equipe foi salva, mas o log geral não pôde ser registrado.', auditError);
+        }
+        renderStaff();
+        notify(staffFeedback, auditFailed ? 'Equipe salva, mas o log geral não pôde ser registrado.' : action + ' registrado(a) no log.');
+        return true;
+      } catch (error) {
+        console.error('Não foi possível salvar os dados da equipe.', error);
+        notify(staffFeedback, 'Não foi possível salvar os dados da equipe neste navegador.', error);
+        return false;
+      }
+    }
+    function resetStaffForm() {
+      editingStaffId = null;
+      staffForm.reset();
+      staffRoleInput.value = 'Secretária';
+      staffOtherRoleInput.value = '';
+      staffSpecialtyInput.value = '';
+      staffCrmField.hidden = true;
+      staffCrmInput.required = false;
+      staffSpecialtyField.hidden = true;
+      staffOtherRoleField.hidden = true;
+      staffOtherRoleInput.required = false;
+      document.getElementById('save-staff').textContent = 'Cadastrar funcionário';
+      document.getElementById('cancel-staff-edit').hidden = true;
+    }
+    function editStaff(employee) {
+      editingStaffId = employee.id;
+      document.getElementById('staff-name').value = employee.name;
+      document.getElementById('staff-email').value = employee.email;
+      document.getElementById('staff-phone').value = employee.phone || '';
+      staffRoleInput.value = employee.role;
+      if (!Array.from(staffRoleInput.options).some(function(option) { return option.value === employee.role; })) {
+        const legacyRole = document.createElement('option');
+        legacyRole.value = employee.role;
+        legacyRole.textContent = employee.role;
+        staffRoleInput.appendChild(legacyRole);
+      }
+      staffDoctorCheckbox.checked = Boolean(employee.isDoctor);
+      staffCrmInput.value = employee.crm || '';
+      staffSpecialtyInput.value = employee.specialty || '';
+      staffOtherRoleInput.value = employee.customRole || '';
+      toggleDoctorFields();
+      document.getElementById('save-staff').textContent = 'Salvar alterações';
+      document.getElementById('cancel-staff-edit').hidden = false;
+      staffForm.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    function deleteStaff(id) {
+      const employee = staffState.employees.find(function(item) { return item.id === id; });
+      if (!employee || !window.confirm('Excluir o cadastro de ' + employee.name + '?')) return;
+      if (hasSystemAdmin(employee) && staffState.employees.filter(function(item) { return hasSystemAdmin(item) && item.active !== false; }).length <= 1) {
+        notify(staffFeedback, 'Mantenha pelo menos uma administradora ativa no cadastro.');
+        return;
+      }
+      const nextState = {
+        employees:staffState.employees.filter(function(item) { return item.id !== id; }),
+        logs:staffState.logs.slice()
+      };
+      if (!nextState.employees.some(function(item) { return hasSystemAdmin(item) && item.active !== false; })) {
+        notify(staffFeedback, 'Mantenha pelo menos uma administradora ativa no cadastro.');
+        return;
+      }
+      persistStaff(nextState, 'Exclusão de funcionário', id);
+      if (editingStaffId === id) resetStaffForm();
+    }
+    function toggleStaffStatus(id) {
+      const employee = staffState.employees.find(function(item) { return item.id === id; });
+      if (!employee) return;
+      const makingInactive = employee.active !== false;
+      if (makingInactive && hasSystemAdmin(employee) && staffState.employees.filter(function(item) { return hasSystemAdmin(item) && item.active !== false; }).length <= 1) {
+        notify(staffFeedback, 'Mantenha pelo menos uma administradora ativa no cadastro.');
+        return;
+      }
+      const updated = { ...employee, active:!makingInactive };
+      const nextState = {
+        employees:staffState.employees.map(function(item) { return item.id === id ? updated : item; }),
+        logs:staffState.logs.slice()
+      };
+      persistStaff(nextState, makingInactive ? 'Inativação de funcionário' : 'Reativação de funcionário', id);
+    }
+    staffDoctorCheckbox.addEventListener('change', toggleDoctorFields);
+    staffRoleInput.addEventListener('change', toggleDoctorFields);
+    document.getElementById('cancel-staff-edit').addEventListener('click', resetStaffForm);
+    staffForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const name = document.getElementById('staff-name').value.trim();
+      const email = document.getElementById('staff-email').value.trim();
+      const isDoctor = staffDoctorCheckbox.checked;
+      const crm = staffCrmInput.value.trim();
+      const selectedRole = staffRoleInput.value;
+      const customRole = staffOtherRoleInput.value.trim();
+      const current = editingStaffId ? staffState.employees.find(function(item) { return item.id === editingStaffId; }) : null;
+      const roleValue = selectedRole === 'Outra' ? customRole : selectedRole;
+      if (!name || !email || (isDoctor && !crm) || (selectedRole === 'Outra' && !customRole)) {
+        notify(staffFeedback, 'Informe nome, e-mail, função e, para médicos, CRM.');
+        return;
+      }
+      if (staffState.employees.some(function(employee) {
+        return employee.email.toLocaleLowerCase('pt-BR') === email.toLocaleLowerCase('pt-BR') && employee.id !== editingStaffId;
+      })) {
+        notify(staffFeedback, 'Já existe um funcionário cadastrado com este e-mail.');
+        return;
+      }
+      const id = editingStaffId || 'staff-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      const employee = {
+        id:id,
+        name:name,
+        email:email,
+        phone:document.getElementById('staff-phone').value.trim(),
+        role:current && current.protected ? current.role : roleValue,
+        customRole:selectedRole === 'Outra' ? customRole : '',
+        isDoctor:isDoctor,
+        crm:isDoctor ? crm : '',
+        specialty:isDoctor ? staffSpecialtyInput.value.trim() : '',
+        isAdmin:selectedRole === 'Admin do sistema' || Boolean(current && current.protected),
+        protected:Boolean(current && current.protected),
+        active:current ? current.active !== false : true
+      };
+      const nextState = {
+        employees:editingStaffId
+          ? staffState.employees.map(function(item) { return item.id === id ? employee : item; })
+          : [employee].concat(staffState.employees),
+        logs:staffState.logs.slice()
+      };
+      if (persistStaff(nextState, editingStaffId ? 'Edição de funcionário' : 'Cadastro de funcionário', id)) resetStaffForm();
+    });
+    renderStaff();
+  }());
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

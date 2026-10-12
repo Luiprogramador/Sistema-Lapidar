@@ -7,7 +7,7 @@ const EXAMES_CATALOGO = [
   { id: 'meta_ldl',      nome: 'Meta Individual LDL',  unidade: 'mg/dL',  meta: '≤ 100',   anterior: '100', atual: '100', refMin: 0,   refMax: 100,  dir: 'meta' },
   { id: 'hdl',           nome: 'Colesterol HDL',       unidade: 'mg/dL',  meta: '≥ 50',    anterior: '48',  atual: '52',  refMin: 50,  refMax: 100,  dir: 'min', warnThreshold: 45 },
   { id: 'triglicerideos',nome: 'Triglicerídeos',       unidade: 'mg/dL',  meta: '< 150',   anterior: '162', atual: '138', refMin: 0,   refMax: 150,  dir: 'max', warnThreshold: 175 },
-  { id: 'apob',          nome: 'Apolipoproteína B (ApoB)', unidade: 'mg/dL', meta: '< 90', anterior: '112', atual: '94',  refMin: 0,   refMax: 90,   dir: 'max', warnThreshold: 105 },
+  { id: 'doppler_carotidas', nome: 'Ecografia com Doppler de carótidas', unidade: 'Sim / Não', meta: 'Conforme avaliação clínica', anterior: 'Não informado', atual: 'Não informado', dir: 'status' },
   { id: 'lpa',           nome: 'Lipoproteína(a) [Lp(a)]', unidade: 'nmol/L', meta: '< 50', anterior: '42',  atual: '38',  refMin: 0,   refMax: 50,   dir: 'max', warnThreshold: 75 },
   { id: 'hba1c',         nome: 'Hemoglobina Glicada (HbA1c)', unidade: '%', meta: '< 5,6', anterior: '5,7', atual: '5,4', refMin: 4.0, refMax: 5.6,  dir: 'max', warnThreshold: 6.0 },
   { id: 'insulina',      nome: 'Insulina Basal',       unidade: 'µUI/mL', meta: '< 10',    anterior: '12,4',atual: '8,6', refMin: 2.0, refMax: 10.0, dir: 'max', warnThreshold: 15 },
@@ -68,17 +68,17 @@ const PACIENTES = [
     scoreAnterior:[5, 5, 6, 5, 7, 5, 4, 7, 6, 6, 6],
     riscoCV: {
       nivel: "Intermediário",
+      data: "2026-09-15",
       ldl: 128,
       metaLdl: 100,
       naoHdl: 146,
       metaNaoHdl: 130,
       reducaoLdl: 14,
+      dopplerCarotidas: true,
       has: "Sim (estágio 1, controlada)",
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Sim (mãe com IAM aos 62 anos)",
-      apob: 94,
-      metaApob: 90,
       lpa: 38,
       metaLpa: 50,
       pcrUs: 1.1,
@@ -89,9 +89,12 @@ const PACIENTES = [
         "Manter rotina de musculação 3x/semana e cardio zona 2 (150 min/semana)",
         "Se LDL persistir acima de 120 mg/dL no próximo retorno, discutir Rosuvastatina 5mg"
       ],
-      preventScore: "4.8% de risco cardiovascular em 10 anos (AHA PREVENT)",
       metaAtingida: false
     },
+    riscoCVHistorico: [
+      { nivel:"Alto", data:"2026-03-15", ldl:148, metaLdl:100, naoHdl:174, metaNaoHdl:130, reducaoLdl:0, dopplerCarotidas:null, lpa:42, metaLpa:50, pcrUs:2.4, metaPcrUs:1, has:"Sim (estágio 1)", dm:"Não", tabagismo:"Não fumante", historiaFamiliar:"Sim (mãe com IAM aos 62 anos)", fatores:["HAS","Histórico familiar"], sugestoes:["Acompanhar LDL e não-HDL"] },
+      { nivel:"Intermediário", data:"2026-05-20", ldl:137, metaLdl:100, naoHdl:158, metaNaoHdl:130, reducaoLdl:7, dopplerCarotidas:true, lpa:40, metaLpa:50, pcrUs:1.7, metaPcrUs:1, has:"Sim (controlada)", dm:"Não", tabagismo:"Não fumante", historiaFamiliar:"Sim (mãe com IAM aos 62 anos)", fatores:["HAS","Histórico familiar"], sugestoes:["Manter acompanhamento"] },
+    ],
     nutricaoMetas: { proteina: '100 g/dia', fibras: '25 g/dia', agua: '2,5 L/dia' },
     metasPersonalizadas: [
       { id: 'm_musc', nome: 'Musculação', freqDesejada: '3x/semana', meta: 3, realizado: 3, unidade: 'treinos', desc: 'Foco em membros inferiores e core' },
@@ -120,7 +123,7 @@ const PACIENTES = [
     ],
     arquivos: [
       { id: 1, titulo: "Receita — TRH e Suplementação Individualizada", tipo: "Receitas", data: "15/09/2026", origem: "Enviado", tamanho: "245 KB", icon: "📄", desc: "Progesterona micronizada 200mg e Estradiol gel" },
-      { id: 2, titulo: "Pedido de Exames — Painel Metabólico e Hormonal", tipo: "Pedidos", data: "15/09/2026", origem: "Enviado", tamanho: "180 KB", icon: "📋", desc: "Lipidograma, ApoB, Lp(a), PCR-us, Hormônios" },
+      { id: 2, titulo: "Pedido de Exames — Painel Metabólico e Hormonal", tipo: "Pedidos", data: "15/09/2026", origem: "Enviado", tamanho: "180 KB", icon: "📋", desc: "Lipidograma, ecografia com Doppler de carótidas, Lp(a), PCR-us e hormônios" },
       { id: 3, titulo: "Laudo Laboratorial Completo — Fleury", tipo: "Exames", data: "02/09/2026", origem: "Recebido", tamanho: "1.8 MB", icon: "🔬", desc: "Resultados de sangue, perfil lipídico e tireoide" },
       { id: 4, titulo: "Relatório de Bioimpedância InBody 770", tipo: "Exames", data: "15/09/2026", origem: "Recebido", tamanho: "920 KB", icon: "📊", desc: "Composição corporal comparativa set/2026" },
       { id: 5, titulo: "Plano Metabólico e Orientações Iniciais", tipo: "Receitas", data: "20/05/2026", origem: "Enviado", tamanho: "310 KB", icon: "📑", desc: "Metas de macronutrientes e rotina de sono" }
@@ -174,15 +177,12 @@ const PACIENTES = [
       dm: "Não (resistência insulínica tratada)",
       tabagismo: "Não fumante",
       historiaFamiliar: "Não",
-      apob: 82,
-      metaApob: 90,
       lpa: 22,
       metaLpa: 50,
       pcrUs: 0.9,
       metaPcrUs: 1.0,
       fatores: ["Resistência insulínica"],
       sugestoes: ["Manter Inositol e controle de carboidratos refinados", "Caminhada pós-prandial de 10 min"],
-      preventScore: "1.2% risco cardiovascular em 10 anos",
       metaAtingida: true
     },
     nutricaoMetas: { proteina: '90 g/dia', fibras: '28 g/dia', agua: '2,2 L/dia' },
@@ -261,8 +261,6 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Sim (pai com infarto aos 55 anos)",
-      apob: 118,
-      metaApob: 80,
       lpa: 68,
       metaLpa: 50,
       pcrUs: 2.1,
@@ -273,7 +271,6 @@ const PACIENTES = [
         "Meta estrita de LDL < 70 a 100 mg/dL devido ao risco alto",
         "Ecocardiograma e escore de cálcio coronariano recomendados"
       ],
-      preventScore: "8.6% de risco cardiovascular em 10 anos (AHA PREVENT)",
       metaAtingida: false
     },
     nutricaoMetas: { proteina: '95 g/dia', fibras: '30 g/dia', agua: '2,5 L/dia' },
@@ -349,15 +346,12 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Não",
-      apob: 76,
-      metaApob: 90,
       lpa: 18,
       metaLpa: 50,
       pcrUs: 0.6,
       metaPcrUs: 1.0,
       fatores: [],
       sugestoes: ["Manter ácido fólico na forma de metilfolato", "Atenção ao consumo de peixes ricos em DHA"],
-      preventScore: "0.8% de risco cardiovascular em 10 anos",
       metaAtingida: true
     },
     nutricaoMetas: { proteina: '85 g/dia', fibras: '25 g/dia', agua: '2,4 L/dia' },
@@ -430,15 +424,12 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Sim",
-      apob: 108,
-      metaApob: 90,
       lpa: 34,
       metaLpa: 50,
       pcrUs: 2.4,
       metaPcrUs: 1.0,
       fatores: ["Sobrepeso", "Sedentarismo pregresso", "Circunferência abdominal > 88cm"],
       sugestoes: ["Manter restrição de ultraprocessados", "Aumentar cardio para 180 min/semana"],
-      preventScore: "5.4% de risco cardiovascular em 10 anos",
       metaAtingida: false
     },
     nutricaoMetas: { proteina: '110 g/dia', fibras: '30 g/dia', agua: '2,8 L/dia' },
@@ -509,15 +500,12 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Não",
-      apob: 70,
-      metaApob: 90,
       lpa: 15,
       metaLpa: 50,
       pcrUs: 0.8,
       metaPcrUs: 1.0,
       fatores: [],
       sugestoes: ["Acompanhar retorno dos ciclos nos próximos 90 dias"],
-      preventScore: "0.6% de risco cardiovascular em 10 anos",
       metaAtingida: true
     },
     nutricaoMetas: { proteina: '85 g/dia', fibras: '25 g/dia', agua: '2,2 L/dia' },
@@ -590,15 +578,12 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Não",
-      apob: 84,
-      metaApob: 90,
       lpa: 24,
       metaLpa: 50,
       pcrUs: 0.7,
       metaPcrUs: 1.0,
       fatores: [],
       sugestoes: ["Manter estilo de vida protetor e controle de estresse"],
-      preventScore: "1.5% risco cardiovascular em 10 anos",
       metaAtingida: true
     },
     nutricaoMetas: { proteina: '95 g/dia', fibras: '26 g/dia', agua: '2,4 L/dia' },
@@ -671,15 +656,12 @@ const PACIENTES = [
       dm: "Não",
       tabagismo: "Não fumante",
       historiaFamiliar: "Sim (avó com osteoporose severa)",
-      apob: 96,
-      metaApob: 90,
       lpa: 30,
       metaLpa: 50,
       pcrUs: 1.2,
       metaPcrUs: 1.0,
       fatores: ["Pós-menopausa", "História familiar de osteoporose"],
       sugestoes: ["Manter ingestão adequada de cálcio e vitamina D", "Exercícios resistidos com carga progressiva"],
-      preventScore: "4.1% risco cardiovascular em 10 anos",
       metaAtingida: false
     },
     nutricaoMetas: { proteina: '95 g/dia', fibras: '28 g/dia', agua: '2,6 L/dia' },
@@ -717,9 +699,70 @@ const PACIENTES = [
 try {
   const savedPatients = JSON.parse(localStorage.getItem('lapidar-pacientes'));
   if (Array.isArray(savedPatients) && savedPatients.length) {
-    PACIENTES.splice(0, PACIENTES.length, ...savedPatients);
+    const savedById = new Map(savedPatients.filter(patient => patient && Number.isFinite(Number(patient.id))).map(patient => [Number(patient.id), patient]));
+    const mergedPatients = PACIENTES.map(patient => Object.assign(patient, savedById.get(patient.id) || {}));
+    savedPatients.forEach(patient => {
+      if (patient && Number.isFinite(Number(patient.id)) && !mergedPatients.some(item => item.id === Number(patient.id))) {
+        mergedPatients.push(patient);
+      }
+    });
+    PACIENTES.splice(0, PACIENTES.length, ...mergedPatients);
   }
 } catch(e) {}
+
+const SUPPLEMENTAL_PATIENTS = [
+  'Juliana Martins', 'Renata Costa', 'Sílvia Nogueira', 'Camila Ribeiro', 'Mariana Carvalho',
+  'Luciana Barros', 'Paula Mendes', 'Cristina Almeida', 'Vanessa Dias', 'Simone Freitas',
+  'Larissa Azevedo', 'Natália Moreira', 'Priscila Farias', 'Aline Cardoso', 'Daniela Pires',
+  'Fabiana Monteiro', 'Roberta Lopes', 'Mônica Tavares',
+];
+const SUPPORTED_PROTOCOLS = ['Lapidar 40+', 'Lapidar SOP', 'Lapidar Fertilidade', 'Pocket'];
+SUPPLEMENTAL_PATIENTS.forEach((name, index) => {
+  const id = 9 + index;
+  if (PACIENTES.some(patient => Number(patient.id) === id)) return;
+  const template = PACIENTES[(index + 1) % Math.min(PACIENTES.length, 8)];
+  const patient = JSON.parse(JSON.stringify(template));
+  const age = 31 + (index * 7) % 24;
+  const birthYear = new Date().getFullYear() - age;
+  const birthMonth = (index * 5) % 12 + 1;
+  const birthDay = (index * 9) % 27 + 1;
+  const slug = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]+/g, '.').replace(/^\.+|\.+$/g, '');
+  const cpfDigits = String(10000000000 + id * 1379);
+  patient.id = id;
+  patient.nome = name;
+  patient.iniciais = name.split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
+  patient.idade = age;
+  patient.nascimento = `${String(birthDay).padStart(2, '0')}/${String(birthMonth).padStart(2, '0')}/${birthYear}`;
+  patient.telefone = `(61) 9 ${String(800000000 + id * 317).slice(-8).replace(/(\d{4})(\d{4})/, '$1-$2')}`;
+  patient.cpf = `${cpfDigits.slice(0, 3)}.${cpfDigits.slice(3, 6)}.${cpfDigits.slice(6, 9)}-${cpfDigits.slice(9, 11)}`;
+  patient.email = `${slug}@example.com`;
+  patient.protocolo = SUPPORTED_PROTOCOLS[index % SUPPORTED_PROTOCOLS.length];
+  patient.consultaAtual = `${1 + index % 6}ª Consulta`;
+  patient.pesoInicial = 62 + (index * 3.7) % 29;
+  patient.pesoAtual = Number((patient.pesoInicial - (index % 6) * 1.3).toFixed(1));
+  patient.meta = index % 5 === 0 ? null : Number((patient.pesoInicial - 6).toFixed(1));
+  patient.ultimaConsulta = formatDate(dateOffset(-((index % 8) + 1)));
+  patient.proximaConsulta = formatDate(dateOffset((index % 14) + 1));
+  patient.origemLead = ['Indicação', 'Instagram', 'Google', 'Indicação médica'][index % 4];
+  patient.ativo = id <= 23;
+  patient.status = patient.ativo ? 'Ativa' : 'Inativa';
+  patient.email = `${slug}@example.com`;
+  PACIENTES.push(patient);
+});
+PACIENTES.forEach(patient => {
+  const slug = String(patient.nome || 'paciente').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]+/g, '.').replace(/^\.+|\.+$/g, '');
+  if (!patient.email) patient.email = `${slug}@example.com`;
+  if (!patient.cpf) {
+    const digits = String(10000000000 + Number(patient.id || 1) * 1379);
+    patient.cpf = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  }
+  const phoneDigits = String(patient.telefone || '').replace(/\D/g, '');
+  if (phoneDigits.length === 11) {
+    patient.telefone = `(${phoneDigits.slice(0, 2)}) ${phoneDigits[2]} ${phoneDigits.slice(3, 7)}-${phoneDigits.slice(7)}`;
+  }
+  if (patient.ativo === undefined) patient.ativo = patient.status !== 'Inativa';
+  if (!patient.status) patient.status = patient.ativo ? 'Ativa' : 'Inativa';
+});
 
 const CONSULTAS = [
   { id:1, data: dateOffset(0), horario:"09:00", paciente:"Ana Paula Ferreira", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
@@ -735,6 +778,51 @@ const CONSULTAS = [
   { id:11,data: dateOffset(7), horario:"11:00", paciente:"Carla Mendes", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
   { id:12,data: dateOffset(14),horario:"08:00", paciente:"Fernanda Alves", tipo:"Retorno", protocolo:"Pocket", status:"agendada" },
 ];
+try {
+  const savedConsultations = JSON.parse(localStorage.getItem('lapidar-consultas'));
+  if (Array.isArray(savedConsultations)) {
+    const savedById = new Map(savedConsultations.filter(consultation => consultation && Number.isFinite(Number(consultation.id))).map(consultation => [Number(consultation.id), consultation]));
+    const mergedConsultations = CONSULTAS.map(consultation => Object.assign(consultation, savedById.get(consultation.id) || {}));
+    savedConsultations.forEach(consultation => {
+      if (consultation && Number.isFinite(Number(consultation.id)) && !mergedConsultations.some(item => item.id === Number(consultation.id))) {
+        mergedConsultations.push(consultation);
+      }
+    });
+    CONSULTAS.splice(0, CONSULTAS.length, ...mergedConsultations);
+  }
+} catch (error) {
+  console.error('Não foi possível carregar as consultas salvas.', error);
+}
+
+(() => {
+  const now = new Date();
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+  const currentWeek = CONSULTAS.filter(consultation => {
+    const date = new Date(`${consultation.data}T12:00:00`);
+    return date >= weekStart && date < weekEnd && consultation.status !== 'cancelada';
+  });
+  const missingCount = Math.max(0, 21 - currentWeek.length);
+  for (let index = 0; index < missingCount; index++) {
+    const dayOffset = index % 7;
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + dayOffset);
+    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const patient = PACIENTES[(index + 8) % PACIENTES.length];
+    const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    CONSULTAS.push({
+      id:100 + index,
+      data:isoDate,
+      horario:`${String(8 + (index % 8)).padStart(2, '0')}:${index % 2 ? '30' : '00'}`,
+      paciente:patient.nome,
+      tipo:['Retorno', 'Bioimpedância', 'Resultados', 'Primeira consulta'][index % 4],
+      protocolo:patient.protocolo,
+      status:isPast ? 'concluida' : 'agendada',
+      modo:index % 3 === 0 ? 'Online' : 'Presencial',
+    });
+  }
+})();
 
 const ALERTAS = [
   { paciente:"Carla Mendes",   protocolo:"Lapidar 40+",       tipo:"LDL acima da meta" },
@@ -745,6 +833,15 @@ const ALERTAS = [
   { paciente:"Patricia Souza", protocolo:"Lapidar 40+",        tipo:"Exames pendentes" },
   { paciente:"Fernanda Alves", protocolo:"Pocket",             tipo:"Sem atividade física" },
 ];
+const ALERT_TYPES = ['LDL acima da meta', 'Vitamina D baixa', 'Sem atividade física', 'Exames pendentes', 'Bioimpedância pendente'];
+for (let index = ALERTAS.length; index < 63; index++) {
+  const patient = PACIENTES[(index * 7) % PACIENTES.length];
+  ALERTAS.push({
+    paciente:patient.nome,
+    protocolo:patient.protocolo,
+    tipo:ALERT_TYPES[index % ALERT_TYPES.length],
+  });
+}
 
 const PROXIMOS_CONTATOS = [
   { paciente:"Ana Paula Ferreira", horario:"09:00", motivo:"Retorno 30 dias · Avaliação TRH" },
@@ -795,9 +892,9 @@ const PROTO_DIST = (() => {
 })();
 
 const CONSULTAS_SEMANA = (() => {
-  const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex"];
+  const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   const currentDate = new Date();
-  const daysToMonday = currentDate.getDay() === 0 ? 1 : 1 - currentDate.getDay();
+  const daysToMonday = -((currentDate.getDay() + 6) % 7);
   const monday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + daysToMonday);
   return weekdays.map((dia, index) => {
     const weekday = new Date(monday);
@@ -805,7 +902,7 @@ const CONSULTAS_SEMANA = (() => {
     const date = `${weekday.getFullYear()}-${String(weekday.getMonth() + 1).padStart(2, "0")}-${String(weekday.getDate()).padStart(2, "0")}`;
     return {
       dia,
-      n: CONSULTAS.filter(consultation => consultation.data === date && consultation.status === "agendada").length,
+      n: CONSULTAS.filter(consultation => consultation.data === date && consultation.status !== "cancelada").length,
     };
   });
 })();
@@ -820,4 +917,59 @@ function formatDate(isoDate) {
   if (!isoDate) return '';
   const [y,m,d] = isoDate.split('-');
   return `${d}/${m}/${y}`;
+}
+
+// Mensagens demonstrativas (espelha lib/data/mock/lapidar_seed_messages.dart).
+const MESSAGES_KEY = 'lapidar-messages';
+const RECEIVED_TEMPLATES = [
+  ['Dúvida sobre a suplementação', () => 'Olá, doutora! Posso tomar a vitamina D junto com o ômega 3 no café da manhã ou é melhor separar os horários?'],
+  ['Resultado dos exames de sangue', () => 'Bom dia! Os resultados dos exames saíram hoje. Anexei no aplicativo para a senhora avaliar antes do retorno.'],
+  ['Remarcar consulta', () => 'Oi! Tive um imprevisto no trabalho e não vou conseguir ir na consulta de terça. Seria possível remarcar para a semana seguinte?'],
+  ['Sintomas após a nova medicação', () => 'Doutora, desde que comecei a nova medicação estou com um pouco de enjoo pela manhã. É normal nos primeiros dias?'],
+];
+const SENT_TEMPLATES = [
+  ['Orientações pós-consulta', name => 'Olá, ' + name + '! Seguem as orientações combinadas na consulta: manter a hidratação de 2,5 L por dia, priorizar proteína no café da manhã e registrar o Score Lapidar diariamente.'],
+  ['Lembrete: bioimpedância', name => 'Olá, ' + name + '! Lembrete da bioimpedância na sexta-feira. Venha em jejum de 4 horas e evite atividade física intensa no dia anterior.'],
+  ['Pedido de exames', name => 'Olá, ' + name + '! O pedido dos exames de acompanhamento está disponível na sua ficha. Assim que tiver os resultados, envie por aqui.'],
+];
+
+function seedMessages() {
+  const now = Date.now();
+  const list = [];
+  PACIENTES.forEach((patient, index) => {
+    const firstName = String(patient.nome).split(' ')[0];
+    const count = 1 + index % 3;
+    for (let item = 0; item < count; item++) {
+      const received = (index + item) % 2 === 0;
+      const pool = received ? RECEIVED_TEMPLATES : SENT_TEMPLATES;
+      const template = pool[(index + item) % pool.length];
+      const ageMs = ((index % 9 + item * 6) * 24 + (2 + (index * 3 + item) % 9)) * 3600 * 1000;
+      const recent = ageMs < 4 * 24 * 3600 * 1000;
+      list.push({
+        id: 'm' + patient.id + '-' + item,
+        patientId: patient.id,
+        direction: received ? 'recebida' : 'enviada',
+        subject: template[0],
+        body: template[1](firstName),
+        date: new Date(now - ageMs).toISOString(),
+        read: received ? !recent : index % 2 === 0,
+        replyToId: null,
+      });
+    }
+  });
+  return list;
+}
+
+function loadMessages() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(MESSAGES_KEY));
+    if (Array.isArray(stored)) return stored;
+  } catch (e) {}
+  const seeded = seedMessages();
+  localStorage.setItem(MESSAGES_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+
+function saveStoredMessages(list) {
+  localStorage.setItem(MESSAGES_KEY, JSON.stringify(list));
 }

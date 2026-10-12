@@ -4,48 +4,48 @@
 
 :root {
   /* Cores principais */
-  --vinho:         #591B1C;
-  --vinho-dark:    #351013;
-  --vinho-light:   #722B2E;
-  --vinho-xlight:  #F7EEEE;
+  --vinho:         #5B2333;
+  --vinho-dark:    #3B1620;
+  --vinho-light:   #7A3348;
+  --vinho-xlight:  #F6E7E9;
 
   /* Neutros */
-  --bege:          #F2EBDF;
-  --bege-dark:     #E8DDCD;
-  --bege-darker:   #D8C9B5;
-  --white:         #FFFFFF;
+  --bege:          #FAF3E9;
+  --bege-dark:     #F1E4D3;
+  --bege-darker:   #CFBCAE;
+  --white:         #FFFDF9;
 
   /* Acentos */
   --dourado:       #C6A15B;
-  --dourado-light: #D2AF71;
+  --dourado-light: #E4CFA0;
   --dourado-pale:  #FBF5E8;
-  --oliva:         #59633D;
+  --oliva:         #2B5538;
   --oliva-light:   #6F7C4D;
   --oliva-pale:    #EEF1E8;
 
   /* Texto */
-  --text-primary:  #2F201B;
-  --text-secondary:#5F4B42;
-  --text-muted:    #78685A;
+  --text-primary:  #1C1418;
+  --text-secondary:#473A3F;
+  --text-muted:    #473A3F;
   --text-inverted: #F2EBDF;
 
   /* Bordas */
-  --border:        #E3D8C8;
-  --border-dark:   #CDBDA8;
+  --border:        #CFBCAE;
+  --border-dark:   #BBA89B;
 
   /* Status / Alertas */
-  --red-bg:        #FEE2E2;
-  --red-text:      #991B1B;
-  --yellow-bg:     #FEF3C7;
-  --yellow-text:   #92400E;
-  --blue-bg:       #E0F2FE;
-  --blue-text:     #075985;
+  --red-bg:        #F8E0E3;
+  --red-text:      #86192A;
+  --yellow-bg:     #F8EBCF;
+  --yellow-text:   #7A4C06;
+  --blue-bg:       #E2EAF3;
+  --blue-text:     #263F63;
   --purple-bg:     #EDE9FE;
   --purple-text:   #5B21B6;
   --pink-bg:       #FCE7F3;
   --pink-text:     #9D174D;
-  --green-bg:      #D1FAE5;
-  --green-text:    #065F46;
+  --green-bg:      #E4EFE3;
+  --green-text:    #2B5538;
 
   /* Tipografia */
   --font-serif:    'Playfair Display', Georgia, serif;
@@ -73,9 +73,9 @@
 
   /* Bordas arredondadas */
   --radius-sm:     6px;
-  --radius:        10px;
-  --radius-md:     12px;
-  --radius-lg:     16px;
+  --radius:        14px;
+  --radius-md:     16px;
+  --radius-lg:     18px;
   --radius-xl:     20px;
   --radius-full:   9999px;
 
@@ -86,9 +86,8 @@
   --shadow-lg:     0 8px 40px rgba(53,16,19,0.18);
 
   /* Layout */
-  --sidebar-width: 228px;
+  --sidebar-width: 250px;
   --topbar-height: 56px;
-  --bottombar-height: 60px;
 
   /* Transições */
   --transition:    all 0.2s ease;

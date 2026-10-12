@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .agenda-layout {
       display: grid;
@@ -40,6 +41,11 @@
     @media (max-width: 900px) {
       .agenda-layout { grid-template-columns: 1fr; }
     }
+    #modal-consulta .modal { max-height: min(90vh, 42rem); display: flex; flex-direction: column; }
+    #modal-consulta .modal-body { min-height: 0; overflow-y: auto; }
+    .appointment-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .appointment-status { display: inline-flex; margin-top: 4px; font-size: 11px; color: var(--text-muted); }
+    .patient-search { margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -106,7 +112,6 @@
   </div>
 </main>
 
-<div id="bottombar-container"></div>
 
 <!-- Modal nova consulta -->
 <div class="modal-overlay" id="modal-consulta">
@@ -120,8 +125,10 @@
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group" style="grid-column:1/-1;">
-          <label class="form-label">Paciente *</label>
-          <select class="form-select" id="modal-select-paciente">
+          <label class="form-label" for="patient-search">Buscar paciente</label>
+          <input class="form-input patient-search" id="patient-search" type="search" placeholder="Digite o nome da paciente..." autocomplete="off">
+          <label class="form-label" for="modal-select-paciente">Paciente *</label>
+          <select class="form-select" id="modal-select-paciente" required>
             <option value="">Selecionar paciente...</option>
           </select>
         </div>
@@ -147,11 +154,14 @@
           <select class="form-select" id="modal-status">
             <option value="agendada">Agendada</option>
             <option value="concluida">Realizada</option>
+            <option value="remarcada">Reagendada</option>
             <option value="cancelada">Cancelada</option>
+            <option value="nao_compareceu">Paciente não compareceu</option>
           </select>
         </div>
       </div>
     </div>
+    <p id="appointment-feedback" role="status" style="margin:0 20px;color:var(--text-secondary);font-size:12px;"></p>
     <div class="modal-footer">
       <button class="btn btn-subtle" id="cancel-modal-consulta">Cancelar</button>
       <button class="btn btn-primary" id="save-consulta">Agendar</button>
@@ -168,15 +178,18 @@
   const role = Router.getRole();
   const selectedPatient = Router.getSelectedPatient() || PACIENTES[0];
   const isPatientView = role === 'patient';
-  const isSecretary = role === 'secretary';
+  const canManageAppointments = Router.can('scheduleConsultations');
+  const canSeeConsultationDetails = Router.can('seeConsultations');
   const appointmentsStorageKey = 'lapidar-agenda-consultas';
   let editingConsultationId = null;
   try {
-    const savedAppointments = JSON.parse(localStorage.getItem(appointmentsStorageKey) || '[]');
-    if (Array.isArray(savedAppointments)) savedAppointments.forEach(saved => {
-      const appointment = CONSULTAS.find(item => item.id === saved.id);
-      if (appointment) Object.assign(appointment, saved);
-    });
+    if (!localStorage.getItem('lapidar-consultas')) {
+      const savedAppointments = JSON.parse(localStorage.getItem(appointmentsStorageKey) || '[]');
+      if (Array.isArray(savedAppointments)) savedAppointments.forEach(saved => {
+        const appointment = CONSULTAS.find(item => item.id === saved.id);
+        if (appointment) Object.assign(appointment, saved);
+      });
+    }
   } catch (error) {
     console.error('Não foi possível carregar as alterações da agenda.', error);
   }
@@ -226,11 +239,23 @@
 
   // Populate patient select in modal
   function populatePatientSelect() {
-    const sel = document.querySelector('#modal-consulta select');
+    const sel = document.getElementById('modal-select-paciente');
     PACIENTES.forEach(p => {
-      sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+      const option = document.createElement('option');
+      option.value = String(p.id);
+      option.textContent = p.nome;
+      sel.appendChild(option);
     });
   }
+  document.getElementById('patient-search').addEventListener('input', event => {
+    const query = event.target.value.trim().toLocaleLowerCase('pt-BR');
+    const patientSelect = document.getElementById('modal-select-paciente');
+    Array.from(patientSelect.options).forEach((option, index) => {
+      if (index === 0) return;
+      option.hidden = query !== '' && !option.textContent.toLocaleLowerCase('pt-BR').includes(query);
+    });
+    if (patientSelect.selectedOptions[0] && patientSelect.selectedOptions[0].hidden) patientSelect.value = '';
+  });
 
   function getDaysWithConsults(year, month) {
     return new Set(
@@ -294,47 +319,67 @@
 
     list.innerHTML = day.map(c => {
       const tc = tipoColors[c.tipo] || { bg:'#F3F4F6', text:'#374151' };
-      const foundP = PACIENTES.find(p => p.nome === c.paciente);
-      const pid = foundP ? foundP.id : 1;
+      const statusLabels = {
+        agendada: 'Agendada',
+        concluida: 'Realizada',
+        remarcada: 'Reagendada',
+        cancelada: 'Cancelada',
+        nao_compareceu: 'Paciente não compareceu'
+      };
       return `
-        <div class="consult-item" data-appointment-id="${c.id}" style="cursor:pointer;" title="${isSecretary ? 'Configurar consulta' : 'Clique para abrir a consulta'}">
+        <div class="consult-item" data-appointment-id="${c.id}">
           <div class="consult-time">${c.horario}</div>
           <div style="flex:1;min-width:0;">
             <div class="consult-name">${c.paciente}</div>
             <div class="consult-tipo">${c.protocolo}</div>
+            <span class="appointment-status">${statusLabels[c.status] || 'Agendada'}</span>
           </div>
           <span class="badge" style="background:${tc.bg};color:${tc.text};">${c.tipo}</span>
-          <span style="font-size:12px;color:var(--dourado);font-weight:600;margin-left:8px;">${isSecretary ? 'Configurar →' : 'Abrir →'}</span>
+          <div class="appointment-actions">
+            ${canSeeConsultationDetails ? `<button class="btn btn-subtle btn-sm" type="button" data-open-consultation="${c.id}">Abrir</button>` : ''}
+            ${canManageAppointments ? `<button class="btn btn-subtle btn-sm" type="button" data-edit-appointment="${c.id}">Editar</button>` : ''}
+          </div>
         </div>`;
     }).join('');
-    list.querySelectorAll('[data-appointment-id]').forEach(row => {
-      row.addEventListener('click', () => {
-        const appointment = CONSULTAS.find(item => item.id === Number(row.dataset.appointmentId));
-        if (!appointment) return;
-        if (isSecretary) {
-          openAppointmentEditor(appointment);
-        } else {
-          const patient = PACIENTES.find(item => item.nome === appointment.paciente);
-          Router.navigate('consultation', {
-            patientId:patient ? patient.id : 1,
-            consultationId:appointment.id,
-          });
-        }
+    list.querySelectorAll('[data-open-consultation]').forEach(button => {
+      button.addEventListener('click', () => {
+        const appointment = CONSULTAS.find(item => item.id === Number(button.dataset.openConsultation));
+        if (!appointment || !canSeeConsultationDetails) return;
+        const patient = PACIENTES.find(item => item.nome === appointment.paciente);
+        Router.navigate('consultation', { patientId:patient ? patient.id : 1, consultationId:appointment.id });
+      });
+    });
+    list.querySelectorAll('[data-edit-appointment]').forEach(button => {
+      button.addEventListener('click', () => {
+        const appointment = CONSULTAS.find(item => item.id === Number(button.dataset.editAppointment));
+        if (appointment && canManageAppointments) openAppointmentEditor(appointment);
       });
     });
   }
 
   function openAppointmentEditor(appointment) {
+    if (!canManageAppointments) return;
     editingConsultationId = appointment.id;
     document.querySelector('#modal-consulta .modal-title').textContent = 'Configurar consulta';
     document.getElementById('save-consulta').textContent = 'Salvar alterações';
-    document.getElementById('modal-select-paciente').value = String(PACIENTES.find(patient => patient.nome === appointment.paciente)?.id || '');
+    const patient = PACIENTES.find(item => item.nome === appointment.paciente);
+    document.getElementById('modal-select-paciente').value = patient ? String(patient.id) : '';
     document.getElementById('modal-select-paciente').disabled = true;
+    document.getElementById('patient-search').disabled = true;
+    document.getElementById('patient-search').value = appointment.paciente;
     document.getElementById('modal-data').value = appointment.data;
     document.getElementById('modal-horario').value = appointment.horario;
-    document.getElementById('modal-tipo').value = appointment.tipo;
+    const typeSelect = document.getElementById('modal-tipo');
+    if (!Array.from(typeSelect.options).some(option => option.value === appointment.tipo)) {
+      const option = document.createElement('option');
+      option.value = appointment.tipo;
+      option.textContent = appointment.tipo;
+      typeSelect.appendChild(option);
+    }
+    typeSelect.value = appointment.tipo;
     document.getElementById('modal-status').value = appointment.status;
     document.getElementById('modal-status-group').hidden = false;
+    document.getElementById('appointment-feedback').textContent = '';
     modal.classList.add('open');
   }
 
@@ -409,47 +454,77 @@
   // Modal
   const modal = document.getElementById('modal-consulta');
   document.getElementById('btn-nova-consulta').addEventListener('click', () => {
+    if (!canManageAppointments) return;
     editingConsultationId = null;
     document.querySelector('#modal-consulta .modal-title').textContent = 'Nova Consulta';
     document.getElementById('save-consulta').textContent = 'Agendar';
     document.getElementById('modal-select-paciente').disabled = false;
+    document.getElementById('patient-search').disabled = false;
+    document.getElementById('patient-search').value = '';
+    document.getElementById('modal-horario').value = '09:00';
+    document.getElementById('modal-tipo').selectedIndex = 0;
     document.getElementById('modal-status-group').hidden = true;
     document.getElementById('modal-select-paciente').value = '';
     document.getElementById('modal-data').value = selectedDate;
+    document.getElementById('appointment-feedback').textContent = '';
     modal.classList.add('open');
   });
   document.getElementById('close-modal-consulta').addEventListener('click', () => modal.classList.remove('open'));
   document.getElementById('cancel-modal-consulta').addEventListener('click', () => modal.classList.remove('open'));
   document.getElementById('save-consulta').addEventListener('click', () => {
-    if (isSecretary && editingConsultationId !== null) {
-      const appointment = CONSULTAS.find(item => item.id === editingConsultationId);
-      if (!appointment) {
-        alert('Não foi possível localizar esta consulta na agenda.');
-        return;
-      }
-      appointment.data = document.getElementById('modal-data').value;
-      appointment.horario = document.getElementById('modal-horario').value;
-      appointment.tipo = document.getElementById('modal-tipo').value;
-      appointment.status = document.getElementById('modal-status').value;
-      try {
-        const saved = JSON.parse(localStorage.getItem(appointmentsStorageKey) || '[]');
-        const updates = Array.isArray(saved) ? saved.filter(item => item.id !== appointment.id) : [];
-        updates.push(appointment);
-        localStorage.setItem(appointmentsStorageKey, JSON.stringify(updates));
-      } catch (error) {
-        console.error('Não foi possível salvar as alterações da consulta.', error);
-        alert('Não foi possível salvar as alterações neste navegador.');
-        return;
-      }
-      modal.classList.remove('open');
-      document.getElementById('modal-select-paciente').disabled = false;
-      editingConsultationId = null;
-      renderCalendar();
-      renderConsults();
+    if (!canManageAppointments) return;
+    const patientId = document.getElementById('modal-select-paciente').value;
+    const patient = PACIENTES.find(item => String(item.id) === patientId);
+    const date = document.getElementById('modal-data').value;
+    const time = document.getElementById('modal-horario').value;
+    const type = document.getElementById('modal-tipo').value;
+    if ((!editingConsultationId && !patient) || !date || !time || !type) {
+      document.getElementById('appointment-feedback').textContent = 'Preencha paciente, data, horário e tipo da consulta.';
       return;
     }
+    const nextConsultations = CONSULTAS.map(item => Object.assign({}, item));
+    let savedAppointment;
+    if (editingConsultationId !== null) {
+      savedAppointment = nextConsultations.find(item => item.id === editingConsultationId);
+      if (!savedAppointment) {
+        document.getElementById('appointment-feedback').textContent = 'Não foi possível localizar esta consulta na agenda.';
+        return;
+      }
+      savedAppointment.data = date;
+      savedAppointment.horario = time;
+      savedAppointment.tipo = type;
+      savedAppointment.status = document.getElementById('modal-status').value;
+    } else {
+      const nextId = nextConsultations.reduce((highest, item) => Math.max(highest, Number(item.id) || 0), 0) + 1;
+      savedAppointment = {
+        id: nextId,
+        data: date,
+        horario: time,
+        paciente: patient.nome,
+        tipo: type,
+        protocolo: patient.protocolo || 'Sem protocolo',
+        status: 'agendada'
+      };
+      nextConsultations.push(savedAppointment);
+    }
+    try {
+      localStorage.setItem('lapidar-consultas', JSON.stringify(nextConsultations));
+    } catch (error) {
+      console.error('Não foi possível salvar a consulta na agenda.', error);
+      document.getElementById('appointment-feedback').textContent = 'Não foi possível salvar a consulta neste navegador.';
+      return;
+    }
+    CONSULTAS.splice(0, CONSULTAS.length, ...nextConsultations);
+    selectedDate = savedAppointment.data;
+    const savedDate = new Date(savedAppointment.data + 'T00:00:00');
+    viewYear = savedDate.getFullYear();
+    viewMonth = savedDate.getMonth();
     modal.classList.remove('open');
-    alert('Consulta agendada! (Demonstração)');
+    document.getElementById('modal-select-paciente').disabled = false;
+    document.getElementById('patient-search').disabled = false;
+    editingConsultationId = null;
+    renderCalendar();
+    renderConsults();
   });
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 
@@ -458,5 +533,7 @@
   renderConsults();
   if (!isPatientView) renderAttention();
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

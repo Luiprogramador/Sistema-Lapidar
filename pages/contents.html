@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .contents-page { max-width: 1280px; margin: 0 auto; }
     .contents-hero {
@@ -34,8 +35,16 @@
     .contents-hero-mark { flex: 0 0 auto; color: rgba(244,239,231,.18); font-family: var(--font-serif); font-size: clamp(72px, 12vw, 140px); line-height: 1; }
     .contents-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
     .contents-toolbar p { color:var(--text-muted); font-size:13px; }
-    .content-section { margin: 0 0 34px; }
+    .content-section { margin: 0 0 34px; padding:18px 18px 10px; border:1px solid var(--border); border-left:5px solid #87444b; border-radius:16px; background:linear-gradient(135deg,#fffafa,#fff 65%); }
+    .content-section:nth-child(5n + 2) { border-left-color:#527b91; background:linear-gradient(135deg,#f5fafc,#fff 65%); }
+    .content-section:nth-child(5n + 3) { border-left-color:#718365; background:linear-gradient(135deg,#f7faf4,#fff 65%); }
+    .content-section:nth-child(5n + 4) { border-left-color:#b68b42; background:linear-gradient(135deg,#fffbf1,#fff 65%); }
+    .content-section:nth-child(5n + 5) { border-left-color:#887093; background:linear-gradient(135deg,#faf7fc,#fff 65%); }
     .content-section-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:14px; }
+    .content-section:nth-child(5n + 2) .content-section-heading h2 { color:#416b81; }
+    .content-section:nth-child(5n + 3) .content-section-heading h2 { color:#5d7350; }
+    .content-section:nth-child(5n + 4) .content-section-heading h2 { color:#956d28; }
+    .content-section:nth-child(5n + 5) .content-section-heading h2 { color:#765b82; }
     .content-section-heading h2 { color:var(--vinho); font-family:var(--font-serif); font-size:22px; }
     .content-section-heading p { margin-top:4px; color:var(--text-muted); font-size:12px; }
     .content-see-all { padding:6px 0; color:var(--vinho); font-size:12px; font-weight:600; white-space:nowrap; }
@@ -125,6 +134,128 @@
       .rail-arrow { display:none; }
     }
     @media (max-width:420px) { .contents-gallery-grid { grid-template-columns:1fr; } }
+
+    /* Paridade com ContentPage (Flutter): cabeçalho compacto, controles e prateleiras por tipo. */
+    .contents-page { max-width: none; }
+    .contents-hero { display:none; }
+    .contents-toolbar { align-items:center; justify-content:flex-start; flex-wrap:wrap; margin: 12px 0 18px; }
+    #contents-context { display:none; }
+    .contents-toolbar .contents-controls { display:flex; align-items:center; flex-wrap:wrap; gap:10px; width:100%; }
+    .contents-view-toggle { display:inline-flex; gap:3px; padding:4px; border:1px solid var(--border); border-radius:12px; background:var(--surface, var(--white)); }
+    .contents-view-toggle button { border:0; border-radius:8px; background:transparent; color:var(--text-secondary); padding:9px 14px; font:600 13px var(--font-sans, inherit); cursor:pointer; }
+    .contents-view-toggle button.active { background:var(--vinho); color:#fffaf2; }
+    .contents-tags { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 20px; }
+    .contents-tags.collapsed { display:none; }
+    .contents-tags.expanded { display:flex; }
+    .contents-modal-body .form-group { display:block; margin-bottom:14px; }
+    .contents-modal-body .form-label { display:block; margin-bottom:6px; }
+    .contents-modal-body .form-input, .contents-modal-body .form-select, .contents-modal-body .form-textarea { width:100%; box-sizing:border-box; }
+    .content-card-tags { max-height:42px; overflow:auto; }
+    .contents-tags .tag-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:9px; background:var(--white); color:var(--text-primary); padding:7px 10px; font-size:12px; cursor:pointer; }
+    .contents-tags .tag-chip.active { background:var(--vinho); border-color:var(--vinho); color:#fffaf2; }
+    .contents-tags .tag-chip .remove { opacity:.8; font-size:14px; }
+    .content-section { padding:16px; border:1px solid var(--border); border-radius:var(--radius-lg, 14px); background:var(--white); margin-bottom:14px; }
+    /* Identidade visual por categoria na biblioteca de conteúdos. */
+    .content-section--ebooks {
+      --section-accent: #94702e;
+      --section-tint: #fbf6e9;
+      --section-border: #e8d9b7;
+      background: var(--section-tint);
+      border-color: var(--section-border);
+    }
+    .content-section--videos {
+      --section-accent: #356f9b;
+      --section-tint: #edf5fb;
+      --section-border: #c9dfef;
+      background: var(--section-tint);
+      border-color: var(--section-border);
+    }
+    .content-section--sites {
+      --section-accent: #39765d;
+      --section-tint: #edf7f0;
+      --section-border: #c9e3d2;
+      background: var(--section-tint);
+      border-color: var(--section-border);
+    }
+    .content-section--ebooks .content-section-heading h2,
+    .content-section--videos .content-section-heading h2,
+    .content-section--sites .content-section-heading h2 { color: var(--section-accent); }
+    .content-section--ebooks .content-see-all,
+    .content-section--videos .content-see-all,
+    .content-section--sites .content-see-all {
+      color: var(--section-accent);
+      border-color: var(--section-border);
+    }
+    .content-section--ebooks .content-art { background: #94702e; }
+    .content-section--videos .content-art { background: #356f9b; }
+    .content-section--sites .content-art { background: #39765d; }
+    .content-section--ebooks .content-card-meta span:first-child,
+    .content-section--ebooks .content-card-action { color: #94702e; }
+    .content-section--videos .content-card-meta span:first-child,
+    .content-section--videos .content-card-action { color: #356f9b; }
+    .content-section--sites .content-card-meta span:first-child,
+    .content-section--sites .content-card-action { color: #39765d; }
+    .content-section--ebooks .content-card-tags span { background: #f5ebd2; color: #76571e; }
+    .content-section--videos .content-card-tags span { background: #e0eef8; color: #285c83; }
+    .content-section--sites .content-card-tags span { background: #dff0e5; color: #2c654b; }
+    .content-section-heading { align-items:center; margin-bottom:12px; }
+    .content-section-heading h2 { font-size:20px; margin:0; }
+    .content-section-heading p { display:none; }
+    .content-rail { grid-auto-columns:260px; gap:14px; padding:2px 2px 8px; }
+    .content-card { height:292px; border-radius:14px; }
+    .content-art { flex:0 0 64px; align-items:center; padding:12px 14px; background:var(--vinho); }
+    .content-art::before,.content-art::after { display:none; }
+    .content-art[data-tone="olive"] { background:#46745f; }
+    .content-art[data-tone="blue"] { background:#416c8b; }
+    .content-art[data-tone="rose"] { background:#9a5364; }
+    .content-art[data-tone="gold"] { background:#8a6a37; }
+    .content-art[data-tone="plum"] { background:#665276; }
+    .content-art-type { position:static; border:0; background:transparent; padding:0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    .content-art-label { display:none; }
+    .content-card-body { padding:14px; }
+    .content-card-title { font-size:14px; line-height:1.35; }
+    .content-card-meta { justify-content:flex-start; gap:7px; margin:0; padding:0 0 7px; order:-1; }
+    .content-card-meta span:first-child { color:var(--vinho); font-weight:700; }
+    .content-card-meta span:last-child { margin-left:auto; }
+    .content-card-body { display:flex; flex-direction:column; }
+    .content-card-title { order:0; }
+    .content-card-description { display:-webkit-box; margin-top:7px; color:var(--text-secondary); font-size:12px; line-height:1.4; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .content-card-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+    .content-card-tags span { padding:3px 7px; border-radius:6px; background:var(--vinho-xlight, #f3e8e6); color:var(--vinho); font-size:11px; font-weight:600; }
+    .content-card-action { margin-top:auto; padding-top:9px; color:var(--vinho); font-size:12px; font-weight:800; }
+    /* Cores reais dos cards por seção (sobrescrevem os tons genéricos dos materiais). */
+    .content-section--ebooks .content-card { background:#fffdf8; border-color:#d9c49a; }
+    .content-section--ebooks .content-art,
+    .content-section--ebooks .content-art[data-tone] { background:#94702e !important; }
+    .content-section--videos .content-card { background:#f8fcff; border-color:#b8d5e8; }
+    .content-section--videos .content-art,
+    .content-section--videos .content-art[data-tone] { background:#356f9b !important; }
+    .content-section--videos .content-card-tags span { background:#e0eef8; color:#285c83; }
+    .content-section--sites .content-card { background:#f8fdf9; border-color:#b8d9c4; }
+    .content-section--sites .content-art,
+    .content-section--sites .content-art[data-tone] { background:#39765d !important; }
+    .content-section--sites .content-card-tags span { background:#dff0e5; color:#2c654b; }
+    /* Mantém a identidade de cor por tipo também na visualização “Todos os conteúdos”. */
+    .content-card--ebooks { background:#fffdf8; border-color:#d9c49a; }
+    .content-card--ebooks .content-art { background:#94702e !important; }
+    .content-card--ebooks .content-card-meta span:first-child,
+    .content-card--ebooks .content-card-action { color:#94702e; }
+    .content-card--ebooks .content-card-tags span { background:#f5ebd2; color:#76571e; }
+    .content-card--videos { background:#f8fcff; border-color:#b8d5e8; }
+    .content-card--videos .content-art { background:#356f9b !important; }
+    .content-card--videos .content-card-meta span:first-child,
+    .content-card--videos .content-card-action { color:#356f9b; }
+    .content-card--videos .content-card-tags span { background:#e0eef8; color:#285c83; }
+    .content-card--sites { background:#f8fdf9; border-color:#b8d9c4; }
+    .content-card--sites .content-art { background:#39765d !important; }
+    .content-card--sites .content-card-meta span:first-child,
+    .content-card--sites .content-card-action { color:#39765d; }
+    .content-card--sites .content-card-tags span { background:#dff0e5; color:#2c654b; }
+    .contents-gallery-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+    .contents-gallery .content-section { border:0; padding:0; background:transparent; }
+    .contents-empty { margin:12px 0; }
+    @media(max-width:700px) { .content-section { padding:12px; } .content-rail { grid-auto-columns:minmax(240px,80%); } .contents-toolbar .contents-controls { align-items:stretch; } .contents-view-toggle { width:100%; } .contents-view-toggle button { flex:1; } }
+
   </style>
 </head>
 <body>
@@ -133,26 +264,24 @@
 
 <main class="main-content page-enter">
   <div class="contents-page">
-    <section class="contents-hero">
-      <div class="contents-hero-copy">
-        <span class="contents-eyebrow">Biblioteca Lapidar</span>
-        <h1>Conhecimento para florescer.</h1>
-        <p>Conteúdos selecionados pela sua médica para apoiar sua jornada de saúde, bem-estar e autocuidado.</p>
-      </div>
-      <div class="contents-hero-mark" aria-hidden="true">L</div>
-    </section>
-
     <div class="contents-toolbar">
-      <p id="contents-context">Novidades e orientações da sua médica, em um só lugar.</p>
-      <button class="btn btn-primary btn-sm" id="add-content-btn" type="button" hidden>＋ Adicionar conteúdo</button>
+      <div class="contents-controls">
+        <div class="contents-view-toggle" role="group" aria-label="Visualização dos conteúdos">
+          <button type="button" id="contents-carousel-btn" class="active" aria-pressed="true">▤ Carrossel</button>
+          <button type="button" id="contents-all-btn" aria-pressed="false">▦ Tudo</button>
+        </div>
+        <button class="btn btn-subtle btn-sm" id="contents-filter-btn" type="button">⌕ Tags <span aria-hidden="true">▾</span></button>
+        <button class="btn btn-primary btn-sm" id="add-content-btn" type="button" hidden>＋ Adicionar material</button>
+      </div>
+      <p id="contents-context">Biblioteca de ebooks, vídeos e sites para pacientes e equipe.</p>
     </div>
+    <div class="contents-tags" id="contents-tags" aria-label="Tags selecionadas"></div>
 
     <div id="contents-home"></div>
     <section class="contents-gallery" id="contents-gallery" aria-live="polite"></section>
   </div>
 </main>
 
-<div id="bottombar-container"></div>
 <div class="contents-modal" id="contents-modal" role="dialog" aria-modal="true" aria-labelledby="contents-modal-title">
   <div class="contents-modal-panel">
     <div class="contents-modal-header">
@@ -171,36 +300,23 @@
   initShell('contents');
 
   const CONTENTS_STORAGE_KEY = 'lapidar-conteudos';
-  const canManageContents = Router.getRole() === 'doctor' || Router.getRole() === 'admin';
-  const seededSections = [
-    {
-      name: 'Comece por aqui',
-      description: 'Orientações essenciais para sua jornada de cuidado.',
-      items: [
-        { id:'welcome', title:'Sua jornada Lapidar', type:'Guia', duration:'5 min', tone:'gold', summary:'Entenda como funciona o acompanhamento e como aproveitar cada etapa do seu cuidado.' },
-        { id:'consultation', title:'Como se preparar para a consulta', type:'Dicas', duration:'4 min', tone:'rose', summary:'Pequenos passos que ajudam você a chegar à consulta com suas dúvidas e informações organizadas.' },
-        { id:'questions', title:'Anote suas dúvidas', type:'Ferramenta', duration:'3 min', tone:'olive', summary:'Uma lista simples para registrar sintomas, mudanças e perguntas ao longo da semana.' },
-      ],
-    },
-    {
-      name: 'Saúde e bem-estar',
-      description: 'Conteúdos para apoiar hábitos possíveis no dia a dia.',
-      items: [
-        { id:'sleep', title:'Sono: pequenos hábitos, grandes mudanças', type:'Artigo', duration:'6 min', tone:'blue', summary:'Conheça práticas simples para construir uma rotina noturna mais acolhedora e consistente.' },
-        { id:'movement', title:'Movimento que cabe na sua rotina', type:'Vídeo', duration:'8 min', tone:'olive', summary:'Ideias para incluir movimento com segurança, respeitando seu momento e suas possibilidades.' },
-        { id:'nutrition', title:'Montando um prato equilibrado', type:'Guia', duration:'5 min', tone:'gold', summary:'Uma visão prática para compor refeições variadas sem buscar perfeição.' },
-      ],
-    },
-    {
-      name: 'Cuidado hormonal',
-      description: 'Informação para conversar com sua médica com mais segurança.',
-      items: [
-        { id:'cycle', title:'Conheça os sinais do seu corpo', type:'Artigo', duration:'7 min', tone:'plum', summary:'Observar padrões pode ajudar você e sua médica a entender melhor como está se sentindo.' },
-        { id:'hormones', title:'Terapia hormonal: perguntas frequentes', type:'Perguntas e respostas', duration:'9 min', tone:'rose', summary:'Respostas gerais para apoiar uma conversa individualizada com sua médica.' },
-        { id:'menopause', title:'Transições hormonais e autocuidado', type:'Guia', duration:'6 min', tone:'blue', summary:'Uma introdução acolhedora às mudanças e aos caminhos de cuidado possíveis.' },
-      ],
-    },
-  ];
+  const canManageContents = Router.can('manageContent');
+  // Conteúdo inicial alinhado ao catálogo seedContents() da interface Flutter.
+  const seededSections = [{ name:'Biblioteca', description:'', items:[
+    {id:'ct1',title:'Diabetes tipo 2: guia de alimentação',type:'Ebook',summary:'Como montar o prato, contar carboidratos e manter a glicemia estável.',minutes:25,tags:['Diabetes','Nutrição']},
+    {id:'ct2',title:'Entendendo a bioimpedância',type:'Ebook',summary:'Massa magra, gordura visceral, água corporal e nota corporal.',minutes:15,tags:['Bioimpedância']},
+    {id:'ct3',title:'Cuidando da memória: Alzheimer e prevenção',type:'Ebook',summary:'Hábitos de sono, treino e alimentação que protegem o cérebro.',minutes:30,tags:['Alzheimer','Prevenção']},
+    {id:'ct4',title:'Parkinson: exercícios e qualidade de vida',type:'Ebook',summary:'Rotina de movimento e orientações para o dia a dia.',minutes:22,tags:['Parkinson','Movimento']},
+    {id:'ct5',title:'Como fazer seu check-in no Diário Lapidar',type:'Vídeo',summary:'Movimento, nutrição, sono e bem-estar em cerca de 1 minuto. Constância vale mais que perfeição.',minutes:4,tags:['Diário Lapidar']},
+    {id:'ct6',title:'Glicemia na prática: lendo seu exame',type:'Vídeo',summary:'HbA1c, jejum e insulina explicados com exemplos.',minutes:12,tags:['Diabetes','Exames']},
+    {id:'ct7',title:'Treino de força para quem tem Parkinson',type:'Vídeo',summary:'Sessão guiada de 20 minutos com adaptações.',minutes:20,tags:['Parkinson','Movimento']},
+    {id:'ct8',title:'Sono e memória: o que a ciência mostra',type:'Vídeo',summary:'Por que dormir bem reduz o risco de demência.',minutes:9,tags:['Alzheimer','Sono']},
+    {id:'ct9',title:'LDL, ApoB e risco cardiovascular',type:'Vídeo',summary:'Metas de LDL e não-HDL e estratégias para reduzir o risco.',minutes:11,tags:['Dislipidemia','Exames']},
+    {id:'ct10',title:'Sociedade Brasileira de Diabetes',type:'Site',summary:'Diretrizes, tabelas de alimentos e materiais para pacientes.',minutes:0,tags:['Diabetes'],url:'https://diabetes.org.br'},
+    {id:'ct11',title:'Associação Brasileira de Alzheimer',type:'Site',summary:'Informações, grupos de apoio e orientações a familiares.',minutes:0,tags:['Alzheimer'],url:'https://abraz.org.br'},
+    {id:'ct12',title:'Doença de Parkinson: visão geral',type:'Site',summary:'Cuidados, exercícios e informações para pacientes e famílias.',minutes:0,tags:['Parkinson'],url:'https://pt.wikipedia.org/wiki/Doen%C3%A7a_de_Parkinson'},
+    {id:'ct13',title:'Guia alimentar para a população brasileira',type:'Site',summary:'Referência oficial do Ministério da Saúde.',minutes:0,tags:['Nutrição','Prevenção'],url:'https://bvsms.saude.gov.br/bvs/publicacoes/guia_alimentar_populacao_brasileira_2ed.pdf'}
+  ]}];
 
   const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
@@ -229,80 +345,73 @@
 
   function getSections() {
     const sections = seededSections.map(section => ({ ...section, items:[...section.items] }));
-    loadAddedContents().forEach(item => {
-      let section = sections.find(candidate => candidate.name === item.section);
-      if (!section) {
-        section = { name:item.section, description:'Conteúdos adicionados pela médica.', items:[] };
-        sections.push(section);
-      }
-      section.items.unshift(item);
-    });
+    sections[0].items.unshift(...loadAddedContents());
     return sections;
   }
 
   function contentCard(item) {
+    const normalizedType = String(item.type || '').toLowerCase();
+    const toneClass = normalizedType.includes('vídeo') || normalizedType.includes('video') ? 'videos' : normalizedType.includes('site') ? 'sites' : 'ebooks';
     return `
-      <button class="content-card" type="button" data-content-id="${escapeHTML(item.id)}">
+      <button class="content-card content-card--${toneClass}" type="button" data-content-id="${escapeHTML(item.id)}">
         <span class="content-art" data-tone="${escapeHTML(item.tone || 'gold')}">
           <span class="content-art-type">${escapeHTML(item.type)}</span>
           <span class="content-art-label">${escapeHTML(item.title)}</span>
         </span>
         <span class="content-card-body">
-          <span class="content-card-title">${escapeHTML(item.section || '')}</span>
           <span class="content-card-meta"><span>${escapeHTML(item.type)}</span><span>${escapeHTML(item.duration || 'Conteúdo')}</span></span>
+          <span class="content-card-title">${escapeHTML(item.title)}</span>
+          <span class="content-card-description">${escapeHTML(item.summary || '')}</span>
+          <span class="content-card-tags">${(item.tags || []).slice(0,3).map(tag => `<span>${escapeHTML(tag)}</span>`).join('')}</span>
+          <span class="content-card-action">${item.type === 'Vídeo' ? 'Assistir →' : item.type === 'Site' ? 'Abrir site →' : 'Ler material →'}</span>
         </span>
       </button>`;
   }
 
-  function renderHome() {
-    document.getElementById('contents-gallery').classList.remove('active');
-    document.getElementById('contents-home').hidden = false;
-    document.getElementById('contents-home').innerHTML = getSections().map((section, index) => `
-      <section class="content-section" aria-labelledby="content-section-${index}">
-        <div class="content-section-heading">
-          <div>
-            <h2 id="content-section-${index}">${escapeHTML(section.name)}</h2>
-            <p>${escapeHTML(section.description)}</p>
-          </div>
-          <button class="content-see-all" type="button" data-section="${escapeHTML(section.name)}">Ver mais ${Icons.chevronR}</button>
-        </div>
-        <div class="content-rail-wrap">
-          <button class="rail-arrow rail-arrow-left" type="button" aria-label="Rolar para o início">${Icons.chevronL}</button>
-          <div class="content-rail">${section.items.map(item => contentCard({ ...item, section:item.section || section.name })).join('')}</div>
-          <button class="rail-arrow rail-arrow-right" type="button" aria-label="Ver próximos conteúdos">${Icons.chevronR}</button>
-        </div>
-      </section>
-    `).join('');
-
-    document.querySelectorAll('.content-section').forEach(section => {
-      const rail = section.querySelector('.content-rail');
-      section.querySelector('.rail-arrow-left').addEventListener('click', () => rail.scrollBy({ left:-rail.clientWidth * .8, behavior:'smooth' }));
-      section.querySelector('.rail-arrow-right').addEventListener('click', () => rail.scrollBy({ left:rail.clientWidth * .8, behavior:'smooth' }));
-    });
-    document.querySelectorAll('.content-see-all').forEach(button => {
-      button.addEventListener('click', () => showGallery(button.dataset.section));
-    });
-    bindContentCards();
+  let contentsView = 'carousel';
+  let selectedTags = new Set();
+  let onlyType = null;
+  const typeFor = item => {
+    const t = String(item.type || '').toLowerCase();
+    if (t === 'vídeo' || t === 'video') return 'Vídeos';
+    if (t === 'site') return 'Sites';
+    return 'Ebooks';
+  };
+  const typeAction = type => type === 'Vídeos' ? 'Assistir' : type === 'Sites' ? 'Abrir site' : 'Ler ebook';
+  function allContentItems() { return getSections().flatMap(section => section.items.map(item => ({...item, section:item.section || section.name}))); }
+  function filteredItems() { return allContentItems().filter(item => (!onlyType || typeFor(item) === onlyType) && (!selectedTags.size || (item.tags || []).some(tag => selectedTags.has(tag)))); }
+  function renderTags() {
+    const host = document.getElementById('contents-tags');
+    const allTags = [...new Set(allContentItems().flatMap(item => item.tags || []))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    host.innerHTML = allTags.map(tag => `<button type="button" class="tag-chip ${selectedTags.has(tag)?'active':''}" data-tag="${escapeHTML(tag)}" aria-pressed="${selectedTags.has(tag)}">${escapeHTML(tag)}${selectedTags.has(tag)?'<span class="remove">×</span>':''}</button>`).join('') + (selectedTags.size ? '<button type="button" class="tag-chip" id="clear-content-tags">Limpar tags</button>' : '');
+    host.querySelectorAll('[data-tag]').forEach(btn => btn.addEventListener('click',()=>{ const tag=btn.dataset.tag; selectedTags.has(tag)?selectedTags.delete(tag):selectedTags.add(tag); renderHome(); }));
+    const clear = document.getElementById('clear-content-tags'); if(clear) clear.addEventListener('click',()=>{selectedTags.clear();renderHome();});
   }
-
-  function showGallery(sectionName) {
-    const section = getSections().find(item => item.name === sectionName);
-    if (!section) return;
-    document.getElementById('contents-home').hidden = true;
-    const gallery = document.getElementById('contents-gallery');
-    gallery.classList.add('active');
-    gallery.innerHTML = `
-      <div class="content-section-heading">
-        <div>
-          <button class="content-see-all" type="button" id="gallery-back">${Icons.chevronL} Voltar aos conteúdos</button>
-          <h2 style="margin-top:10px;">${escapeHTML(section.name)}</h2>
-          <p>${escapeHTML(section.description)} · ${section.items.length} conteúdos</p>
-        </div>
-      </div>
-      <div class="contents-gallery-grid">${section.items.map(item => contentCard({ ...item, section:item.section || section.name })).join('')}</div>`;
-    document.getElementById('gallery-back').addEventListener('click', renderHome);
+  function renderHome() {
+    const items = filteredItems();
+    renderTags();
+    document.getElementById('contents-gallery').classList.toggle('active', contentsView === 'all');
+    document.getElementById('contents-home').hidden = contentsView === 'all';
+    document.getElementById('contents-carousel-btn').classList.toggle('active', contentsView === 'carousel');
+    document.getElementById('contents-all-btn').classList.toggle('active', contentsView === 'all');
+    document.getElementById('contents-carousel-btn').setAttribute('aria-pressed', String(contentsView === 'carousel'));
+    document.getElementById('contents-all-btn').setAttribute('aria-pressed', String(contentsView === 'all'));
+    if(contentsView === 'carousel') {
+      const types = ['Ebooks','Vídeos','Sites'];
+      document.getElementById('contents-home').innerHTML = types.map(type => {
+        const group = items.filter(item => typeFor(item) === type);
+        if(!group.length) return '';
+        const sectionTone = type === 'Vídeos' ? 'videos' : type === 'Sites' ? 'sites' : 'ebooks';
+        return `<section class="content-section content-section--${sectionTone}"><div class="content-section-heading"><div><h2>${type} <span style="font:500 12px sans-serif;color:var(--text-muted)">(${group.length})</span></h2></div><button class="content-see-all" type="button" data-only-type="${type}">Ver tudo →</button></div><div class="content-rail-wrap"><div class="content-rail">${group.map(item => contentCard({...item,type:type==='Vídeos'?'Vídeo':type==='Sites'?'Site':'Ebook',duration:item.duration || (item.minutes ? item.minutes+' min' : 'Material')})).join('')}</div></div></section>`;
+      }).join('') || '<div class="contents-empty">Nenhum conteúdo encontrado. Ajuste as tags para ver mais materiais.</div>';
+      document.querySelectorAll('[data-only-type]').forEach(button => button.addEventListener('click',()=>{onlyType=button.dataset.onlyType;contentsView='all';renderHome();}));
+    } else {
+      const shown = onlyType ? items.filter(item=>typeFor(item)===onlyType) : items;
+      document.getElementById('contents-gallery').innerHTML = `<div class="content-section-heading"><div><h2>${onlyType || 'Todos os conteúdos'}</h2><p>${shown.length} materiais</p></div><button class="content-see-all" type="button" id="gallery-back">← Voltar ao carrossel</button></div><div class="contents-gallery-grid">${shown.map(item=>contentCard({...item,type:typeFor(item)==='Vídeos'?'Vídeo':typeFor(item)==='Sites'?'Site':'Ebook',duration:item.duration || (item.minutes ? item.minutes+' min':'Material')})).join('')}</div>`;
+      document.getElementById('gallery-back').addEventListener('click',()=>{contentsView='carousel';onlyType=null;renderHome();});
+      if(!shown.length) document.getElementById('contents-gallery').innerHTML += '<div class="contents-empty">Nenhum conteúdo encontrado. Ajuste as tags para ver mais materiais.</div>';
+    }
     bindContentCards();
-    window.scrollTo({ top:0, behavior:'smooth' });
   }
 
   function findContent(id) {
@@ -318,8 +427,11 @@
         <span class="content-art-type">${escapeHTML(item.type)}</span>
         <span class="content-art-label">${escapeHTML(item.title)}</span>
       </div>
-      <p>${escapeHTML(item.summary)}</p>
-      <span class="badge badge-dourado">${escapeHTML(item.duration || 'Conteúdo da sua médica')}</span>`;
+      <p>${escapeHTML(item.description || item.summary || '')}</p>
+      <span class="badge badge-dourado">${escapeHTML(item.minutes ? item.minutes + ' min' : 'Material da biblioteca')}</span>`;
+    if (item.url) {
+      const urlLink = document.createElement('a'); urlLink.href = item.url; urlLink.target = '_blank'; urlLink.rel = 'noopener noreferrer'; urlLink.textContent = item.type === 'Site' ? 'Abrir site' : (item.type === 'Vídeo' ? 'Assistir' : 'Abrir material'); urlLink.className = 'btn btn-primary btn-sm'; urlLink.style.marginTop = '14px'; document.getElementById('contents-modal-body').appendChild(urlLink);
+    }
     if (item.file && item.file.data) {
       const fileLink = document.createElement('a');
       fileLink.href = item.file.data;
@@ -330,10 +442,12 @@
       document.getElementById('contents-modal-body').appendChild(fileLink);
     }
     document.getElementById('contents-modal-actions').innerHTML = canManageContents && item.custom
-      ? `<button class="btn btn-danger btn-sm" type="button" id="delete-content-btn">Excluir conteúdo</button>`
-      : `<button class="btn btn-primary btn-sm" type="button" id="finish-content-btn">Entendi</button>`;
+      ? `<button class="btn btn-subtle btn-sm" type="button" id="edit-content-btn">Editar conteúdo</button><button class="btn btn-danger btn-sm" type="button" id="delete-content-btn">Excluir conteúdo</button>`
+      : `<button class="btn btn-primary btn-sm" type="button" id="finish-content-btn">Fechar</button>`;
     modal.classList.add('open');
     modal.dataset.contentId = item.id;
+    const editButton = document.getElementById('edit-content-btn');
+    if (editButton) editButton.addEventListener('click', () => openEditContent(item));
     const deleteButton = document.getElementById('delete-content-btn');
     if (deleteButton) {
       deleteButton.addEventListener('click', () => {
@@ -348,6 +462,34 @@
     if (finishButton) finishButton.addEventListener('click', closeContentModal);
   }
 
+  function openEditContent(item) {
+    if (!canManageContents || !item || !item.custom) return;
+    const modal = document.getElementById('contents-modal');
+    document.getElementById('contents-modal-title').textContent = 'Editar conteúdo';
+    document.getElementById('contents-modal-body').innerHTML = `
+      <label class="form-group"><span class="form-label">Título</span><input class="form-input" id="edit-content-title" maxlength="80" value="${escapeHTML(item.title || '')}" required></label>
+      <label class="form-group"><span class="form-label">Tipo de conteúdo</span><select class="form-select" id="edit-content-type"><option ${item.type==='Ebook'?'selected':''}>Ebook</option><option ${item.type==='Vídeo'?'selected':''}>Vídeo</option><option ${item.type==='Site'?'selected':''}>Site</option></select></label>
+      <label class="form-group"><span class="form-label">Descrição</span><textarea class="form-textarea" id="edit-content-summary" rows="4" maxlength="500" required>${escapeHTML(item.summary || item.description || '')}</textarea></label>
+      <label class="form-group"><span class="form-label">Tópicos / tags (separe por vírgulas)</span><input class="form-input" id="edit-content-tags" value="${escapeHTML((item.tags || []).join(', '))}"></label>
+      <label class="form-group"><span class="form-label">Duração em minutos</span><input class="form-input" id="edit-content-minutes" type="number" min="0" max="999" value="${Number(item.minutes || 0)}"></label>
+      <label class="form-group"><span class="form-label">Link do material</span><input class="form-input" id="edit-content-url" type="url" value="${escapeHTML(item.url || '')}" placeholder="https://..."></label>`;
+    document.getElementById('contents-modal-actions').innerHTML = '<button class="btn btn-subtle btn-sm" type="button" id="cancel-edit-content">Cancelar</button><button class="btn btn-primary btn-sm" type="button" id="save-edit-content">Salvar alterações</button>';
+    document.getElementById('cancel-edit-content').addEventListener('click', () => openContent(item));
+    document.getElementById('save-edit-content').addEventListener('click', () => {
+      const title = document.getElementById('edit-content-title').value.trim();
+      const summary = document.getElementById('edit-content-summary').value.trim();
+      if (!title || !summary) { alert('Preencha o título e a descrição.'); return; }
+      const updated = loadAddedContents().map(saved => String(saved.id) === String(item.id) ? {
+        ...saved, title, summary, description:summary,
+        type:document.getElementById('edit-content-type').value,
+        tags:document.getElementById('edit-content-tags').value.split(',').map(tag=>tag.trim()).filter(Boolean),
+        minutes:Number(document.getElementById('edit-content-minutes').value || 0),
+        url:document.getElementById('edit-content-url').value.trim()
+      } : saved);
+      if (saveAddedContents(updated)) { closeContentModal(); renderHome(); }
+    });
+  }
+
   function bindContentCards() {
     document.querySelectorAll('.content-card').forEach(card => {
       card.addEventListener('click', () => openContent(findContent(card.dataset.contentId)));
@@ -358,6 +500,17 @@
     document.getElementById('contents-modal').classList.remove('open');
   }
 
+  document.getElementById('contents-carousel-btn').addEventListener('click',()=>{contentsView='carousel';onlyType=null;renderHome();});
+  document.getElementById('contents-all-btn').addEventListener('click',()=>{contentsView='all';onlyType=null;renderHome();});
+  const tagsPanel = document.getElementById('contents-tags');
+  tagsPanel.classList.add('collapsed');
+  document.getElementById('contents-filter-btn').setAttribute('aria-expanded','false');
+  document.getElementById('contents-filter-btn').addEventListener('click',()=>{
+    const isCollapsed = tagsPanel.classList.toggle('collapsed');
+    tagsPanel.classList.toggle('expanded', !isCollapsed);
+    document.getElementById('contents-filter-btn').setAttribute('aria-expanded', String(!isCollapsed));
+    if (!isCollapsed) tagsPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
   document.getElementById('close-content-modal').addEventListener('click', closeContentModal);
   document.getElementById('contents-modal').addEventListener('click', event => {
     if (event.target.id === 'contents-modal') closeContentModal();
@@ -369,23 +522,24 @@
   if (canManageContents) {
     const addButton = document.getElementById('add-content-btn');
     addButton.hidden = false;
-    document.getElementById('contents-context').textContent = 'Publique orientações e materiais para as pacientes.';
+    document.getElementById('contents-context').textContent = 'Biblioteca de ebooks, vídeos e sites para pacientes e equipe.';
     addButton.addEventListener('click', () => {
       document.getElementById('contents-modal-title').textContent = 'Adicionar conteúdo';
       document.getElementById('contents-modal-body').innerHTML = `
         <label class="form-group"><span class="form-label">Título</span><input class="form-input" id="new-content-title" maxlength="80" required placeholder="Ex.: Guia de sono"></label>
-        <label class="form-group"><span class="form-label">Seção</span><input class="form-input" id="new-content-section" maxlength="50" required list="content-section-options" placeholder="Escolha ou crie uma seção"><datalist id="content-section-options">${getSections().map(section => `<option value="${escapeHTML(section.name)}">`).join('')}</datalist></label>
-        <label class="form-group"><span class="form-label">Tipo</span><select class="form-select" id="new-content-type"><option>Artigo</option><option>Vídeo</option><option>Guia</option><option>Áudio</option></select></label>
-        <label class="form-group"><span class="form-label">Resumo</span><textarea class="form-textarea" id="new-content-summary" rows="4" maxlength="350" required placeholder="O que a paciente encontrará neste conteúdo?"></textarea></label>
+        <label class="form-group"><span class="form-label">Tipo de conteúdo</span><select class="form-select" id="new-content-type"><option>Ebook</option><option>Vídeo</option><option>Site</option></select></label>
+        <label class="form-group"><span class="form-label">Descrição</span><textarea class="form-textarea" id="new-content-summary" rows="4" maxlength="500" required placeholder="Descrição do material"></textarea></label>
+        <label class="form-group"><span class="form-label">Tópicos / tags (separe por vírgulas)</span><input class="form-input" id="new-content-tags" placeholder="Ex.: Diabetes, Nutrição"></label>
+        <label class="form-group"><span class="form-label">Duração em minutos (opcional)</span><input class="form-input" id="new-content-minutes" type="number" min="0" max="999" placeholder="Ex.: 15"></label>
+        <label class="form-group"><span class="form-label">Link do material (opcional)</span><input class="form-input" id="new-content-url" type="url" placeholder="https://..."></label>
         <label class="form-group"><span class="form-label">Arquivo PDF (opcional, até 1 MB)</span><input class="form-input" id="new-content-pdf" type="file" accept="application/pdf,.pdf"></label>`;
       document.getElementById('contents-modal-actions').innerHTML = '<button class="btn btn-primary btn-sm" type="button" id="save-content-btn">Publicar conteúdo</button>';
       document.getElementById('contents-modal').classList.add('open');
       document.getElementById('save-content-btn').addEventListener('click', () => {
         const title = document.getElementById('new-content-title').value.trim();
-        const section = document.getElementById('new-content-section').value.trim();
         const summary = document.getElementById('new-content-summary').value.trim();
-        if (!title || !section || !summary) {
-          alert('Preencha o título, a seção e o resumo para publicar.');
+        if (!title || !summary) {
+          alert('Preencha o título e a descrição para publicar.');
           return;
         }
         const pdfInput = document.getElementById('new-content-pdf');
@@ -399,10 +553,11 @@
         items.unshift({
           id:`custom-${Date.now()}`,
           title,
-          section,
           type:document.getElementById('new-content-type').value,
-          summary,
-          duration:'Novo conteúdo',
+          summary, description:summary,
+          minutes:Number(document.getElementById('new-content-minutes').value || 0),
+          tags:document.getElementById('new-content-tags').value.split(',').map(tag=>tag.trim()).filter(Boolean),
+          url:document.getElementById('new-content-url').value.trim(),
           tone:['gold','rose','olive','blue','plum'][items.length % 5],
           custom:true,
           file:fileData ? { name:pdf.name, data:fileData } : null,
@@ -426,5 +581,7 @@
 
   renderHome();
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logs — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <style>
+    .audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:18px; }
+    .audit-filter-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+    .audit-filter-row input, .audit-filter-row select { min-height:44px; }
+    .audit-record { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:13px; border:1px solid var(--border); border-left:4px solid var(--vinho); border-radius:var(--radius); background:var(--white); }
+    .audit-record[data-action="criação"] { border-left-color:var(--oliva); }
+    .audit-record[data-action="exclusão"] { border-left-color:var(--red-text); }
+    .audit-record-meta { display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:5px; color:var(--text-muted); font-size:11px; }
+    .audit-details { margin-top:7px; color:var(--text-secondary); font-size:12px; overflow-wrap:anywhere; }
+    .audit-pagination { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; font-size:12px; color:var(--text-muted); }
+    @media(max-width:560px) { .audit-record { grid-template-columns:1fr; } .audit-record .audit-expand { justify-self:start; } }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter">
+  <div class="page-header">
+    <div><h1 class="page-title">Logs do sistema</h1><p class="page-subtitle">Histórico demonstrativo de ações registradas neste navegador</p></div>
+  </div>
+  <div class="audit-grid" id="audit-stats"></div>
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <h2 style="font-size:14px;color:var(--vinho);">Auditoria</h2>
+      <button class="btn btn-subtle btn-sm" id="clear-filters" type="button">Limpar filtros</button>
+    </div>
+    <div class="audit-filter-row">
+      <input class="form-input" id="audit-search" type="search" placeholder="Buscar usuário, detalhe ou ID" aria-label="Buscar nos logs" style="flex:1 1 220px;">
+      <select class="form-select" id="audit-table" aria-label="Filtrar por tabela" style="flex:1 1 170px;"><option value="">Todas as tabelas</option></select>
+      <div class="filter-chips" id="audit-actions" aria-label="Filtrar por ação"></div>
+    </div>
+    <p id="audit-count" style="font-size:12px;color:var(--text-muted);margin:8px 0 12px;"></p>
+    <div id="audit-list" style="display:grid;gap:9px;"></div>
+    <div class="audit-pagination" id="audit-pagination"></div>
+  </section>
+  <section class="card" style="margin-top:18px;">
+    <h2 style="font-size:14px;color:var(--vinho);margin-bottom:4px;">Enviar aviso</h2>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Avisos são demonstrações locais; eles não enviam e-mail nem notificações fora deste protótipo.</p>
+    <form id="announcement-form">
+      <div class="form-grid">
+        <label class="form-group"><span class="form-label">Destinatário</span><select class="form-select" id="announcement-recipient" required></select></label>
+        <label class="form-group"><span class="form-label">Título</span><input class="form-input" id="announcement-title" maxlength="80" required></label>
+        <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Mensagem</span><textarea class="form-textarea" id="announcement-body" rows="3" maxlength="500" required></textarea></label>
+      </div>
+      <p id="announcement-feedback" role="status" style="font-size:12px;margin:8px 0;"></p>
+      <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" type="submit">Enviar aviso</button></div>
+    </form>
+  </section>
+</main>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  if (Router.getRole() !== 'developer') {
+    Router.navigate(Router.getHomePage());
+  } else {
+    initShell('logs');
+    const auditKey = 'lapidar-auditoria';
+    const pageSize = 15;
+    const actionFilters = ['Todas', 'Criação', 'Edição', 'Exclusão'];
+    const state = { query:'', table:'', action:'Todas', date:'', page:0, expanded:new Set() };
+    const list = document.getElementById('audit-list');
+    const search = document.getElementById('audit-search');
+    const tableSelect = document.getElementById('audit-table');
+    function getEntries() {
+      try {
+        const entries = JSON.parse(localStorage.getItem(auditKey) || '[]');
+        if (!Array.isArray(entries)) throw new TypeError('Formato de auditoria inválido.');
+        return entries;
+      } catch (error) {
+        console.error('Não foi possível carregar os logs do sistema.', error);
+        document.getElementById('audit-count').textContent = 'Não foi possível carregar os logs salvos neste navegador.';
+        return [];
+      }
+    }
+    function entryDate(entry) { return new Date(entry.data || entry.at || 0); }
+    function renderStats(entries) {
+      const today = new Date().toLocaleDateString('en-CA');
+      const counts = [
+        ['Total', entries.length, 'Todas'],
+        ['Hoje', entries.filter(entry => entryDate(entry).toLocaleDateString('en-CA') === today).length, 'Hoje'],
+        ['Criações', entries.filter(entry => /cria/i.test(entry.acao || '')).length, 'Criação'],
+        ['Edições', entries.filter(entry => /edi/i.test(entry.acao || '')).length, 'Edição'],
+        ['Exclusões', entries.filter(entry => /exclu/i.test(entry.acao || '')).length, 'Exclusão'],
+      ];
+      document.getElementById('audit-stats').innerHTML = counts.map(([label, value, action]) =>
+        `<button type="button" class="card-stat" data-stat-action="${action}" aria-label="Filtrar ${label.toLowerCase()}" style="text-align:left;cursor:pointer;"><span class="card-stat-label">${label}</span><span class="card-stat-value">${value}</span><span class="card-stat-sub">registros locais</span></button>`
+      ).join('');
+      document.querySelectorAll('[data-stat-action]').forEach(button => button.addEventListener('click', () => {
+        state.date = button.dataset.statAction === 'Hoje' ? new Date().toLocaleDateString('en-CA') : '';
+        state.action = ['Criação','Edição','Exclusão'].includes(button.dataset.statAction) ? button.dataset.statAction : 'Todas';
+        state.page = 0;
+        render();
+      }));
+    }
+    function renderActionFilters() {
+      const root = document.getElementById('audit-actions');
+      root.replaceChildren();
+      actionFilters.forEach(action => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'filter-chip' + (state.action === action ? ' active' : '');
+        button.textContent = action;
+        button.setAttribute('aria-pressed', String(state.action === action));
+        button.addEventListener('click', () => { state.action = action; state.page = 0; render(); });
+        root.appendChild(button);
+      });
+    }
+    function render() {
+      const entries = getEntries().sort((a, b) => entryDate(b) - entryDate(a));
+      const tables = [...new Set(entries.map(entry => entry.tabela).filter(Boolean))].sort();
+      const selected = tableSelect.value;
+      tableSelect.innerHTML = '<option value="">Todas as tabelas</option>' + tables.map(table =>
+        `<option value="${escapePatientCardText(table)}">${escapePatientCardText(table)}</option>`
+      ).join('');
+      tableSelect.value = tables.includes(state.table) ? state.table : '';
+      state.table = tableSelect.value;
+      renderStats(entries);
+      renderActionFilters();
+      const query = state.query.toLocaleLowerCase('pt-BR');
+      const filtered = entries.filter(entry => {
+        const actionMatches = state.action === 'Todas' || String(entry.acao || '').toLocaleLowerCase('pt-BR').includes(state.action.toLocaleLowerCase('pt-BR').replace(/ão$/, 'ão'));
+        const tableMatches = !state.table || entry.tabela === state.table;
+        const dateMatches = !state.date || entryDate(entry).toLocaleDateString('en-CA') === state.date;
+        const text = [entry.usuario, entry.acao, entry.tabela, entry.registroId, entry.detalhes, entry.id].join(' ').toLocaleLowerCase('pt-BR');
+        return actionMatches && tableMatches && dateMatches && (!query || text.includes(query));
+      });
+      const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      state.page = Math.min(state.page, pages - 1);
+      const visible = filtered.slice(state.page * pageSize, (state.page + 1) * pageSize);
+      document.getElementById('audit-count').textContent = `${filtered.length} registro(s) encontrado(s).`;
+      list.innerHTML = visible.length ? visible.map((entry, index) => {
+        const action = String(entry.acao || 'edição').toLocaleLowerCase('pt-BR');
+        const id = String(entry.id || '');
+        const expanded = state.expanded.has(id);
+        const details = String(entry.detalhes || '');
+        const date = entryDate(entry);
+        const dateText = Number.isNaN(date.getTime()) ? 'Data não informada' : date.toLocaleString('pt-BR');
+        return `<article class="audit-record" data-action="${escapePatientCardText(action)}">
+          <div><strong>${escapePatientCardText(entry.acao || 'Ação registrada')} · ${escapePatientCardText(entry.tabela || 'Sistema')}</strong>
+            <div class="audit-record-meta"><span>ID do registro: ${escapePatientCardText(entry.registroId || '—')}</span><span>${escapePatientCardText(entry.usuario || 'Usuário')}</span><time>${escapePatientCardText(dateText)}</time><span>Log #${escapePatientCardText(id || String(index + 1))}</span></div>
+            ${details ? `<p class="audit-details">${escapePatientCardText(expanded || details.length <= 180 ? details : details.slice(0,180) + '…')}</p>` : ''}
+          </div>
+          ${details.length > 180 ? `<button type="button" class="btn btn-subtle btn-sm audit-expand" data-expand="${escapePatientCardText(id)}">${expanded ? 'Ver menos' : 'Ver mais'}</button>` : ''}
+        </article>`;
+      }).join('') : '<p class="empty-state" style="padding:20px;">Nenhum registro corresponde aos filtros.</p>';
+      document.querySelectorAll('[data-expand]').forEach(button => button.addEventListener('click', () => {
+        const id = button.dataset.expand;
+        if (state.expanded.has(id)) state.expanded.delete(id); else state.expanded.add(id);
+        render();
+      }));
+      const start = filtered.length ? state.page * pageSize + 1 : 0;
+      const end = Math.min(filtered.length, (state.page + 1) * pageSize);
+      document.getElementById('audit-pagination').innerHTML = `<span>Mostrando ${start}–${end} de ${filtered.length}</span><div><button class="btn btn-subtle btn-sm" type="button" id="audit-prev" ${state.page === 0 ? 'disabled' : ''}>Anterior</button><span>Página ${state.page + 1} de ${pages}</span><button class="btn btn-subtle btn-sm" type="button" id="audit-next" ${state.page + 1 >= pages ? 'disabled' : ''}>Próxima</button></div>`;
+      document.getElementById('audit-prev').addEventListener('click', () => { state.page--; render(); });
+      document.getElementById('audit-next').addEventListener('click', () => { state.page++; render(); });
+    }
+    search.addEventListener('input', () => { state.query = search.value.trim(); state.page = 0; render(); });
+    tableSelect.addEventListener('change', () => { state.table = tableSelect.value; state.page = 0; render(); });
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      search.value = '';
+      state.query = '';
+      state.table = '';
+      state.action = 'Todas';
+      state.date = '';
+      state.page = 0;
+      render();
+    });
+    render();
+    const profileByStaffRole = role => {
+      if (/desenvolvedor/i.test(role || '')) return 'developer';
+      if (/secret/i.test(role || '')) return /admin/i.test(role || '') ? 'secretary-admin' : 'secretary';
+      if (/administrador do sistema/i.test(role || '')) return 'doctor-admin';
+      if (/m[eé]dico/i.test(role || '')) return 'doctor-admin';
+      return 'doctor';
+    };
+    const recipient = document.getElementById('announcement-recipient');
+    let staff = [];
+    try {
+      const stored = JSON.parse(localStorage.getItem('lapidar-staff-management-v1') || '{"employees":[]}');
+      staff = Array.isArray(stored.employees) ? stored.employees.filter(person => person.active !== false) : [];
+    } catch (error) {
+      console.error('Não foi possível carregar os destinatários cadastrados.', error);
+    }
+    recipient.innerHTML = '<option value="all">Toda a equipe</option>' + staff.map(person =>
+      `<option value="staff:${escapePatientCardText(person.id)}">${escapePatientCardText(person.name)} · ${escapePatientCardText(person.role)}</option>`
+    ).join('') + '<optgroup label="Perfis de demonstração"><option value="doctor-admin">Médica administradora</option><option value="doctor">Médica</option><option value="secretary-admin">Secretária administradora</option><option value="secretary">Secretária</option></optgroup>';
+    document.getElementById('announcement-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const title = document.getElementById('announcement-title').value.trim();
+      const detail = document.getElementById('announcement-body').value.trim();
+      const selected = recipient.value;
+      if (!title || !detail) return;
+      const profileTargets = selected === 'all' ? ['doctor-admin','doctor','secretary-admin','secretary'] : selected.startsWith('staff:')
+        ? [profileByStaffRole(staff.find(person => 'staff:' + person.id === selected)?.role)]
+        : [selected];
+      const notice = { id:'notice-' + Date.now(), title, detail, time:new Date().toLocaleString('pt-BR'), unread:true };
+      try {
+        profileTargets.forEach(profile => {
+          const key = 'lapidar-notification-feed-' + profile;
+          const feed = JSON.parse(localStorage.getItem(key) || '[]');
+          if (!Array.isArray(feed)) throw new TypeError('Formato de notificações inválido para ' + profile);
+          localStorage.setItem(key, JSON.stringify([notice, ...feed].slice(0, 200)));
+        });
+        appendSystemAudit({ usuario:getProfileLabel(), acao:'Criação', tabela:'notificacoes', registroId:notice.id, detalhes:'Aviso enviado para ' + (selected === 'all' ? 'toda a equipe' : selected) + ': ' + title });
+        document.getElementById('announcement-feedback').textContent = 'Aviso salvo para ' + (selected === 'all' ? 'toda a equipe' : 'o destinatário escolhido') + '.';
+        event.target.reset();
+        render();
+      } catch (error) {
+        console.error('Não foi possível salvar o aviso.', error);
+        document.getElementById('announcement-feedback').textContent = 'Não foi possível enviar o aviso neste navegador.';
+      }
+    });
+  }
+</script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
+</body>
+</html>

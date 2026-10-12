@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .habits-container {
       max-width: 760px;
@@ -215,6 +216,36 @@
       color: var(--white);
       border-color: var(--vinho);
     }
+    .diary-calendar { margin-top: 12px; width: min(100%, 340px); padding: 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 12px; background: rgba(255,255,255,.08); }
+    .diary-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .diary-calendar-head button { width: 30px; height: 30px; border: 1px solid rgba(255,255,255,.25); border-radius: 8px; color: var(--bege); font-size: 20px; line-height: 1; }
+    .diary-calendar-head strong { font-size: 12px; text-transform: capitalize; }
+    .diary-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin-top: 8px; }
+    .diary-calendar-day { min-width: 0; height: 30px; border-radius: 7px; color: var(--bege); font-size: 11px; }
+    .diary-calendar-day.weekday { height: 20px; color: rgba(244,239,231,.65); font-size: 9px; font-weight: 700; }
+    .diary-calendar-day:disabled { opacity: .38; cursor: default; }
+    .diary-calendar-day.selected { outline: 2px solid var(--dourado); outline-offset: 1px; }
+    .diary-calendar-day.complete { background: rgba(102,114,74,.9); }
+    .diary-calendar-day.partial { background: rgba(198,161,91,.9); color: #351719; }
+    .diary-calendar-day.empty:not(.outside) { background: rgba(160,49,56,.7); }
+    .diary-calendar-day.outside { opacity: .3; }
+    .diary-calendar-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; font-size: 10px; color: rgba(244,239,231,.85); }
+    .diary-calendar-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .diary-status { font-style: normal; font-weight: 800; }
+    .diary-status.complete { color: #d8e5bc; }
+    .diary-status.partial { color: #f5d38c; }
+    .diary-status.empty { color: #f1a9a9; }
+    .diary-score-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; }
+    .diary-score-field { padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); }
+    .diary-score-field > strong { display: block; margin-bottom: 6px; color: var(--text-primary); font-size: 12px; }
+    .diary-score-field > span { display: block; margin-top: 4px; color: var(--text-muted); font-size: 10px; }
+    .diary-score-field .scale-container { margin-top: 8px; }
+    .goal-card, .section-card { min-width: 0; }
+    @media (max-width: 520px) {
+      .diary-calendar { width: 100%; }
+      .diary-calendar-day { height: 34px; }
+      .diary-score-fields { grid-template-columns: minmax(0,1fr); }
+    }
   </style>
 </head>
 <body>
@@ -255,6 +286,23 @@
         Data deste diário
         <input type="date" class="form-input" id="diary-entry-date" style="width:auto;padding:6px 9px;">
       </label>
+      <section class="diary-calendar" id="diary-calendar" aria-label="Calendário de check-ins">
+        <div class="diary-calendar-head">
+          <button type="button" id="diary-calendar-prev" aria-label="Mês anterior">‹</button>
+          <strong id="diary-calendar-month"></strong>
+          <button type="button" id="diary-calendar-next" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="diary-calendar-grid" id="diary-calendar-grid"></div>
+        <div class="diary-calendar-legend" aria-label="Legenda do calendário">
+          <span><i class="diary-status complete">●</i> Completo</span>
+          <span><i class="diary-status partial">◐</i> Parcial</span>
+          <span><i class="diary-status empty">×</i> Sem registro</span>
+        </div>
+      </section>
+      <div id="checkin-progress-panel" style="margin-top:14px;max-width:520px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--bege);margin-bottom:5px;"><span>Progresso do check-in</span><span id="checkin-progress-label">0%</span></div>
+        <div class="progress-bar" style="height:7px;background:rgba(244,239,231,.25);"><div class="progress-fill" id="checkin-progress-bar" style="width:0%;background:var(--dourado);"></div></div>
+      </div>
     </div>
 
     <!-- Success Banner -->
@@ -272,14 +320,14 @@
     <div id="view-checkin">
       
       <!-- 1. MOVIMENTO -->
-      <div class="section-card">
+      <div class="section-card" id="movement-section">
         <div class="section-card-title">
           <span>🏃‍♀️</span> Movimento
         </div>
         <div class="section-card-sub">Musculação e cardio fazem parte do Método Lapidar. Não estava programado não é falta de adesão.</div>
 
         <div style="display:flex;flex-direction:column;gap:18px;">
-          <div>
+          <div data-movement-goal="musculacao">
             <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Fez musculação hoje?</label>
             <div class="btn-choice-group" data-group="musculacao">
               <button type="button" class="btn-choice" data-val="sim">Sim ✓</button>
@@ -288,7 +336,7 @@
             </div>
           </div>
 
-          <div>
+          <div data-movement-goal="cardio">
             <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:8px;">Fez cardio hoje?</label>
             <div class="btn-choice-group" data-group="cardio">
               <button type="button" class="btn-choice" data-val="sim">Sim ✓</button>
@@ -300,14 +348,14 @@
       </div>
 
       <!-- 2. NUTRIÇÃO E HIDRATAÇÃO -->
-      <div class="section-card">
+      <div class="section-card" id="nutrition-section">
         <div class="section-card-title">
           <span>🥗</span> Nutrição e Hidratação
         </div>
         <div class="section-card-sub">Suas metas individuais prescritas para nutrição ótima e saciedade.</div>
 
         <div style="display:flex;flex-direction:column;gap:18px;" id="nutri-group">
-          <div>
+          <div data-nutrition-goal="proteina">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:13.5px;font-weight:600;">Proteína</span>
               <span class="badge badge-vinho" id="meta-prot-badge">Meta: 100 g/dia</span>
@@ -319,7 +367,7 @@
             </div>
           </div>
 
-          <div>
+          <div data-nutrition-goal="fibras">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:13.5px;font-weight:600;">Fibras</span>
               <span class="badge badge-vinho" id="meta-fibras-badge">Meta: 25 g/dia</span>
@@ -331,7 +379,7 @@
             </div>
           </div>
 
-          <div>
+          <div data-nutrition-goal="agua">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:13.5px;font-weight:600;">Água</span>
               <span class="badge badge-vinho" id="meta-agua-badge">Meta: 2,5 L/dia</span>
@@ -414,54 +462,35 @@
       </div>
 
       <!-- 5. METAS PERSONALIZADAS -->
-      <div class="section-card">
-        <div class="section-card-title">
-          <span>🎯</span> Minhas Metas Personalizadas
+      <div class="section-card" id="personalized-goals-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div class="section-card-title"><span>🎯</span> Minhas Metas</div>
+          <button class="btn btn-primary btn-sm" type="button" id="new-goal-btn">Nova meta</button>
         </div>
         <div class="section-card-sub">Hábitos prescritos em consulta para sua fase atual da jornada.</div>
-
+        <form id="diary-goal-form" hidden style="margin:12px 0;padding:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);">
+          <input id="diary-goal-id" type="hidden">
+          <div class="form-grid">
+            <label class="form-group"><span class="form-label">Tipo (opcional)</span><select class="form-select" id="diary-goal-type"><option value="">Selecionar</option><option>Hábito</option><option>Peso</option><option>Bioimpedância</option><option>Risco cardiovascular</option><option>Saúde mental</option><option>Sono</option></select></label>
+            <label class="form-group"><span class="form-label">Nome da meta *</span><input class="form-input" id="diary-goal-name" maxlength="100" required></label>
+            <label class="form-group"><span class="form-label">Valor alvo (opcional)</span><input class="form-input" id="diary-goal-target" maxlength="60"></label>
+            <label class="form-group"><span class="form-label">Frequência desejada</span><input class="form-input" id="diary-goal-frequency" maxlength="80" placeholder="Ex.: 3x por semana"></label>
+            <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Descrição (opcional)</span><textarea class="form-textarea" id="diary-goal-description" rows="2" maxlength="240"></textarea></label>
+          </div>
+          <p id="diary-goal-error" role="alert" hidden style="color:var(--red-text);font-size:12px;margin-top:6px;"></p>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;"><button class="btn btn-subtle btn-sm" type="button" id="cancel-goal-edit">Cancelar</button><button class="btn btn-primary btn-sm" type="submit">Salvar meta</button></div>
+        </form>
         <div id="metas-personalizadas-container"></div>
       </div>
 
-      <!-- 6. BLOCO EXCLUSIVO - LAPIDAR 40+ -->
-      <div class="section-card" id="bloco-40-container" style="display:none;border-left:4px solid var(--vinho);">
-        <div class="section-card-title">
-          <span>🌸</span> Acompanhamento Lapidar 40+
-        </div>
-        <div class="section-card-sub">Monitoramento exclusivo de sintomas da transição menopausal e hormonal.</div>
-
-        <div style="display:flex;flex-direction:column;gap:18px;">
-          <div>
-            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Fogachos / Ondas de calor (0 a 10):</label>
-            <div class="scale-container" id="scale-fogachos"></div>
-            <div class="scale-labels"><span>0 = Nenhum</span><span>10 = Muito intenso</span></div>
-          </div>
-
-          <div>
-            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Ressecamento vaginal (0 a 10):</label>
-            <div class="scale-container" id="scale-ressecamento"></div>
-            <div class="scale-labels"><span>0 = Nenhum</span><span>10 = Muito intenso</span></div>
-          </div>
-
-          <div>
-            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Irritabilidade (0 a 10):</label>
-            <div class="scale-container" id="scale-irritabilidade"></div>
-            <div class="scale-labels"><span>0 = Nenhuma</span><span>10 = Muito intensa</span></div>
-          </div>
-
-          <div>
-            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Névoa mental / Dificuldade de concentração (0 a 10):</label>
-            <div class="scale-container" id="scale-nevoa"></div>
-            <div class="scale-labels"><span>0 = Nenhuma</span><span>10 = Muito intensa</span></div>
-          </div>
-
-          <div>
-            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Como está sua libido hoje? (0 a 10):</label>
-            <div class="scale-container" id="scale-libido"></div>
-            <div class="scale-labels"><span>0 = Muito baixa</span><span>10 = Excelente</span></div>
-          </div>
-        </div>
+      <div class="section-card" id="diary-score-section">
+        <div class="section-card-title"><span>✦</span> Como você se sentiu hoje?</div>
+        <div class="section-card-sub">Suas respostas diárias também atualizam o Score Lapidar, sem precisar preenchê-lo em outra tela.</div>
+        <div id="diary-score-fields" class="diary-score-fields"></div>
       </div>
+
+      <!-- 6. BLOCO EXCLUSIVO - LAPIDAR 40+ -->
+      <div class="section-card" id="bloco-40-container" hidden style="border-left:4px solid var(--vinho);"></div>
 
       <!-- 7. OBSERVAÇÕES -->
       <div class="section-card">
@@ -536,7 +565,6 @@
   </div>
 </main>
 
-<div id="bottombar-container"></div>
 
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
@@ -551,6 +579,55 @@
   const role = Router.getRole();
   const diaryStorageKey = 'lapidar-diario-' + p.id;
   const diaryHistoryKey = 'lapidar-diario-historico-' + p.id;
+  const scoreHistoryKey = 'lapidar-score-history-' + p.id;
+  const scoreLabels = p.scoreLabels || [];
+  const isFortyPlus = p.protocolo === 'Lapidar 40+' || (Array.isArray(p.protocolos) && p.protocolos.includes('Lapidar 40+'));
+  const patientGoals = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [];
+  let hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+  let nutritionGoalKeys = ['proteina','fibras','agua'].filter(key => p.nutricaoMetas && p.nutricaoMetas[key]);
+  let hasNutritionGoals = nutritionGoalKeys.length > 0;
+  let hasAdherenceGoals = patientGoals.length > 0 || hasNutritionGoals;
+  const extraScoreFields = [
+    { index:0, name:'Saciedade', hint:'Quanto você se sentiu satisfeita após as refeições?' },
+    { index:1, name:'Fome', hint:'Como foi sua percepção de fome ao longo do dia?' },
+    { index:4, name:'Humor', hint:'Como você avalia seu bem-estar emocional hoje?' },
+    { index:7, name:'Perda urinária', hint:'Qual foi a intensidade do sintoma hoje?', fortyPlus:true },
+    { index:8, name:'Constipação', hint:'Como avalia seu funcionamento intestinal hoje?', fortyPlus:true },
+  ];
+  const protocolSymptoms = {
+    'Lapidar 40+': [
+      { id:'fogachos', label:'Fogachos / ondas de calor', scoreIndex:6 },
+      { id:'ressecamento', label:'Ressecamento vaginal' },
+      { id:'irritabilidade', label:'Irritabilidade' },
+      { id:'nevoa', label:'Névoa mental' },
+      { id:'libido', label:'Libido', scoreIndex:5 },
+      { id:'perdaUrinaria', label:'Perda urinária', scoreIndex:7 },
+      { id:'constipacao', label:'Constipação', scoreIndex:8 },
+    ],
+    'Lapidar SOP': [
+      { id:'regularidadeCiclo', label:'Regularidade do ciclo menstrual' },
+      { id:'acne', label:'Acne' },
+      { id:'hirsutismo', label:'Hirsutismo' },
+      { id:'inchaco', label:'Inchaço' },
+      { id:'compulsaoDoces', label:'Compulsão por doces' },
+      { id:'dorPelvica', label:'Dor pélvica' },
+    ],
+    'Lapidar Fertilidade': [
+      { id:'mucoCervical', label:'Muco cervical' },
+      { id:'dorOvulatoria', label:'Dor ovulatória' },
+      { id:'colica', label:'Cólicas' },
+      { id:'tpm', label:'TPM' },
+      { id:'libido', label:'Libido', scoreIndex:5 },
+      { id:'ansiedade', label:'Ansiedade' },
+    ],
+  };
+  const symptoms = protocolSymptoms[p.protocolo] || [];
+  const symptomScoreIndices = symptoms.map(item => item.scoreIndex).filter(Number.isInteger);
+  let visibleScoreIndices = scoreLabels.map((_, index) => index).filter(index =>
+    (isFortyPlus || ![6,7,8].includes(index)) &&
+    (index !== 9 || hasMovementGoals) &&
+    (index !== 10 || hasAdherenceGoals)
+  );
   const todayIso = new Date().toISOString().slice(0, 10);
   const diaryDateInput = document.getElementById('diary-entry-date');
   diaryDateInput.value = todayIso;
@@ -568,17 +645,28 @@
   document.getElementById('checkin-date-indicator').textContent = 
     'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
 
-  // Protocol 40+ block visibility rule from spec:
-  if (p.protocolo === 'Lapidar 40+') {
-    document.getElementById('bloco-40-container').style.display = 'block';
+  const movementSection = document.getElementById('movement-section');
+  movementSection.hidden = !hasMovementGoals;
+  movementSection.querySelector('[data-movement-goal="musculacao"]').hidden = !patientGoals.some(goal => /muscul|treino/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+  movementSection.querySelector('[data-movement-goal="cardio"]').hidden = !patientGoals.some(goal => /cardio|corrida|caminhada/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+  const nutritionSection = document.getElementById('nutrition-section');
+  nutritionSection.hidden = !hasNutritionGoals;
+  nutritionSection.querySelectorAll('[data-nutrition-goal]').forEach(block => {
+    block.hidden = !nutritionGoalKeys.includes(block.dataset.nutritionGoal);
+  });
+  const symptomsBlock = document.getElementById('bloco-40-container');
+  symptomsBlock.hidden = symptoms.length === 0;
+  if (symptoms.length) {
+    symptomsBlock.innerHTML = '<div class="section-card-title"><span>🌿</span> Sintomas · ' + escapeDiaryHTML(p.protocolo) + '</div>' +
+      '<div class="section-card-sub">Registre somente os sintomas acompanhados neste protocolo.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">' +
+      symptoms.map(symptom => '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;" for="symptom-' + symptom.id + '">' + escapeDiaryHTML(symptom.label) + ' (0 a 10)</label><div class="scale-container" id="symptom-' + symptom.id + '"></div></div>').join('') + '</div>';
   }
 
   // Nutrition badges
-  if (p.nutricaoMetas) {
-    document.getElementById('meta-prot-badge').textContent = 'Meta: ' + p.nutricaoMetas.proteina;
-    document.getElementById('meta-fibras-badge').textContent = 'Meta: ' + p.nutricaoMetas.fibras;
-    document.getElementById('meta-agua-badge').textContent = 'Meta: ' + p.nutricaoMetas.agua;
-  }
+  if (p.nutricaoMetas) ['proteina','fibras','agua'].forEach(key => {
+    const badge = document.getElementById('meta-' + (key === 'proteina' ? 'prot' : key) + '-badge');
+    if (badge && p.nutricaoMetas[key]) badge.textContent = 'Meta: ' + p.nutricaoMetas[key];
+  });
 
   function makeEmptyDailyData() {
     return {
@@ -587,8 +675,9 @@
       nutricao:{ proteina:'', fibras:'', agua:'' },
       sono:{ dormiu:'', acordou:'', duracao:'', despertares:'', qualidade:null },
       bemEstar:{ energia:null, estresse:null },
+      score:Array(scoreLabels.length).fill(null),
       metas:{},
-      sintomas40:{ fogachos:null, ressecamento:null, irritabilidade:null, nevoa:null, libido:null },
+      sintomas40:{},
       observacoes:'',
     };
   }
@@ -619,6 +708,16 @@
   }
 
   let currentData = loadDailyData(diaryDateInput.value);
+  if (!Array.isArray(currentData.score)) {
+    currentData.score = Array(scoreLabels.length).fill(null);
+    if (p.diarioHoje && currentData === p.diarioHoje) currentData.score = (p.scoreAtual || []).slice();
+  }
+  currentData.sintomas40 = currentData.sintomas40 || currentData.sintomas || {};
+  currentData.score[2] = currentData.bemEstar?.energia ?? currentData.score[2] ?? null;
+  currentData.score[3] = currentData.sono?.qualidade ?? currentData.score[3] ?? null;
+  symptoms.forEach(symptom => {
+    if (Number.isInteger(symptom.scoreIndex)) currentData.score[symptom.scoreIndex] = currentData.sintomas40[symptom.id] ?? currentData.score[symptom.scoreIndex] ?? null;
+  });
   let savedBaseline = JSON.stringify(currentData);
 
   function formatDiaryDate(dateIso) {
@@ -630,19 +729,98 @@
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
     }[char]));
   }
+  function localIsoDate(date) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  }
+  function isDiaryComplete(entry) {
+    if (!entry || !entry.preenchido) return false;
+    const scores = Array.isArray(entry.score) ? entry.score : [];
+    const scoreComplete = visibleScoreIndices.every(index =>
+      scores[index] !== null && scores[index] !== undefined && scores[index] !== '' &&
+      Number.isFinite(Number(scores[index])) && Number(scores[index]) >= 0 && Number(scores[index]) <= 10
+    );
+    const goalsComplete = (Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [])
+      .every(goal => ['sim','parcialmente','nao'].includes(entry.metas?.[goal.id]));
+    const nutritionComplete = !hasNutritionGoals || nutritionGoalKeys.every(key =>
+      ['atingi','parcialmente','nao_atingi'].includes(entry.nutricao?.[key]));
+    const movementComplete = !hasMovementGoals || ['musculacao','cardio'].every(key => {
+      const control = document.querySelector('[data-movement-goal="' + key + '"]');
+      return !control || control.hidden || ['sim','nao','nao_programado'].includes(entry.movimento?.[key]);
+    });
+    const sleepComplete = Boolean(entry.sono?.dormiu && entry.sono?.acordou);
+    return scoreComplete && goalsComplete && nutritionComplete && movementComplete && sleepComplete;
+  }
+  let diaryCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  function renderDiaryCalendar() {
+    const grid = document.getElementById('diary-calendar-grid');
+    const monthLabel = document.getElementById('diary-calendar-month');
+    monthLabel.textContent = diaryCalendarMonth.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+    const weekdayNames = ['D','S','T','Q','Q','S','S'];
+    const firstDay = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth(), 1);
+    const start = new Date(firstDay);
+    start.setDate(start.getDate() - firstDay.getDay());
+    const todayDate = new Date(todayIso + 'T12:00:00');
+    const cells = weekdayNames.map(day => `<span class="diary-calendar-day weekday" aria-hidden="true">${day}</span>`);
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      const iso = localIsoDate(date);
+      const entry = loadDailyData(iso);
+      const state = isDiaryComplete(entry) ? 'complete' : entry?.preenchido ? 'partial' : 'empty';
+      const marker = state === 'complete' ? '●' : state === 'partial' ? '◐' : String(date.getDate());
+      const outside = date.getMonth() !== diaryCalendarMonth.getMonth();
+      const disabled = date > todayDate || outside && date > todayDate;
+      const label = date.toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+      cells.push(`<button type="button" class="diary-calendar-day ${state}${outside?' outside':''}${iso===diaryDateInput.value?' selected':''}" data-diary-date="${iso}" aria-label="${label}: ${state==='complete'?'check-in completo':state==='partial'?'check-in parcial':'sem registro'}" ${disabled?'disabled':''}>${marker}</button>`);
+    }
+    grid.innerHTML = cells.join('');
+    grid.querySelectorAll('[data-diary-date]').forEach(button => button.addEventListener('click', () => {
+      diaryCalendarMonth = new Date(button.dataset.diaryDate + 'T12:00:00');
+      diaryCalendarMonth.setDate(1);
+      diaryDateInput.value = button.dataset.diaryDate;
+      diaryDateInput.dispatchEvent(new Event('change', { bubbles:true }));
+      renderDiaryCalendar();
+    }));
+    document.getElementById('diary-calendar-prev').disabled =
+      diaryCalendarMonth.getFullYear() < 2020;
+    document.getElementById('diary-calendar-next').disabled =
+      diaryCalendarMonth.getFullYear() > todayDate.getFullYear() ||
+      diaryCalendarMonth.getFullYear() === todayDate.getFullYear() && diaryCalendarMonth.getMonth() >= todayDate.getMonth();
+  }
   function updateDiaryDateLabel() {
     document.getElementById('checkin-date-indicator').textContent =
-      'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + formatDiaryDate(diaryDateInput.value);
+      'Paciente: ' + p.nome + (p.protocolo ? ' · ' + p.protocolo : '') + ' · ' + formatDiaryDate(diaryDateInput.value);
   }
   updateDiaryDateLabel();
+  document.getElementById('diary-calendar-prev').addEventListener('click', () => {
+    diaryCalendarMonth = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth() - 1, 1);
+    renderDiaryCalendar();
+  });
+  document.getElementById('diary-calendar-next').addEventListener('click', () => {
+    diaryCalendarMonth = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth() + 1, 1);
+    renderDiaryCalendar();
+  });
+  renderDiaryCalendar();
   diaryDateInput.addEventListener('change', () => {
     if (!diaryDateInput.value) return;
     currentData = loadDailyData(diaryDateInput.value);
+    if (!Array.isArray(currentData.score)) currentData.score = Array(scoreLabels.length).fill(null);
+    currentData.sintomas40 = currentData.sintomas40 || currentData.sintomas || {};
+    currentData.score[2] = currentData.bemEstar?.energia ?? currentData.score[2] ?? null;
+    currentData.score[3] = currentData.sono?.qualidade ?? currentData.score[3] ?? null;
+    symptoms.forEach(symptom => {
+      if (Number.isInteger(symptom.scoreIndex)) currentData.score[symptom.scoreIndex] = currentData.sintomas40[symptom.id] ?? currentData.score[symptom.scoreIndex] ?? null;
+    });
     savedBaseline = JSON.stringify(currentData);
     document.getElementById('success-banner').style.display = 'none';
     updateDiaryDateLabel();
+    renderDiaryCalendar();
+    renderPersonalizedGoals();
     syncUIWithData();
     updateSleepCalc();
+    diaryCalendarMonth = new Date(diaryDateInput.value + 'T12:00:00');
+    diaryCalendarMonth.setDate(1);
+    renderDiaryCalendar();
   });
 
   // Helper to build 0-10 interactive scales
@@ -659,9 +837,45 @@
         el.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         onChange(i);
+        updateCheckinProgress();
       });
       el.appendChild(btn);
     }
+  }
+
+  function updateCheckinProgress() {
+    const visible = element => !element.closest('[hidden]');
+    const groups = Array.from(document.querySelectorAll('#view-checkin .btn-choice-group')).filter(visible);
+    const scales = Array.from(document.querySelectorAll('#view-checkin .scale-container')).filter(visible);
+    const total = groups.length + scales.length + 1;
+    const completed = groups.filter(group => group.querySelector('.btn-choice.active')).length +
+      scales.filter(scale => scale.querySelector('.scale-btn.active')).length +
+      (currentData.sono && currentData.sono.dormiu && currentData.sono.acordou ? 1 : 0);
+    const percent = total ? Math.round(completed / total * 100) : 0;
+    document.getElementById('checkin-progress-label').textContent = percent + '%';
+    document.getElementById('checkin-progress-bar').style.width = percent + '%';
+  }
+
+  function updateDerivedScore() {
+    const movementValues = ['musculacao','cardio'].filter(key => {
+      const control = document.querySelector('[data-movement-goal="' + key + '"]');
+      return control && !control.hidden;
+    }).map(key => ({ sim:10, nao_programado:8, nao:0 }[currentData.movimento[key]])).filter(Number.isFinite);
+    currentData.score[9] = hasMovementGoals && movementValues.length
+      ? Math.round(movementValues.reduce((total,value) => total + value,0) / movementValues.length)
+      : null;
+    const adherenceValues = [];
+    if (hasNutritionGoals) nutritionGoalKeys.forEach(key => {
+      const value = currentData.nutricao[key];
+      if (value) adherenceValues.push(({ atingi:10, parcialmente:5, nao_atingi:0 })[value]);
+    });
+    patientGoals.forEach(goal => {
+      const value = currentData.metas && currentData.metas[goal.id];
+      if (value) adherenceValues.push(({ sim:10, parcialmente:5, nao:0 })[value]);
+    });
+    currentData.score[10] = adherenceValues.length
+      ? Math.round(adherenceValues.reduce((total,value) => total + value,0) / adherenceValues.length)
+      : null;
   }
 
   // Render choice groups
@@ -681,6 +895,7 @@
           } else if (groupName === 'despertares') {
             currentData.sono.despertares = val;
           }
+          updateCheckinProgress();
         });
       });
     });
@@ -689,38 +904,31 @@
   // Render personalized goals
   function renderPersonalizedGoals() {
     const container = document.getElementById('metas-personalizadas-container');
-    const goals = p.metasPersonalizadas || [
-      { id:'musc', nome:'Musculação', freqDesejada:'3x/semana', meta:3, realizado:2, unidade:'treinos', desc:'Foco em força' },
-      { id:'cardio', nome:'Cardio', freqDesejada:'2x/semana', meta:2, realizado:2, unidade:'sessões', desc:'Zona 2' },
-      { id:'resp', nome:'Respiração / Mindfulness', freqDesejada:'5x/semana', meta:5, realizado:5, unidade:'práticas', desc:'Ao acordar' }
-    ];
+    const goals = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [];
+    const section = document.getElementById('personalized-goals-section');
+    section.hidden = goals.length === 0 && role !== 'patient';
+    if (!goals.length) {
+      container.replaceChildren();
+      return;
+    }
 
     container.innerHTML = goals.map(g => {
-      let feedback = '';
-      if (g.realizado > g.meta) {
-        feedback = 'Você superou sua meta ✦';
-      } else if (g.realizado === g.meta) {
-        feedback = 'Meta da semana concluída ✓';
-      } else {
-        const falta = g.meta - g.realizado;
-        feedback = 'Falta só ' + falta + ' para completar sua meta da semana.';
-      }
-
-      const activeChoice = currentData.metas && currentData.metas[g.id] ? currentData.metas[g.id] : 'sim';
+      const activeChoice = currentData.metas && currentData.metas[g.id] ? currentData.metas[g.id] : '';
 
       return `
-        <div class="goal-card ${g.realizado >= g.meta ? 'completed' : ''}">
+        <div class="goal-card">
           <div class="goal-card-header">
-            <span class="goal-card-name">${g.nome} · <small style="font-weight:400;color:var(--text-muted);">${g.freqDesejada}</small></span>
-            <span class="goal-card-feedback">${feedback}</span>
+            <span class="goal-card-name">${escapeDiaryHTML(g.nome)} · <small style="font-weight:400;color:var(--text-muted);">${escapeDiaryHTML(g.freqDesejada || 'Frequência definida em consulta')}</small></span>
+            ${role === 'patient' ? '<span style="display:flex;gap:6px;"><button type="button" class="btn btn-subtle btn-sm" data-edit-goal="' + escapeDiaryHTML(g.id) + '">Editar</button><button type="button" class="btn btn-subtle btn-sm" data-delete-goal="' + escapeDiaryHTML(g.id) + '">Excluir</button></span>' : ''}
           </div>
-          <div class="goal-card-sub">${g.realizado} de ${g.meta} ${g.unidade} esta semana</div>
+          ${g.tipo ? '<div class="goal-card-sub">Tipo: ' + escapeDiaryHTML(g.tipo) + (g.alvo ? ' · Alvo: ' + escapeDiaryHTML(g.alvo) : '') + '</div>' : ''}
+          <div class="goal-card-sub">${escapeDiaryHTML(g.desc || 'Meta individual acompanhada no diário.')}</div>
           <div>
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--text-secondary);">Realizou hoje?</label>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--text-secondary);">Como foi hoje?</label>
             <div class="btn-choice-group" data-goal-id="${g.id}">
-              <button type="button" class="btn-choice ${activeChoice==='sim'?'active':''}" data-val="sim">Sim ✓</button>
-              <button type="button" class="btn-choice ${activeChoice==='nao'?'active':''}" data-val="nao">Não</button>
-              <button type="button" class="btn-choice ${activeChoice==='nao_programado'?'active':''}" data-val="nao_programado">Não estava programado</button>
+              <button type="button" class="btn-choice ${activeChoice==='sim'?'active':''}" data-val="sim">Concluída</button>
+              <button type="button" class="btn-choice ${activeChoice==='parcialmente'?'active':''}" data-val="parcialmente">Parcial</button>
+              <button type="button" class="btn-choice ${activeChoice==='nao'?'active':''}" data-val="nao">Não realizada</button>
             </div>
           </div>
         </div>`;
@@ -735,13 +943,135 @@
           btn.classList.add('active');
           if (!currentData.metas) currentData.metas = {};
           currentData.metas[gid] = btn.dataset.val;
+          updateCheckinProgress();
         });
       });
     });
+    container.querySelectorAll('[data-edit-goal]').forEach(button => button.addEventListener('click', () => {
+      const goal = goals.find(item => String(item.id) === button.dataset.editGoal);
+      if (goal) openGoalForm(goal);
+    }));
+    container.querySelectorAll('[data-delete-goal]').forEach(button => button.addEventListener('click', () => {
+      const goal = goals.find(item => String(item.id) === button.dataset.deleteGoal);
+      if (!goal || !window.confirm('Excluir a meta “' + goal.nome + '”?')) return;
+      savePatientGoals(goals.filter(item => item.id !== goal.id));
+    }));
+  }
+
+  const goalForm = document.getElementById('diary-goal-form');
+  const newGoalButton = document.getElementById('new-goal-btn');
+  newGoalButton.hidden = role !== 'patient';
+  function openGoalForm(goal) {
+    goalForm.reset();
+    document.getElementById('diary-goal-id').value = goal ? goal.id : '';
+    document.getElementById('diary-goal-type').value = goal && goal.tipo || '';
+    document.getElementById('diary-goal-name').value = goal && goal.nome || '';
+    document.getElementById('diary-goal-target').value = goal && (goal.alvo || goal.meta && goal.meta !== 1 && goal.meta) || '';
+    document.getElementById('diary-goal-frequency').value = goal && goal.freqDesejada || '';
+    document.getElementById('diary-goal-description').value = goal && goal.desc || '';
+    document.getElementById('diary-goal-error').hidden = true;
+    goalForm.hidden = false;
+    document.getElementById('diary-goal-name').focus();
+  }
+  function refreshGoalSections() {
+    hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+    hasAdherenceGoals = patientGoals.length > 0 || hasNutritionGoals;
+    visibleScoreIndices = scoreLabels.map((_, index) => index).filter(index =>
+      (isFortyPlus || ![6,7,8].includes(index)) &&
+      (index !== 9 || hasMovementGoals) &&
+      (index !== 10 || hasAdherenceGoals)
+    );
+    const movement = document.getElementById('movement-section');
+    movement.hidden = !hasMovementGoals;
+    movement.querySelector('[data-movement-goal="musculacao"]').hidden = !patientGoals.some(goal => /muscul|treino/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+    movement.querySelector('[data-movement-goal="cardio"]').hidden = !patientGoals.some(goal => /cardio|corrida|caminhada/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+    renderDiaryScoreFields();
+    syncUIWithData();
+  }
+  function savePatientGoals(nextGoals) {
+    const previousGoals = patientGoals.slice();
+    const previousNames = p.metas;
+    const previousStorage = localStorage.getItem('lapidar-pacientes');
+    patientGoals.splice(0, patientGoals.length, ...nextGoals);
+    p.metasPersonalizadas = patientGoals;
+    p.metas = patientGoals.map(goal => goal.nome);
+    try {
+      localStorage.setItem('lapidar-pacientes', JSON.stringify(PACIENTES));
+    } catch (error) {
+      patientGoals.splice(0, patientGoals.length, ...previousGoals);
+      p.metasPersonalizadas = patientGoals;
+      p.metas = previousNames;
+      try {
+        if (previousStorage === null) localStorage.removeItem('lapidar-pacientes');
+        else localStorage.setItem('lapidar-pacientes', previousStorage);
+      } catch (restoreError) {
+        console.error('Não foi possível restaurar as metas anteriores.', restoreError);
+      }
+      console.error('Não foi possível salvar as metas da paciente.', error);
+      const feedback = document.getElementById('diary-goal-error');
+      feedback.textContent = 'Não foi possível salvar as metas neste navegador.';
+      feedback.hidden = false;
+      return false;
+    }
+    goalForm.hidden = true;
+    renderPersonalizedGoals();
+    refreshGoalSections();
+    renderDiaryCalendar();
+    return true;
+  }
+  newGoalButton.addEventListener('click', () => openGoalForm(null));
+  document.getElementById('cancel-goal-edit').addEventListener('click', () => { goalForm.hidden = true; });
+  goalForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if (role !== 'patient') return;
+    const id = document.getElementById('diary-goal-id').value;
+    const name = document.getElementById('diary-goal-name').value.trim();
+    const target = document.getElementById('diary-goal-target').value.trim();
+    if (!name) return;
+    const current = patientGoals.find(goal => String(goal.id) === String(id));
+    const goal = {
+      ...(current || {}),
+      id:id || 'patient-goal-' + Date.now(),
+      tipo:document.getElementById('diary-goal-type').value,
+      nome:name,
+      alvo:target,
+      meta:target && Number.isFinite(Number(target)) && Number(target) > 0 ? Number(target) : current && current.meta || 1,
+      freqDesejada:document.getElementById('diary-goal-frequency').value.trim(),
+      desc:document.getElementById('diary-goal-description').value.trim(),
+      realizado:current && current.realizado || 0,
+      unidade:current && current.unidade || 'vezes',
+    };
+    const nextGoals = id
+      ? patientGoals.map(existing => String(existing.id) === String(id) ? goal : existing)
+      : patientGoals.concat(goal);
+    savePatientGoals(nextGoals);
+  });
+
+  function renderDiaryScoreFields() {
+    const container = document.getElementById('diary-score-fields');
+    container.innerHTML = extraScoreFields
+      .filter(field => scoreLabels[field.index] && (!field.fortyPlus || isFortyPlus))
+      .map(field => `<div class="diary-score-field"><strong>${escapeDiaryHTML(field.name)}</strong><span>${escapeDiaryHTML(field.hint)}</span><div class="scale-container" id="diary-score-${field.index}"></div><span>0 = baixo · 10 = alto</span></div>`)
+      .join('');
+    if (!isFortyPlus) {
+      const libido = document.createElement('div');
+      libido.className = 'diary-score-field';
+      libido.innerHTML = '<strong>Libido</strong><span>Como você avalia esse aspecto hoje?</span><div class="scale-container" id="diary-score-5"></div><span>0 = muito baixa · 10 = muito boa</span>';
+      container.appendChild(libido);
+    }
+    extraScoreFields.forEach(field => {
+      if (!scoreLabels[field.index] || field.fortyPlus && !isFortyPlus) return;
+      buildScale('diary-score-' + field.index, currentData.score[field.index], value => { currentData.score[field.index] = value; });
+    });
+    if (!isFortyPlus) {
+      buildScale('diary-score-5', currentData.score[5], value => { currentData.score[5] = value; });
+    }
   }
 
   // Populate active choices in check-in form
   function syncUIWithData() {
+    renderPersonalizedGoals();
+    document.querySelectorAll('.btn-choice.active').forEach(button => button.classList.remove('active'));
     // Movimento
     if (currentData.movimento) {
       ['musculacao', 'cardio'].forEach(key => {
@@ -769,24 +1099,21 @@
     }
 
     // Scales
-    buildScale('scale-sono', currentData.sono?.qualidade ?? 8, v => { currentData.sono.qualidade = v; });
-    buildScale('scale-energia', currentData.bemEstar?.energia ?? 8, v => { currentData.bemEstar.energia = v; });
-    buildScale('scale-estresse', currentData.bemEstar?.estresse ?? 3, v => { currentData.bemEstar.estresse = v; });
+    buildScale('scale-sono', currentData.sono?.qualidade ?? null, v => { currentData.sono.qualidade = v; currentData.score[3] = v; });
+    buildScale('scale-energia', currentData.bemEstar?.energia ?? null, v => { currentData.bemEstar.energia = v; currentData.score[2] = v; });
+    buildScale('scale-estresse', currentData.bemEstar?.estresse ?? null, v => { currentData.bemEstar.estresse = v; });
 
-    // 40+ scales
-    if (p.protocolo === 'Lapidar 40+') {
-      const s40 = currentData.sintomas40 || {};
-      buildScale('scale-fogachos', s40.fogachos ?? 3, v => { currentData.sintomas40.fogachos = v; });
-      buildScale('scale-ressecamento', s40.ressecamento ?? 2, v => { currentData.sintomas40.ressecamento = v; });
-      buildScale('scale-irritabilidade', s40.irritabilidade ?? 2, v => { currentData.sintomas40.irritabilidade = v; });
-      buildScale('scale-nevoa', s40.nevoa ?? 2, v => { currentData.sintomas40.nevoa = v; });
-      buildScale('scale-libido', s40.libido ?? 7, v => { currentData.sintomas40.libido = v; });
-    }
+    symptoms.forEach(symptom => buildScale('symptom-' + symptom.id, currentData.sintomas40[symptom.id] ?? null, value => {
+      currentData.sintomas40[symptom.id] = value;
+      if (Number.isInteger(symptom.scoreIndex)) currentData.score[symptom.scoreIndex] = value;
+      updateCheckinProgress();
+    }));
 
     // Observações
     if (currentData.observacoes) {
       document.getElementById('observacoes-input').value = currentData.observacoes;
     }
+    updateCheckinProgress();
   }
 
   // Calculate sleep duration live
@@ -805,19 +1132,30 @@
   }
   document.getElementById('sleep-start').addEventListener('change', updateSleepCalc);
   document.getElementById('sleep-end').addEventListener('change', updateSleepCalc);
+  document.getElementById('sleep-start').addEventListener('change', updateCheckinProgress);
+  document.getElementById('sleep-end').addEventListener('change', updateCheckinProgress);
+  document.getElementById('observacoes-input').addEventListener('input', updateCheckinProgress);
 
   // Save check-in
   document.getElementById('btn-salvar-checkin').addEventListener('click', () => {
+    updateDerivedScore();
     currentData.preenchido = true;
     currentData.data = formatDiaryDate(diaryDateInput.value);
     currentData.horario = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     currentData.sono.dormiu = document.getElementById('sleep-start').value;
     currentData.sono.acordou = document.getElementById('sleep-end').value;
+    if (currentData.sono.dormiu && currentData.sono.acordou) {
+      const [sleepHour, sleepMinute] = currentData.sono.dormiu.split(':').map(Number);
+      const [wakeHour, wakeMinute] = currentData.sono.acordou.split(':').map(Number);
+      let duration = wakeHour * 60 + wakeMinute - (sleepHour * 60 + sleepMinute);
+      if (duration < 0) duration += 24 * 60;
+      currentData.sono.duracao = Math.floor(duration / 60) + 'h' + String(duration % 60).padStart(2, '0');
+    }
     currentData.observacoes = document.getElementById('observacoes-input').value;
 
     const previousData = JSON.parse(savedBaseline);
     const changedFields = Object.keys({
-      movimento:true, nutricao:true, sono:true, bemEstar:true, metas:true, sintomas40:true, observacoes:true,
+    movimento:true, nutricao:true, sono:true, bemEstar:true, metas:true, sintomas40:true, score:true, observacoes:true,
     }).filter(key =>
       JSON.stringify(previousData[key]) !== JSON.stringify(currentData[key])
     );
@@ -827,7 +1165,8 @@
       sono:'Sono e descanso',
       bemEstar:'Bem-estar',
       metas:'Metas personalizadas',
-      sintomas40:'Sintomas Lapidar 40+',
+      sintomas40:'Sintomas ' + (p.protocolo || 'do protocolo'),
+      score:'Avaliação diária do Score Lapidar',
       observacoes:'Observações do dia',
     };
     const formatChoice = value => ({
@@ -840,7 +1179,8 @@
       sono:() => 'Dormiu ' + (currentData.sono.dormiu || '—') + ', acordou ' + (currentData.sono.acordou || '—') + '; qualidade: ' + (currentData.sono.qualidade == null ? '—' : currentData.sono.qualidade + '/10'),
       bemEstar:() => 'Energia: ' + (currentData.bemEstar.energia == null ? '—' : currentData.bemEstar.energia + '/10') + '; estresse: ' + (currentData.bemEstar.estresse == null ? '—' : currentData.bemEstar.estresse + '/10'),
       metas:() => Object.entries(currentData.metas || {}).map(([name, value]) => name + ': ' + formatChoice(value)).join('; ') || 'Metas atualizadas',
-      sintomas40:() => Object.entries(currentData.sintomas40 || {}).map(([name, value]) => name + ': ' + (value == null ? '—' : value + '/10')).join('; ') || 'Sintomas atualizados',
+      sintomas40:() => Object.entries(currentData.sintomas40 || {}).filter(([,value]) => value !== null && value !== undefined && value !== '').map(([name, value]) => name + ': ' + value + '/10').join('; ') || 'Sintomas atualizados',
+      score:() => scoreLabels.map((label, index) => label + ': ' + (currentData.score[index] == null ? '—' : currentData.score[index] + '/10')).join('; '),
       observacoes:() => currentData.observacoes || 'Observação removida',
     };
     const changeRecords = changedFields.map(key => ({
@@ -855,10 +1195,25 @@
       changes:changeRecords,
       snapshot:JSON.parse(JSON.stringify(currentData)),
     };
+    history.events = history.events.filter(existing => existing.date !== event.date);
     history.events.push(event);
+    history.events.sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+    let scoreHistory = [];
     try {
+      const savedScores = JSON.parse(localStorage.getItem(scoreHistoryKey) || '[]');
+      if (Array.isArray(savedScores)) scoreHistory = savedScores;
+      scoreHistory = scoreHistory.filter(entry => entry && entry.date !== diaryDateInput.value);
+      if (isDiaryComplete(currentData)) {
+        scoreHistory.push({
+          date:diaryDateInput.value,
+          values:currentData.score.map(value => Number(value)),
+          source:'diary',
+        });
+      }
+      scoreHistory.sort((a, b) => a.date.localeCompare(b.date));
       localStorage.setItem(diaryStorageKey + '-' + diaryDateInput.value, JSON.stringify(currentData));
       localStorage.setItem(diaryHistoryKey, JSON.stringify(history));
+      localStorage.setItem(scoreHistoryKey, JSON.stringify(scoreHistory));
       if (diaryDateInput.value === todayIso) localStorage.setItem(diaryStorageKey, JSON.stringify(currentData));
     } catch (error) {
       console.error('Não foi possível salvar o check-in e seu histórico.', error);
@@ -866,6 +1221,7 @@
       return;
     }
     savedBaseline = JSON.stringify(currentData);
+    renderDiaryCalendar();
 
     // Show success banner
     const banner = document.getElementById('success-banner');
@@ -902,7 +1258,7 @@
   });
 
   // Render Evolução
-  let activeHistoryPeriod = '7';
+  let activeHistoryPeriod = 'all';
   function renderEvolucaoView() {
     const goals = p.metasPersonalizadas || [];
     const container = document.getElementById('weekly-goals-progress');
@@ -961,9 +1317,11 @@
 
   // Init
   initChoiceGroups();
+  renderDiaryScoreFields();
   renderPersonalizedGoals();
   syncUIWithData();
   updateSleepCalc();
+  renderDiaryCalendar();
 
   if (role !== 'patient') {
     document.getElementById('btn-salvar-checkin').hidden = true;
@@ -973,5 +1331,7 @@
   }
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

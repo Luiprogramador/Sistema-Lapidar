@@ -1,0 +1,117 @@
+/* Lapidar prototype parity pass — responsive layout, contrast and interaction polish */
+:root { --focus-ring: #B8893F; }
+html { min-width: 320px; }
+body { overflow-x: hidden; }
+button, a, input, select, textarea { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring) !important; outline-offset: 2px;
+}
+.card, .card-stat, .card-patient { min-width: 0; }
+.card { overflow-wrap: anywhere; }
+.card-stat-label { line-height: 1.4; }
+.card-stat-value { overflow-wrap: anywhere; }
+.page-header { gap: 12px; }
+.page-title { line-height: 1.15; }
+.main-content { min-width: 0; }
+.tabs, .filter-chips, .topbar-right { min-width: 0; }
+.tabs { overscroll-behavior-x: contain; scroll-snap-type: x proximity; }
+.tab-item { scroll-snap-align: start; }
+.filter-chips { flex-wrap: wrap; }
+input, select, textarea { max-width: 100%; }
+table { width: 100%; }
+.table-wrap, .table-responsive, .chart-scroll, .wide-chart-wrap {
+  max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-color: rgba(89,27,28,.35) transparent; scrollbar-width: thin;
+}
+.chart-scroll canvas, .wide-chart-wrap canvas { display:block; }
+.chart-legend, [id$="-legend"] { min-width: 0; }
+.chart-legend > *, [id$="-legend"] > * { min-width: 0; }
+.modal, .modal-content, .dialog, .dialog-content { max-width: calc(100vw - 24px); }
+@media (max-width: 1100px) {
+  .main-content { padding-left: clamp(16px, 3vw, 28px); padding-right: clamp(16px, 3vw, 28px); }
+  .grid-responsive-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 760px) {
+  .page-header { align-items: stretch; }
+  .page-header > * { min-width: 0; }
+  .page-header .btn { align-self: flex-start; }
+  .grid-responsive-3, .grid-responsive-4, .grid-responsive-2 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .card, .card-stat { padding: 16px; }
+  .card-stat-value { font-size: clamp(22px, 7vw, 30px); }
+  .search-bar { max-width: none !important; width: 100%; }
+  .search-bar input, .search-input { min-width: 0; width: 100%; }
+  .filter-chips { gap: 6px; }
+  .filter-chip { max-width: 100%; white-space: normal; }
+  .tabs { width: 100%; }
+  .tab-item { padding: 10px 12px; }
+  .form-grid, .form-row, .agenda-layout { grid-template-columns: minmax(0, 1fr) !important; }
+  .table-wrap table, .table-responsive table { min-width: 640px; }
+  .modal, .dialog, .modal-content, .dialog-content {
+    width: calc(100vw - 24px) !important; max-height: calc(100dvh - 24px); overflow-y: auto;
+  }
+}
+@media (max-width: 420px) {
+  .main-content { padding-left: 12px; padding-right: 12px; }
+  .card, .card-stat { padding: 13px; border-radius: 12px; }
+  .btn { white-space: normal; }
+  .page-title { font-size: 25px; }
+}
+
+
+/* Refinamento visual transversal baseado na identidade Lapidar */
+:root { color-scheme: light; }
+::selection { background: rgba(89,27,28,.16); color: var(--text-primary, #351719); }
+.card, .modal-content, .dialog-content, .panel, .settings-card {
+  box-shadow: var(--shadow-sm, 0 3px 14px rgba(55,24,24,.045));
+}
+.card, .card-stat, .card-patient, .modal-content, .dialog-content { border-color: var(--border, #e8ddd3); }
+input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea {
+  min-height: 40px; border-radius: 9px; transition: border-color .16s ease, box-shadow .16s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--dourado, #b8893f); box-shadow: 0 0 0 3px rgba(184,137,63,.14);
+}
+button, .btn, .tab-item, .filter-chip { transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+.btn:active, button:active { transform: translateY(1px); }
+.filter-chip[aria-pressed="true"], .filter-chip.active, .tag.selected, .select-chip.selected {
+  background: var(--vinho, #591b1c) !important; color: var(--bege, #f4efe7) !important; border-color: var(--vinho, #591b1c) !important;
+}
+.badge, .tag, .status-badge { max-width: 100%; overflow-wrap: anywhere; }
+.card-patient, .patient-card, .patient-list-card { height: 100%; }
+.card-patient .btn, .patient-card .btn { min-height: 34px; }
+.chart-container, .chart-wrapper, .chart-scroll, .wide-chart-wrap { position: relative; }
+.chart-legend, [id$="-legend"] { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 8px; padding: 4px 2px 8px; scrollbar-width: thin; }
+.chart-legend > *, [id$="-legend"] > * { flex: 0 0 auto; }
+.details-accordion, details.accordion, .accordion-item { border: 1px solid var(--border, #e8ddd3); border-radius: 10px; background: var(--white, #fff); }
+details > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; }
+details > summary::marker { color: var(--dourado, #b8893f); }
+details[open] > summary { border-bottom: 1px solid var(--border, #e8ddd3); }
+:where(.main-content) img { max-width: 100%; height: auto; }
+@media (min-width: 1500px) {
+  .main-content { max-width: 1720px; margin-inline: auto; }
+  .grid-responsive-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .page-header { flex-direction: column; }
+  .page-header .btn, .page-header button { align-self: flex-start; }
+  .tabs { overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; }
+  .tab-item { flex: 0 0 auto; }
+  .modal-backdrop, .modal-overlay { padding: 12px; align-items: flex-end; }
+  .modal, .modal-content, .dialog, .dialog-content { border-radius: 16px 16px 12px 12px; }
+  .chart-legend, [id$="-legend"] { padding-bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Rodada 2 — acabamento responsivo e controles recolhíveis */
+.round2-login-linear .login-shell{display:grid;grid-template-columns:minmax(300px, .85fr) minmax(360px,1fr);align-items:stretch}
+.round2-login-linear .login-left{width:auto;min-width:0}
+.round2-login-linear .login-right{min-width:0}
+@media(max-width:760px){.round2-login-linear .login-shell{grid-template-columns:1fr}.round2-login-linear .login-left{padding:28px 22px;min-height:220px}.round2-login-linear .login-right{padding:28px 20px}}
+.chart-scroll,.table-responsive{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--dourado,#c6a15b);outline-offset:2px}
+.settings-section[hidden]{display:none!important}

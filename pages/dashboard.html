@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
 <body>
 <div id="topbar-container"></div>
@@ -21,52 +22,82 @@
   </div>
 
   <!-- Stat cards -->
-  <div class="grid-responsive-3" style="gap:12px;margin-bottom:20px;">
-    <div class="card-stat stagger-1">
+  <section aria-labelledby="dashboard-summary-title" style="margin-bottom:20px;">
+    <div style="margin-bottom:12px;">
+      <h2 id="dashboard-summary-title" style="font-size:17px;font-family:var(--font-serif);color:var(--vinho);">Resumo geral</h2>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Fotografia da carteira: quantas pacientes a clínica acompanha, como está a semana e o que pede atenção.</p>
+    </div>
+  <div class="grid-responsive-4" style="gap:12px;margin-bottom:20px;">
+    <button class="card-stat stagger-1 dashboard-stat" type="button" data-dashboard-action="patients">
       <span class="card-stat-label">Total de Pacientes</span>
       <span class="card-stat-value" id="total-patients-count">0</span>
-      <span class="card-stat-sub">cadastros de demonstração</span>
-    </div>
-    <div class="card-stat stagger-2">
-      <span class="card-stat-label">Pacientes com Protocolo</span>
-      <span class="card-stat-value" id="protocol-patients-count" style="color:var(--oliva);">0</span>
-      <span class="card-stat-sub">com protocolo definido</span>
-    </div>
-    <div class="card-stat stagger-3">
+      <span class="card-stat-sub">cadastradas (ativas + inativas)</span>
+    </button>
+    <button class="card-stat stagger-2 dashboard-stat" type="button" data-dashboard-action="active-patients">
+      <span class="card-stat-label">Pacientes Ativas</span>
+      <span class="card-stat-value" id="active-patients-count" style="color:var(--oliva);">0</span>
+      <span class="card-stat-sub" id="active-patients-percent">em acompanhamento</span>
+    </button>
+    <button class="card-stat stagger-3 dashboard-stat" type="button" data-dashboard-action="consultations">
       <span class="card-stat-label">Consultas na Semana</span>
       <span class="card-stat-value" id="weekly-consultations-count">0</span>
-      <span class="card-stat-sub">agendadas de segunda a sexta</span>
-    </div>
+      <span class="card-stat-sub">agendadas de segunda a domingo</span>
+    </button>
+    <button class="card-stat stagger-4 dashboard-stat" type="button" data-dashboard-action="alerts">
+      <span class="card-stat-label">Alertas Clínicos</span>
+      <span class="card-stat-value" id="dashboard-alert-count" style="color:var(--red-text);">0</span>
+      <span class="card-stat-sub" id="dashboard-alert-sub">em pacientes - por tipo</span>
+    </button>
   </div>
+  </section>
 
   <!-- Protocol distribution -->
-  <div class="grid-responsive-4" style="gap:10px;margin-bottom:20px;" id="proto-cards"></div>
+  <details class="card details-accordion" id="protocol-accordion" open style="margin-bottom:20px;padding:0;">
+    <summary style="font-size:15px;color:var(--vinho);">Protocolos <span id="protocol-summary" style="font-size:11px;color:var(--text-muted);font-family:var(--font-sans);font-weight:400;"></span></summary>
+    <div style="padding:0 16px 16px;">
+      <div class="protocol-toolbar" style="display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);">
+          Filtrar protocolo
+          <select id="protocol-filter" aria-label="Filtrar por protocolo" style="min-width:190px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--white);color:var(--text-primary);">
+            <option value="Todos">Todos os protocolos</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid-responsive-4" style="gap:10px;margin-bottom:4px;" id="proto-cards"></div>
+    </div>
+  </details>
 
   <!-- Charts row -->
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px;" class="charts-row">
     <!-- Donut -->
-    <div class="card">
-      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:16px;">Pacientes por Protocolo</h3>
+    <div class="card" id="protocol-distribution-card">
+      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:16px;">Distribuição de pacientes</h3>
       <canvas id="donut-chart" style="width:100%;height:160px;display:block;"></canvas>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;" id="donut-legend"></div>
     </div>
     <!-- Bar chart -->
     <div class="card">
-      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Consultas Esta Semana</h3>
-      <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Distribuição por dia</p>
-      <canvas id="bar-chart" style="width:100%;height:160px;display:block;"></canvas>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Consultas por semana</h3>
+        <div class="week-navigation" aria-label="Navegar entre semanas">
+          <button class="btn btn-subtle btn-sm" id="week-prev" type="button" aria-label="Semana anterior">‹ Anterior</button>
+          <button class="btn btn-subtle btn-sm" id="week-next" type="button" aria-label="Próxima semana">Próxima ›</button>
+        </div>
+      </div>
+      <p id="week-range" style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Distribuição por dia da semana</p>
+      <div class="chart-scroll"><canvas id="bar-chart" style="width:100%;min-width:520px;height:190px;display:block;"></canvas></div>
     </div>
   </div>
 
   <!-- Bottom row: alerts + contacts -->
   <div class="grid-responsive-2" style="gap:20px;">
     <!-- Alertas -->
-    <div class="card">
+    <div class="card" id="clinical-alerts-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Alertas Clínicos</h3>
         <span class="badge badge-red" id="alert-count"></span>
       </div>
-      <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Exames · Bioimpedâncias · LDL · Vitamina D</p>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;" id="alerts-subtitle">Exames · Bioimpedâncias · LDL · Vitamina D</p>
       <div class="filter-chips" id="alert-filters"></div>
       <div style="margin-top:14px;" id="alert-list"></div>
     </div>
@@ -78,26 +109,141 @@
       <div style="display:flex;flex-direction:column;gap:0;" id="contacts-list"></div>
     </div>
   </div>
+
+  <section class="card" id="diary-summary-card" style="margin-top:20px;">
+    <div style="margin-bottom:16px;">
+      <h2 style="font-size:17px;font-family:var(--font-serif);color:var(--vinho);">Diário Lapidar</h2>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Registros diários das pacientes entre uma consulta e a outra</p>
+    </div>
+    <div class="grid-responsive-4" style="gap:10px;margin-bottom:18px;">
+      <div class="card-stat"><span class="card-stat-label">Check-ins hoje</span><span class="card-stat-value" id="diary-checkins-today">0</span></div>
+      <div class="card-stat"><span class="card-stat-label">Registraram na semana</span><span class="card-stat-value" id="diary-checkins-week">0</span></div>
+      <div class="card-stat"><span class="card-stat-label">Constância média</span><span class="card-stat-value" id="diary-average-consistency">0 / 7</span></div>
+      <div class="card-stat"><span class="card-stat-label">Sem check-in há 7 dias</span><span class="card-stat-value" id="diary-no-recent-checkin" style="color:var(--red-text);">0</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px;">
+      <div>
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Pacientes sem registro recente</h3>
+        <div id="diary-no-recent-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+      <div>
+        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Pontos de atenção</h3>
+        <p id="diary-attention-summary" style="font-size:12px;color:var(--text-secondary);"></p>
+      </div>
+    </div>
+  </section>
 </main>
 
-<div id="bottombar-container"></div>
 
 <script src="../js/data.js"></script>
 <script src="../js/charts.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() !== 'doctor' && Router.getRole() !== 'admin') {
-    Router.navigate(Router.getRole() === 'secretary' ? 'patients' : 'patient-detail');
+  if (Router.getRole() === 'patient') {
+    Router.navigate(Router.getHomePage());
   } else {
   initShell('dashboard');
 
   // Date
   document.getElementById('today-date').textContent =
-    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' · Dados demonstrativos';
+    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' · Visão geral da clínica · Dados demonstrativos';
   document.getElementById('total-patients-count').textContent = PACIENTES.length;
-  document.getElementById('protocol-patients-count').textContent = PACIENTES.filter(patient => patient.protocolo).length;
+  const activePatients = PACIENTES.filter(patient => patient.ativo !== false && patient.status !== 'Inativa').length;
+  document.getElementById('active-patients-count').textContent = activePatients;
+  document.getElementById('active-patients-percent').textContent = `${PACIENTES.length ? Math.round(activePatients / PACIENTES.length * 100) : 0}% da carteira em acompanhamento`;
   document.getElementById('weekly-consultations-count').textContent = CONSULTAS_SEMANA.reduce((total, weekday) => total + weekday.n, 0);
+  document.getElementById('dashboard-alert-count').textContent = ALERTAS.length;
+  document.getElementById('dashboard-alert-sub').textContent = `em ${new Set(ALERTAS.map(alert => alert.paciente)).size} paciente(s) - abaixo, por tipo`;
+  if (Router.getRole() === 'secretary') {
+    document.getElementById('clinical-alerts-card').hidden = true;
+    document.getElementById('protocol-distribution-card').hidden = true;
+    document.getElementById('protocol-accordion').hidden = true;
+    document.getElementById('diary-summary-card').hidden = true;
+    document.querySelector('[data-dashboard-action="alerts"]').hidden = true;
+    document.querySelector('.grid-responsive-4').classList.replace('grid-responsive-4', 'grid-responsive-3');
+  }
+  document.querySelectorAll('[data-dashboard-action]').forEach(card => {
+    const navigate = () => {
+      const action = card.dataset.dashboardAction;
+      if (action === 'consultations') Router.navigate('consultations');
+      else if (action === 'alerts') document.getElementById('clinical-alerts-card').scrollIntoView({ behavior:'smooth', block:'start' });
+      else if (action === 'active-patients') Router.navigate('patients', { filterStatus:'Ativa' });
+      else Router.navigate('patients');
+    };
+    card.addEventListener('click', navigate);
+  });
+
+  function diaryDateToIso(value) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return value;
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value || '');
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
+  }
+  function readDiaryEntry(key) {
+    const value = localStorage.getItem(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      console.error(`Não foi possível ler o registro do diário "${key}".`, error);
+      return null;
+    }
+  }
+  const diaryToday = new Date();
+  const diaryTodayIso = `${diaryToday.getFullYear()}-${String(diaryToday.getMonth()+1).padStart(2,'0')}-${String(diaryToday.getDate()).padStart(2,'0')}`;
+  const diaryWeekStart = new Date(diaryToday.getFullYear(), diaryToday.getMonth(), diaryToday.getDate());
+  diaryWeekStart.setDate(diaryWeekStart.getDate() - (diaryWeekStart.getDay() || 7) + 1);
+  const diaryWeekStartIso = `${diaryWeekStart.getFullYear()}-${String(diaryWeekStart.getMonth()+1).padStart(2,'0')}-${String(diaryWeekStart.getDate()).padStart(2,'0')}`;
+  const diaryRecentStart = new Date(diaryToday);
+  diaryRecentStart.setDate(diaryRecentStart.getDate() - 6);
+  const diaryRecentStartIso = `${diaryRecentStart.getFullYear()}-${String(diaryRecentStart.getMonth()+1).padStart(2,'0')}-${String(diaryRecentStart.getDate()).padStart(2,'0')}`;
+  const diaryPatients = PACIENTES.filter(patient => patient.ativo !== false && patient.status !== 'Inativa');
+  const diaryRecordsByPatient = diaryPatients.map(patient => {
+    const dates = new Set();
+    const historyKey = `lapidar-diario-historico-${patient.id}`;
+    const history = readDiaryEntry(historyKey);
+    if (Array.isArray(history?.events)) history.events.forEach(event => {
+      if (event?.snapshot?.preenchido && diaryDateToIso(event.date)) dates.add(diaryDateToIso(event.date));
+    });
+    const datedKeyPrefix = `lapidar-diario-${patient.id}-`;
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index);
+      if (!key || !key.startsWith(datedKeyPrefix) || !/^\d{4}-\d{2}-\d{2}$/.test(key.slice(datedKeyPrefix.length))) continue;
+      if (readDiaryEntry(key)?.preenchido) dates.add(key.slice(datedKeyPrefix.length));
+    }
+    const latestEntry = readDiaryEntry(`lapidar-diario-${patient.id}`);
+    if (latestEntry?.preenchido) dates.add(diaryDateToIso(latestEntry.data) || diaryTodayIso);
+    if (patient.diarioHoje?.preenchido) {
+      const sampleDate = diaryDateToIso(patient.diarioHoje.data);
+      if (sampleDate) dates.add(sampleDate);
+    }
+    return { patient, dates:[...dates].sort() };
+  });
+  const diaryCheckinsToday = diaryRecordsByPatient.filter(record => record.dates.includes(diaryTodayIso)).length;
+  const diaryCheckinsWeek = diaryRecordsByPatient.filter(record => record.dates.some(date => date >= diaryWeekStartIso && date <= diaryTodayIso)).length;
+  const diaryAverage = diaryPatients.length
+    ? diaryRecordsByPatient.reduce((sum, record) => sum + record.dates.filter(date => date >= diaryWeekStartIso && date <= diaryTodayIso).length, 0) / diaryPatients.length
+    : 0;
+  const diaryNoRecent = diaryRecordsByPatient
+    .filter(record => !record.dates.some(date => date >= diaryRecentStartIso && date <= diaryTodayIso))
+    .sort((a, b) =>
+      (a.dates[a.dates.length - 1] || '').localeCompare(b.dates[b.dates.length - 1] || '') ||
+      a.patient.nome.localeCompare(b.patient.nome)
+    );
+  document.getElementById('diary-checkins-today').textContent = diaryCheckinsToday;
+  document.getElementById('diary-checkins-week').textContent = diaryCheckinsWeek;
+  document.getElementById('diary-average-consistency').textContent = `${diaryAverage.toFixed(1).replace('.', ',')} / 7`;
+  document.getElementById('diary-no-recent-checkin').textContent = diaryNoRecent.length;
+  document.getElementById('diary-no-recent-list').innerHTML = diaryNoRecent.slice(0, 5).map(({ patient, dates }) => `
+    <button type="button" class="btn btn-subtle btn-sm" data-open-patient-diary="${patient.id}" style="display:flex;justify-content:space-between;gap:12px;text-align:left;">
+      <span>${patient.nome}</span><span style="color:var(--text-muted);">${dates.length ? `Último: ${new Date(`${dates[dates.length-1]}T12:00:00`).toLocaleDateString('pt-BR')}` : 'Sem registro'}</span>
+    </button>`).join('') || '<p style="font-size:12px;color:var(--text-muted);">Todas as pacientes registraram o diário nos últimos sete dias.</p>';
+  document.getElementById('diary-attention-summary').textContent = diaryNoRecent.length
+    ? `${diaryNoRecent.length} paciente(s) ativa(s) estão há pelo menos sete dias sem check-in. A lista mostra até cinco casos prioritários.`
+    : 'Nenhum ponto de atenção: todas as pacientes ativas registraram o diário nos últimos sete dias.';
+  document.querySelectorAll('[data-open-patient-diary]').forEach(button => button.addEventListener('click', () =>
+    Router.navigate('habits', { patientId:Number(button.dataset.openPatientDiary) })
+  ));
 
   // Próximos contatos date
   const nextTue = new Date();
@@ -106,49 +252,93 @@
   document.getElementById('contact-date').textContent =
     nextTue.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
 
-  // Protocol cards
+  // Protocolos: filtro compartilhado entre cards, gráfico e legenda.
   const protoCards = document.getElementById('proto-cards');
-  PROTO_DIST.forEach((p, i) => {
-    protoCards.innerHTML += `
-      <div class="card-stat stagger-${i+1}" style="border-left:3px solid ${p.cor};">
+  const protocolFilter = document.getElementById('protocol-filter');
+  document.getElementById('protocol-summary').textContent =
+    `${PROTO_DIST.length} protocolo(s) · ${PROTO_DIST.reduce((total, protocol) => total + protocol.valor, 0)} pacientes por protocolo`;
+  PROTO_DIST.forEach(p => {
+    const option = document.createElement('option');
+    option.value = p.nome; option.textContent = p.nome; protocolFilter.appendChild(option);
+  });
+  let selectedProtocol = 'Todos';
+  function renderProtocols() {
+    const items = selectedProtocol === 'Todos' ? PROTO_DIST : PROTO_DIST.filter(p => p.nome === selectedProtocol);
+    protoCards.innerHTML = items.map((p, i) => `
+      <button type="button" class="card-stat stagger-${(i % 4)+1} dashboard-protocol-stat" data-protocol="${p.nome}" style="border-left:3px solid ${p.cor};text-align:left;cursor:pointer;">
         <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};"></div>
         <span class="card-stat-label">${p.nome}</span>
         <span class="card-stat-value" style="color:${p.cor};">${p.valor}</span>
         <span class="card-stat-sub">pacientes</span>
-      </div>`;
-  });
-
-  // Charts
-  requestAnimationFrame(() => {
-    const donutCanvas = document.getElementById('donut-chart');
-    drawDonutChart(donutCanvas, PROTO_DIST.map(p => ({ label:p.nome, value:p.valor, color:p.cor })));
-
-    const barCanvas = document.getElementById('bar-chart');
-    drawBarChart(barCanvas, CONSULTAS_SEMANA.map(d => ({ label:d.dia, value:d.n })));
-  });
-
-  // Donut legend
-  const legend = document.getElementById('donut-legend');
-  PROTO_DIST.forEach(p => {
-    legend.innerHTML += `
-      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
-        <div style="display:flex;align-items:center;gap:6px;">
+      </button>`).join('');
+    protoCards.querySelectorAll('[data-protocol]').forEach(card => card.addEventListener('click', () =>
+      Router.navigate('patients', { filterProtocol:card.dataset.protocol })
+    ));
+    const donutItems = items.map(p => ({ label:p.nome, value:p.valor, color:p.cor }));
+    drawDonutChart(document.getElementById('donut-chart'), donutItems);
+    const legend = document.getElementById('donut-legend');
+    legend.innerHTML = items.map(p => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
           <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};flex-shrink:0;"></div>
           <span style="color:var(--text-secondary);">${p.nome}</span>
         </div>
-        <span style="color:var(--text-muted);font-weight:500;">${p.valor}</span>
-      </div>`;
+        <span style="color:var(--text-muted);font-weight:600;">${p.valor}</span>
+      </div>`).join('');
+  }
+  protocolFilter.addEventListener('change', () => {
+    selectedProtocol = protocolFilter.value;
+    renderProtocols();
   });
+  renderProtocols();
+
+  // Navegação real por semanas com base nas consultas de demonstração.
+  let weekOffset = 0;
+  const weekdaysFull = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'];
+  function mondayForOffset(offset) {
+    const now = new Date();
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day = monday.getDay();
+    monday.setDate(monday.getDate() + (day === 0 ? -6 : 1 - day) + offset * 7);
+    monday.setHours(0,0,0,0);
+    return monday;
+  }
+  function dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function renderWeek() {
+    const monday = mondayForOffset(weekOffset);
+    const days = weekdaysFull.map((label, index) => {
+      const date = new Date(monday); date.setDate(monday.getDate()+index);
+      const dateStr = dateKey(date);
+      const count = CONSULTAS.filter(c => c.data === dateStr && c.status === 'agendada').length;
+      return { label, value: count };
+    });
+    const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+    document.getElementById('week-range').textContent =
+      `${monday.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${sunday.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
+    document.getElementById('week-prev').disabled = weekOffset <= -52;
+    document.getElementById('week-next').disabled = weekOffset >= 0;
+    document.getElementById('week-next').style.opacity = weekOffset >= 0 ? '.45' : '1';
+    document.getElementById('week-prev').style.opacity = weekOffset <= -52 ? '.45' : '1';
+    drawBarChart(document.getElementById('bar-chart'), days);
+  }
+  document.getElementById('week-prev').addEventListener('click', () => { weekOffset = Math.max(-52, weekOffset-1); renderWeek(); });
+  document.getElementById('week-next').addEventListener('click', () => { weekOffset = Math.min(0, weekOffset+1); renderWeek(); });
+  requestAnimationFrame(renderWeek);
 
   // Alertas
   let activeFilter = 'Todos';
-  const tipos = ['Todos', ...new Set(ALERTAS.map(a => a.tipo))];
+  // Flutter (AuthSession.canSeeAlert): a secretaria só vê o recorte operacional de exames pendentes.
+  const visibleAlerts = Router.getRole() === 'secretary' ? ALERTAS.filter(a => a.tipo === 'Exames pendentes') : ALERTAS;
+  if (Router.getRole() === 'secretary') document.getElementById('alerts-subtitle').textContent = 'Recorte operacional: pendências de entrega de exames';
+  const tipos = ['Todos', ...new Set(visibleAlerts.map(a => a.tipo))];
   const filtersEl = document.getElementById('alert-filters');
   const alertList = document.getElementById('alert-list');
   const alertCount = document.getElementById('alert-count');
 
   function renderAlerts() {
-    const visible = activeFilter === 'Todos' ? ALERTAS : ALERTAS.filter(a => a.tipo === activeFilter);
+    const visible = activeFilter === 'Todos' ? visibleAlerts : visibleAlerts.filter(a => a.tipo === activeFilter);
     alertCount.textContent = visible.length;
     alertList.innerHTML = visible.map(a => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
@@ -177,23 +367,29 @@
 
   // Próximos contatos
   const contactsList = document.getElementById('contacts-list');
-  PROXIMOS_CONTATOS.forEach((c, i) => {
-    const isLast = i === PROXIMOS_CONTATOS.length - 1;
-    contactsList.innerHTML += `
-      <div style="display:flex;align-items:flex-start;gap:12px;${!isLast ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);' : ''}">
-        <div style="font-size:12px;font-weight:600;color:var(--dourado);width:40px;text-align:right;flex-shrink:0;padding-top:2px;">${c.horario}</div>
-        <div>
-          <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${c.paciente}</p>
-          <p style="font-size:11px;color:var(--text-muted);">${c.motivo}</p>
+  const escapeDashboardText = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[char]));
+  contactsList.innerHTML = PROXIMOS_CONTATOS.map((contact, index) => {
+    const patient = PACIENTES.find(item => item.nome === contact.paciente);
+    const phone = String(patient?.telefone || '').replace(/\D/g, '');
+    const phoneLink = phone.length >= 10 ? `+${phone.startsWith('55') ? phone : `55${phone}`}` : '';
+    const isLast = index === PROXIMOS_CONTATOS.length - 1;
+    return `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;${!isLast ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);' : ''}">
+        <div style="display:flex;align-items:flex-start;gap:12px;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--dourado);width:40px;text-align:right;flex-shrink:0;padding-top:2px;">${escapeDashboardText(contact.horario)}</div>
+          <div style="min-width:0;">
+            <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${escapeDashboardText(contact.paciente)}</p>
+            ${Router.getRole() === 'secretary' ? '' : `<p style="font-size:11px;color:var(--text-muted);">${escapeDashboardText(contact.motivo)}</p>`}
+          </div>
         </div>
+        ${phoneLink ? `<a class="btn btn-subtle btn-sm" href="tel:${phoneLink}" aria-label="Entrar em contato com ${escapeDashboardText(contact.paciente)}">Entrar em contato</a>` : '<span class="text-muted" style="font-size:11px;">Telefone não informado</span>'}
       </div>`;
-  });
+  }).join('') || '<p style="font-size:12px;color:var(--text-muted);">Sem contatos agendados.</p>';
 
   window.addEventListener('resize', () => {
-    requestAnimationFrame(() => {
-      drawDonutChart(document.getElementById('donut-chart'), PROTO_DIST.map(p => ({ label:p.nome, value:p.valor, color:p.cor })));
-      drawBarChart(document.getElementById('bar-chart'), CONSULTAS_SEMANA.map(d => ({ label:d.dia, value:d.n })));
-    });
+    requestAnimationFrame(() => { renderProtocols(); renderWeek(); });
   });
   }
 </script>
@@ -202,5 +398,7 @@
     .charts-row { grid-template-columns: 1fr !important; }
   }
 </style>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

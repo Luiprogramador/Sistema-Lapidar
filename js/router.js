@@ -18,11 +18,64 @@ const Router = {
   },
 
   getRole() {
-    return this.getState().role || 'doctor';
+    const role = this.getState().role || 'doctor';
+    if (role === 'admin') return 'secretary';
+    return ['doctor', 'secretary', 'patient', 'developer'].includes(role) ? role : 'doctor';
+  },
+
+  // Espelha AppUser.isAdmin do Flutter: o administrador não é um perfil
+  // separado, e sim uma flag da médica ou da secretária.
+  isAdmin() {
+    const state = this.getState();
+    if (state.role === 'patient' || state.role === 'developer') return false;
+    if (typeof state.isAdmin === 'boolean') return state.isAdmin;
+    return (state.role || 'doctor') !== 'secretary';
+  },
+
+  getProfileId() {
+    const role = this.getRole();
+    if (role === 'patient') return 'patient';
+    return role + (this.isAdmin() ? '-admin' : '');
+  },
+
+  setProfile(profileId) {
+    const [role, admin] = String(profileId).split('-');
+    if (!['doctor', 'secretary', 'patient', 'developer'].includes(role)) {
+      throw new TypeError(`Perfil de demonstração inválido: ${profileId}`);
+    }
+    const isAdmin = role !== 'patient' && admin === 'admin';
+    this.setState(role === 'patient' ? { role, isAdmin: false, patientId: 1 } : { role, isAdmin });
   },
 
   setRole(role) {
-    this.setState(role === 'patient' ? { role, patientId: 1 } : { role });
+    this.setProfile(role === 'admin' ? 'secretary-admin' : role === 'doctor' ? 'doctor-admin' : role);
+  },
+
+  // Permissões equivalentes a AuthSession (lib/features/auth/data/auth_session.dart).
+  can(permission) {
+    const role = this.getRole();
+    const admin = this.isAdmin();
+    const clinical = role === 'doctor' || role === 'secretary';
+    switch (permission) {
+      case 'manageContent':     return role === 'doctor' && admin;
+      case 'editChart':         return role === 'doctor' && admin;
+      case 'seeFinance':        return clinical;
+      case 'seeClinicFinance':  return clinical && admin;
+      case 'customizeSystem':   return clinical && admin;
+      case 'seeAgenda':         return clinical;
+      case 'scheduleConsultations': return clinical;
+      case 'seeConsultations':  return role !== 'secretary';
+      case 'contactDataOnly':   return role === 'secretary';
+      case 'seePatients':       return clinical;
+      case 'seeClinicalData':   return role === 'doctor' || role === 'patient';
+      case 'manageTeam':        return (role === 'doctor' || role === 'secretary') && admin;
+      case 'seeLogs':           return role === 'developer';
+      default: return false;
+    }
+  },
+
+  getHomePage() {
+    return this.getRole() === 'patient' ? 'habits' : this.getRole() === 'developer' ? 'logs' : 'dashboard';
   },
 
   getActivePage() {
@@ -38,29 +91,32 @@ const Router = {
 
   resolveNavigation(page, params = {}) {
     const role = this.getRole();
+    if (page === 'portal') page = role === 'patient' ? 'patient-detail' : 'dashboard';
+    if (role === 'developer') {
+      return { page: ['logs', 'settings'].includes(page) ? page : 'logs', params };
+    }
     if (role === 'patient') {
-      if (page === 'portal') page = 'patient-detail';
-      const allowedPages = ['login', 'patient-detail', 'habits', 'agenda', 'consultation', 'contents', 'settings', 'profile'];
+      if (page === 'dashboard') page = 'habits';
+      const allowedPages = ['login', 'patient-detail', 'habits', 'consultations', 'consultation', 'messages', 'contents', 'settings', 'profile'];
       return {
-        page: allowedPages.includes(page) ? page : 'patient-detail',
+        page: allowedPages.includes(page) ? page : 'habits',
         params: { ...params, patientId: 1 },
       };
     }
     if (role === 'secretary') {
-      if (page === 'patient-detail') page = 'patient-registration';
-      const allowedPages = ['login', 'patients', 'patient-registration', 'agenda', 'financial', 'journey', 'contents', 'settings', 'profile'];
-      if (!allowedPages.includes(page)) page = 'patients';
-    }
-    if (role === 'admin') {
-      const allowedPages = ['login', 'dashboard', 'patients', 'agenda', 'financial', 'contents', 'settings', 'profile'];
+      if (page === 'consultation' || page === 'consultations' || page === 'patient-detail') page = 'agenda';
+      const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'messages', 'financial', 'journey', 'contents', 'settings', 'profile'];
       if (!allowedPages.includes(page)) page = 'dashboard';
     }
+    const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'consultations', 'patient-detail', 'consultation', 'messages', 'financial', 'contents', 'journey', 'settings', 'habits', 'profile', 'logs'];
+    if (!allowedPages.includes(page)) page = this.getHomePage();
     return { page, params };
   },
 
   navigate(page, params = {}, options = {}) {
     const navigation = this.resolveNavigation(page, params);
     page = navigation.page;
+    params = navigation.params;
     const current = this.getState();
     const history = Array.isArray(current.navigationHistory) ? current.navigationHistory : [];
     if (!options.skipHistory && current.page && current.page !== page) {
@@ -93,6 +149,8 @@ const Router = {
       settings:         '../pages/settings.html',
       habits:           '../pages/habits.html',
       profile:          '../pages/profile.html',
+      messages:         '../pages/messages.html',
+      logs:             '../pages/logs.html',
     };
     const target = pageFiles[page];
     if (target) {
@@ -120,6 +178,7 @@ const Router = {
   navigateRelative(page, params = {}, options = {}) {
     const navigation = this.resolveNavigation(page, params);
     page = navigation.page;
+    params = navigation.params;
     const current = this.getState();
     const history = Array.isArray(current.navigationHistory) ? current.navigationHistory : [];
     if (!options.skipHistory && current.page && current.page !== page) {
@@ -152,6 +211,8 @@ const Router = {
       settings:         'pages/settings.html',
       habits:           'pages/habits.html',
       profile:          'pages/profile.html',
+      messages:         'pages/messages.html',
+      logs:             'pages/logs.html',
     };
     const target = pageFiles[page];
     if (target) {

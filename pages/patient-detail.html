@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .bio-card {
       background: var(--white);
@@ -148,7 +149,7 @@
     /* Print report styles */
     @media print {
       body { background: #fff !important; }
-      #topbar-container, #sidebar-container, #bottombar-container,
+      #topbar-container, #sidebar-container,
       .top-actions-bar, .tabs, .no-print { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; }
       .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #591B1C; padding-bottom: 12px; }
@@ -210,18 +211,21 @@
 
   <!-- Tabs Navigation -->
   <div class="tabs" id="tabs-nav">
-    <button class="tab-item active" data-tab="painel">Painel Clínico</button>
-    <button class="tab-item" data-tab="timeline">Timeline</button>
+    <button class="tab-item active" data-tab="timeline">Timeline</button>
+    <button class="tab-item" data-tab="painel">Painel Clínico</button>
+    <button class="tab-item" data-tab="consultas">Consultas</button>
     <button class="tab-item" data-tab="bio">Bioimpedância</button>
+    <button class="tab-item" data-tab="diario">Diário Lapidar</button>
     <button class="tab-item" data-tab="score">Score Lapidar</button>
-    <button class="tab-item" data-tab="risco">Risco CV</button>
-    <button class="tab-item" data-tab="medicamentos">Medicamentos</button>
+    <button class="tab-item" data-tab="risco">Risco Cardiovascular</button>
+    <button class="tab-item" data-tab="medicamentos">Medicamentos e Suplementos</button>
     <button class="tab-item" data-tab="arquivos">Arquivos</button>
-    <button class="tab-item" data-tab="diario">Diário & Hábitos</button>
+    <button class="tab-item" data-tab="jornada">Jornada operacional</button>
+    <button class="tab-item" data-tab="relatorio">Relatório</button>
   </div>
 
   <!-- Tab 1: Painel Clínico -->
-  <div class="tab-content active" id="tab-painel"></div>
+  <div class="tab-content" id="tab-painel"></div>
 
   <!-- Tab 2: Bioimpedância -->
   <div class="tab-content" id="tab-bio"></div>
@@ -242,11 +246,13 @@
   <div class="tab-content" id="tab-diario"></div>
 
   <!-- Tab 8: Timeline -->
-  <div class="tab-content" id="tab-timeline"></div>
+  <div class="tab-content active" id="tab-timeline"></div>
+  <div class="tab-content" id="tab-consultas"></div>
+  <div class="tab-content" id="tab-jornada"></div>
+  <div class="tab-content" id="tab-relatorio"></div>
 
 </main>
 
-<div id="bottombar-container"></div>
 
 <!-- Modal Nova Bioimpedância -->
 <div class="modal-overlay" id="modal-bio">
@@ -316,7 +322,9 @@
 
   // Load patient
   const p = Router.getSelectedPatient() || PACIENTES[0];
-  const isDoctorView = Router.getRole() === 'doctor';
+  const isDoctorRole = Router.getRole() === 'doctor';
+  // Flutter: só a médica administradora edita a ficha clínica (AuthSession.canEditChart).
+  const isDoctorView = Router.can('editChart');
   const isPatientView = Router.getRole() === 'patient';
   const scoreHistoryKey = 'lapidar-score-history-' + p.id;
   let scoreHistory = [];
@@ -326,9 +334,29 @@
   } catch (error) {
     console.error('Não foi possível carregar o histórico do Score Lapidar.', error);
   }
+  const visibleScoreIndices = p.scoreLabels.map((_, index) => index).filter(index =>
+    p.protocolo === 'Lapidar 40+' || index !== 6
+  );
+  scoreHistory = scoreHistory.filter(entry =>
+    entry && entry.source === 'diary' && Array.isArray(entry.values) &&
+    typeof entry.date === 'string' &&
+    visibleScoreIndices.every(index => Number.isFinite(entry.values[index]) && entry.values[index] >= 0 && entry.values[index] <= 10)
+  );
+  const visibleScoreLabels = visibleScoreIndices.map(index => p.scoreLabels[index]);
   if (scoreHistory.length) {
     scoreHistory.sort((a, b) => a.date.localeCompare(b.date));
-    p.scoreAtual = scoreHistory[scoreHistory.length - 1].values;
+    const latestScore = scoreHistory[scoreHistory.length - 1];
+    const previousScore = scoreHistory.length > 1 ? scoreHistory[scoreHistory.length - 2] : null;
+    p.scoreAtual = p.scoreAtual.slice();
+    p.scoreAnterior = p.scoreAnterior.slice();
+    p.scoreAtual = p.scoreAtual.map((value, index) =>
+      Number.isFinite(latestScore.values[index]) ? latestScore.values[index] : value
+    );
+    if (previousScore) {
+      p.scoreAnterior = p.scoreAnterior.map((value, index) =>
+        Number.isFinite(previousScore.values[index]) ? previousScore.values[index] : value
+      );
+    }
   }
   const patientReleasesKey = 'lapidar-patient-releases-' + p.id;
   let patientReleases = {};
@@ -349,6 +377,118 @@
   const bio = p.bioimpedancia;
   const latestBio = bio[bio.length - 1];
   const prevBio   = bio[bio.length - 2] || null;
+
+  // Abas alinhadas à ficha do lapidar-main: Consultas, Jornada e Relatório.
+  // O protótipo usa dados demonstrativos locais; não representa persistência clínica real.
+  const journeyTabButton = document.querySelector('#tabs-nav [data-tab="jornada"]');
+  if (isPatientView && journeyTabButton) journeyTabButton.hidden = true;
+
+  const tabConsultations = (Array.isArray(CONSULTAS) ? CONSULTAS : [])
+    .filter(item => (item.paciente || '').trim().toLowerCase() === (p.nome || '').trim().toLowerCase());
+
+  const consultationsContainer = document.getElementById('tab-consultas');
+  if (consultationsContainer) {
+    const todayIso = dateOffset(0);
+    const pastConsultations = tabConsultations.filter(c => c.status === 'concluida' || c.data < todayIso);
+    const upcomingConsultations = tabConsultations.filter(c => !pastConsultations.includes(c));
+    const statusBadge = status => `<span class="badge ${status === 'agendada' ? 'badge-vinho' : status === 'cancelada' ? 'badge-red' : 'badge-green'}">${status || 'registrada'}</span>`;
+    consultationsContainer.innerHTML = `
+      <div class="grid-responsive-3" style="gap:12px;margin-bottom:16px;">
+        <div class="card-stat"><span class="card-stat-label">Consultas realizadas</span><span class="card-stat-value">${pastConsultations.length}</span><span class="card-stat-sub">No histórico</span></div>
+        <div class="card-stat"><span class="card-stat-label">Consultas agendadas</span><span class="card-stat-value">${upcomingConsultations.length}</span><span class="card-stat-sub">Próximas datas</span></div>
+        <div class="card-stat"><span class="card-stat-label">Consulta atual</span><span class="card-stat-value">${p.consultaAtual || '—'}</span><span class="card-stat-sub">${p.protocolo || ''}</span></div>
+      </div>
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+          <div>
+            <h3 style="font-size:14px;font-weight:600;color:var(--vinho);">Histórico de consultas</h3>
+            <p class="text-muted" style="font-size:12px;">Consultas associadas a ${p.nome}</p>
+          </div>
+          ${isDoctorRole ? '<button class="btn btn-primary btn-sm" id="patient-tab-new-consult">Nova consulta</button>' : ''}
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>Data</th><th>Horário</th><th>Tipo</th><th>Situação</th><th></th></tr></thead>
+            <tbody>${tabConsultations.length ? tabConsultations.map(c => `
+              <tr><td>${formatDate(c.data) || '—'}</td><td>${c.horario || '—'}</td><td>${c.tipo || 'Consulta'}</td>
+              <td>${statusBadge(c.status)}</td>
+              <td style="text-align:right;"><button class="btn btn-subtle btn-sm" data-open-consultation="${c.id}">Abrir</button></td></tr>
+            `).join('') : '<tr><td colspan="5" class="text-muted">Nenhuma consulta vinculada a esta paciente nos dados de demonstração.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </section>`;
+    consultationsContainer.querySelector('#patient-tab-new-consult')?.addEventListener('click', () =>
+      Router.navigate('consultation', { patientId: p.id, consultationId: null }));
+    consultationsContainer.querySelectorAll('[data-open-consultation]').forEach(button =>
+      button.addEventListener('click', () => Router.navigate('consultation', {
+        patientId: p.id, consultationId: Number(button.dataset.openConsultation)
+      })));
+  }
+
+  const journeyContainer = document.getElementById('tab-jornada');
+  if (journeyContainer && !isPatientView) {
+    const goals = Array.isArray(p.metas) ? p.metas : [];
+    const completedGoals = Math.max(0, Math.min(Number(p.metasConcluidas) || 0, goals.length));
+    let journeyState = { checked: {}, postPhase: 'alta' };
+    try { journeyState = JSON.parse(localStorage.getItem('lapidar-journey-' + p.id)) || journeyState; } catch (e) {}
+    const checkedTasks = Object.values(journeyState.checked || {}).filter(Boolean).length;
+    const postPhaseLabels = { alta:'Alta intensidade', media:'Média intensidade', manutencao:'Manutenção trimestral' };
+    journeyContainer.innerHTML = `
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <div>
+            <h3 style="font-size:14px;font-weight:600;color:var(--vinho);">Jornada da paciente</h3>
+            <p class="text-muted" style="font-size:12px;">Checklist interno da equipe, etapa por etapa</p>
+          </div>
+          <span class="badge badge-dourado">${checkedTasks} item(ns) concluído(s)</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);background:var(--bege);padding:10px 12px;border-radius:var(--radius);margin-bottom:14px;">
+          O progresso é compartilhado entre médica e secretaria e não mede melhora clínica nem adesão da paciente.
+        </p>
+        <div class="grid-responsive-3" style="gap:12px;margin-bottom:16px;">
+          <div class="card-stat"><span class="card-stat-label">Itens do checklist</span><span class="card-stat-value">${checkedTasks}</span><span class="card-stat-sub">Marcados na jornada</span></div>
+          <div class="card-stat"><span class="card-stat-label">Fase pós-ciclo</span><span class="card-stat-value" style="font-size:20px;">${postPhaseLabels[journeyState.postPhase] || 'Ainda não definida'}</span><span class="card-stat-sub">Só uma fase por vez</span></div>
+          <div class="card-stat"><span class="card-stat-label">Metas</span><span class="card-stat-value">${completedGoals}/${goals.length}</span><span class="card-stat-sub">Concluídas</span></div>
+        </div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">${goals.length ? goals.map((goal, index) => `
+          <li style="display:flex;align-items:center;gap:10px;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);">
+            <span aria-hidden="true" style="color:${index < completedGoals ? 'var(--oliva)' : 'var(--text-muted)'};font-weight:700;">${index < completedGoals ? '✓' : '○'}</span><span>${goal}</span>
+          </li>`).join('') : '<li class="text-muted">Nenhuma meta cadastrada.</li>'}</ul>
+        <button class="btn btn-primary btn-sm" id="open-full-journey">Abrir checklist completo</button>
+      </section>`;
+    journeyContainer.querySelector('#open-full-journey')?.addEventListener('click', () =>
+      Router.navigate('journey', { patientId: p.id }));
+  }
+
+  const reportContainer = document.getElementById('tab-relatorio');
+  if (reportContainer) {
+    const reportRow = (label, value) => `
+      <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);">
+        <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:4px;">${label}</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text-primary);">${value}</div>
+      </div>`;
+    reportContainer.innerHTML = `
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <div>
+            <h3 style="font-size:14px;font-weight:600;color:var(--vinho);">Relatório da paciente</h3>
+            <p class="text-muted" style="font-size:12px;">Resumo gerado a partir da ficha, pronto para imprimir ou salvar em PDF.</p>
+          </div>
+          <span class="badge badge-gray">Gerado</span>
+        </div>
+        <div class="grid-responsive-2" style="gap:12px;margin-bottom:14px;">
+          ${reportRow('Paciente', p.nome)}
+          ${reportRow('Protocolo', p.protocolo || '—')}
+          ${reportRow('Última consulta', p.ultimaConsulta || '—')}
+          ${reportRow('Próxima consulta', p.proximaConsulta || '—')}
+          ${reportRow('Peso atual', (p.pesoAtual ?? '—') + ' kg')}
+          ${reportRow('Metas concluídas', (p.metasConcluidas ?? 0) + ' de ' + (p.metas || []).length)}
+        </div>
+        <p class="text-muted" style="font-size:11.5px;margin-bottom:12px;">Este resumo usa dados fictícios do protótipo e não é um documento clínico validado.</p>
+        <button class="btn btn-primary btn-sm" id="print-patient-report">Imprimir / salvar em PDF</button>
+      </section>`;
+    reportContainer.querySelector('#print-patient-report')?.addEventListener('click', () => window.print());
+  }
   const patientMedicationKey = 'lapidar-medicamentos-' + p.id;
   let patientMedications = Array.isArray(p.medicamentos) ? [...p.medicamentos] : [];
   try {
@@ -383,7 +523,12 @@
   });
 
   // ── Patient Header ──
-  const pct = Math.round((p.metasConcluidas / (p.metas.length || 1)) * 100);
+  const patientJourneyGoals = Array.isArray(p.metas) ? p.metas : [];
+  const completedJourneyGoals = Math.max(0, Math.min(Number(p.metasConcluidas) || 0, patientJourneyGoals.length));
+  const pct = patientJourneyGoals.length ? Math.round((completedJourneyGoals / patientJourneyGoals.length) * 100) : 0;
+  const hasCurrentWeight = p.pesoAtual !== null && p.pesoAtual !== undefined && Number.isFinite(Number(p.pesoAtual));
+  const hasInitialWeight = p.pesoInicial !== null && p.pesoInicial !== undefined && Number.isFinite(Number(p.pesoInicial));
+  const hasWeightTarget = p.meta !== null && p.meta !== undefined && p.meta !== '' && Number.isFinite(Number(p.meta));
   document.getElementById('patient-header').innerHTML = `
     <div class="patient-header-inner">
       <div class="patient-header-avatar">${p.iniciais}</div>
@@ -397,21 +542,21 @@
           <span id="patient-lead" class="patient-header-lead" ${isPatientView ? 'hidden' : ''}>Lead: ${p.origemLead || 'Indicação'}</span>
         </div>
         <div class="patient-header-objective">
-          <strong>Objetivo:</strong> ${p.objetivo}
+          <strong>Objetivo:</strong> ${escapeRiskText(p.objetivo || 'A definir')}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;">
-          <div class="patient-header-stat">
-            <div class="patient-header-stat-value">${p.pesoAtual} kg</div>
+          ${hasCurrentWeight ? `<div class="patient-header-stat">
+            <div class="patient-header-stat-value">${Number(p.pesoAtual)} kg</div>
             <div class="patient-header-stat-label">Peso atual</div>
-          </div>
-          <div class="patient-header-stat">
-            <div class="patient-header-stat-value">${p.meta} kg</div>
-            <div class="patient-header-stat-label">Meta</div>
-          </div>
-          <div class="patient-header-stat">
-            <div class="patient-header-stat-value">−${(p.pesoInicial - p.pesoAtual).toFixed(1)} kg</div>
-            <div class="patient-header-stat-label">Perda total</div>
-          </div>
+          </div>` : ''}
+          ${hasWeightTarget ? `<div class="patient-header-stat">
+            <div class="patient-header-stat-value">${Number(p.meta)} kg</div>
+            <div class="patient-header-stat-label">Meta de peso</div>
+          </div>` : ''}
+          ${hasCurrentWeight && hasInitialWeight ? `<div class="patient-header-stat">
+            <div class="patient-header-stat-value">${(Number(p.pesoInicial) - Number(p.pesoAtual) > 0 ? '−' : '') + (Number(p.pesoInicial) - Number(p.pesoAtual)).toFixed(1)} kg</div>
+            <div class="patient-header-stat-label">Variação de peso</div>
+          </div>` : ''}
           <div class="patient-header-stat">
             <div class="patient-header-stat-value">${pct}%</div>
             <div class="patient-header-stat-label">Metas atingidas</div>
@@ -480,22 +625,22 @@
       </div>
 
       <div class="card">
-        <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Metas da Jornada (${p.metasConcluidas}/${p.metas.length})</h4>
+        <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Metas da Jornada (${completedJourneyGoals}/${patientJourneyGoals.length})</h4>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          ${p.metas.map((m, i) => `
+          ${patientJourneyGoals.map((m, i) => `
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
               <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${i < p.metasConcluidas ? 'var(--oliva)' : 'var(--border)'};background:${i < p.metasConcluidas ? 'var(--oliva)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 ${i < p.metasConcluidas ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
               </div>
               <span style="color:${i < p.metasConcluidas ? 'var(--text-muted);text-decoration:line-through' : 'var(--text-primary)'};">${m}</span>
             </div>
-          `).join('')}
+          `).join('') || '<p style="font-size:12px;color:var(--text-muted);">Nenhuma meta da jornada cadastrada.</p>'}
         </div>
         <div style="margin-top:16px;">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:6px;">
-            <span>Adesão ao plano</span><span>${pct}%</span>
+            <span>Adesão ao plano</span><span>${patientJourneyGoals.length ? pct + '%' : 'Sem metas definidas'}</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div></div>
+          ${patientJourneyGoals.length ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--vinho),var(--oliva));"></div></div>` : ''}
         </div>
       </div>
     </div>
@@ -510,6 +655,92 @@
       </div>
     </div>`;
 
+  const profileGoals = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [];
+  document.getElementById('tab-painel').insertAdjacentHTML('afterbegin', `
+    <section class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <h3 style="font-size:14px;font-weight:600;color:var(--vinho);">Perfil clínico e objetivos</h3>
+          <p class="text-muted" style="font-size:12px;">Informações relevantes para o acompanhamento da paciente.</p>
+        </div>
+        ${isDoctorView ? '<button class="btn btn-subtle btn-sm" id="edit-patient-profile">Editar perfil</button>' : ''}
+      </div>
+      <div class="grid-responsive-2" style="gap:12px;">
+        <div><strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Objetivo principal</strong><p style="font-size:13px;margin-top:4px;">${escapeRiskText(p.objetivo || 'A definir')}</p></div>
+        <div><strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Alergias</strong><p style="font-size:13px;margin-top:4px;">${Array.isArray(p.alergias) && p.alergias.length ? p.alergias.map(escapeRiskText).join(', ') : 'Não informadas'}</p></div>
+        <div><strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Meta de peso</strong><p style="font-size:13px;margin-top:4px;">${hasWeightTarget ? escapeRiskText(p.meta) + ' kg' : 'Não definida'}</p></div>
+        <div><strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Metas personalizadas</strong><p style="font-size:13px;margin-top:4px;">${profileGoals.length ? profileGoals.map(goal => escapeRiskText(goal.nome) + (goal.freqDesejada ? ' · ' + escapeRiskText(goal.freqDesejada) : '')).join('<br>') : 'Nenhuma meta definida'}</p></div>
+      </div>
+      ${isDoctorView ? `<form id="patient-profile-form" hidden style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);" novalidate>
+        <div class="form-grid">
+          <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Objetivo principal</span><input class="form-input" id="profile-objective" maxlength="240" value="${escapeRiskText(p.objetivo || '')}"></label>
+          <label class="form-group"><span class="form-label">Meta de peso (opcional)</span><input class="form-input" id="profile-weight-goal" type="number" min="1" step="0.1" value="${hasWeightTarget ? Number(p.meta) : ''}"></label>
+          <label class="form-group"><span class="form-label">Alergias (uma por linha)</span><textarea class="form-textarea" id="profile-allergies" rows="3">${escapeRiskText(Array.isArray(p.alergias) ? p.alergias.join('\n') : '')}</textarea></label>
+          <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Metas personalizadas</span><textarea class="form-textarea" id="profile-goals" rows="4">${escapeRiskText(profileGoals.map(goal => [goal.nome, goal.freqDesejada || '', goal.desc || ''].join(' | ')).join('\n'))}</textarea><small class="text-muted">Uma meta por linha: nome | frequência desejada | descrição (opcional). Deixe vazio para não atribuir metas.</small></label>
+        </div>
+        <p id="patient-profile-error" role="alert" hidden style="margin-top:8px;color:var(--red-text);font-size:12px;"></p>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"><button class="btn btn-subtle btn-sm" type="button" id="cancel-patient-profile">Cancelar</button><button class="btn btn-primary btn-sm" type="submit">Salvar perfil</button></div>
+      </form>` : ''}
+    </section>`);
+  if (isDoctorView) {
+    const profileForm = document.getElementById('patient-profile-form');
+    document.getElementById('edit-patient-profile').addEventListener('click', () => { profileForm.hidden = false; });
+    document.getElementById('cancel-patient-profile').addEventListener('click', () => { profileForm.hidden = true; });
+    profileForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const error = document.getElementById('patient-profile-error');
+      const weightInput = document.getElementById('profile-weight-goal').value.trim();
+      const weightGoal = weightInput ? Number(weightInput) : null;
+      const goalLines = document.getElementById('profile-goals').value.split(/\r?\n/)
+        .map(line => line.split('|').map(part => part.trim()))
+        .filter(parts => parts[0]);
+      const normalizedGoalNames = goalLines.map(parts => parts[0].toLocaleLowerCase('pt-BR'));
+      if (weightInput && (!Number.isFinite(weightGoal) || weightGoal <= 0)) {
+        error.textContent = 'A meta de peso deve ser um número maior que zero ou pode ficar vazia.';
+        error.hidden = false;
+        return;
+      }
+      if (goalLines.length > 20 || new Set(normalizedGoalNames).size !== normalizedGoalNames.length) {
+        error.textContent = 'Informe no máximo 20 metas e use nomes diferentes para cada uma.';
+        error.hidden = false;
+        return;
+      }
+      const nextGoals = goalLines.map(([name, frequency, description], index) => {
+        const existing = profileGoals.find(goal => goal.nome.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'));
+        return {
+          id:existing?.id || 'goal-' + p.id + '-' + Date.now() + '-' + index,
+          nome:name,
+          freqDesejada:frequency || 'Conforme combinado',
+          meta:existing?.meta || 1,
+          realizado:existing?.realizado || 0,
+          unidade:existing?.unidade || 'vezes',
+          desc:description || '',
+        };
+      });
+      const updatedPatient = {
+        ...p,
+        objetivo:document.getElementById('profile-objective').value.trim() || 'A definir',
+        alergias:document.getElementById('profile-allergies').value.split(/\r?\n|,/).map(value => value.trim()).filter(Boolean),
+        meta:weightGoal,
+        metasPersonalizadas:nextGoals,
+        metas:nextGoals.map(goal => goal.nome),
+        metasConcluidas:Math.min(completedJourneyGoals, nextGoals.length),
+      };
+      const nextPatients = PACIENTES.map(patient => String(patient.id) === String(p.id) ? updatedPatient : patient);
+      try {
+        localStorage.setItem('lapidar-pacientes', JSON.stringify(nextPatients));
+      } catch (storageError) {
+        console.error('Não foi possível salvar o perfil clínico da paciente.', storageError);
+        error.textContent = 'Não foi possível salvar o perfil neste navegador.';
+        error.hidden = false;
+        return;
+      }
+      PACIENTES.splice(0, PACIENTES.length, ...nextPatients);
+      Object.assign(p, updatedPatient);
+      location.reload();
+    });
+  }
+
   const patientConsultations = CONSULTAS
     .filter(consultation => consultation.paciente === p.nome)
     .sort((a, b) => b.data.localeCompare(a.data));
@@ -520,7 +751,7 @@
           <h4 id="patient-consultation-history" style="font-size:14px;font-weight:600;color:var(--vinho);">Histórico de Consultas</h4>
           <p style="font-size:12px;color:var(--text-muted);">Atendimentos registrados para ${p.nome}</p>
         </div>
-        ${isDoctorView ? '<button class="btn btn-primary btn-sm" id="patient-history-new-consult">Nova consulta</button>' : ''}
+        ${isDoctorRole ? '<button class="btn btn-primary btn-sm" id="patient-history-new-consult">Nova consulta</button>' : ''}
       </div>
       ${patientConsultations.length ? `<div style="display:flex;flex-direction:column;gap:8px;">
         ${patientConsultations.map(consultation => `
@@ -743,15 +974,16 @@
             Ver Diário
           </button>
         </div>
-        <canvas id="radar-chart" style="width:340px;height:340px;max-width:100%;"></canvas>
+        <canvas id="radar-chart" style="width:340px;height:340px;max-width:100%;" aria-label="Gráfico radar do Score Lapidar"></canvas>
       </div>
 
       <div class="card">
-        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:6px;">As 11 dimensões do Score Lapidar</h4>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Acompanhe cada aspecto registrado no seu score.</p>
-        ${isPatientView ? '<form id="score-entry-form" style="padding:12px;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);"><label class="form-group"><span class="form-label">Data do registro</span><input class="form-input" id="score-entry-date" type="date" required></label><div id="score-entry-inputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0;"></div><button class="btn btn-primary btn-sm" type="submit">Salvar meu Score</button><span id="score-entry-feedback" role="status" style="font-size:11px;margin-left:8px;"></span><div id="score-history-list" style="font-size:11px;color:var(--text-muted);margin-top:8px;"></div></form>' : ''}
+        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:6px;">Dimensões do Score Lapidar</h4>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Valores alimentados pelas respostas do Diário Lapidar.</p>
+        ${isPatientView ? '<p style="padding:10px 12px;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bege);font-size:11px;color:var(--text-secondary);">Para atualizar estes dados, registre ou edite seu check-in no Diário Lapidar.</p>' : ''}
         <div class="score-dimensions">
-          ${p.scoreLabels.map((lbl, i) => {
+          ${visibleScoreIndices.map(i => {
+            const lbl = p.scoreLabels[i];
             const val = p.scoreAtual[i];
             const prev = p.scoreAnterior[i];
             const diff = val - prev;
@@ -784,114 +1016,47 @@
         </div>
       </div>
     </div>`;
-  if (isPatientView) {
-    const scoreDate = document.getElementById('score-entry-date');
-    const todayISO = new Date().toISOString().slice(0, 10);
-    scoreDate.max = todayISO;
-    scoreDate.value = scoreHistory.length ? scoreHistory[scoreHistory.length - 1].date : todayISO;
-    const inputContainer = document.getElementById('score-entry-inputs');
-    const scoreHistoryList = document.getElementById('score-history-list');
-    function renderScoreHistory() {
-      scoreHistoryList.textContent = scoreHistory.length
-        ? 'Registros: ' + scoreHistory.slice().reverse().map(entry => {
-          const [year, month, day] = entry.date.split('-');
-          return day + '/' + month + '/' + year;
-        }).join(' · ')
-        : '';
-    }
-    renderScoreHistory();
-    p.scoreLabels.forEach((label, index) => {
-      const field = document.createElement('label');
-      field.className = 'form-group';
-      const title = document.createElement('span');
-      title.className = 'form-label';
-      title.textContent = label + ' · ' + p.scoreAtual[index] + '/10';
-      const input = document.createElement('input');
-      input.type = 'range';
-      input.min = '0';
-      input.max = '10';
-      input.step = '1';
-      input.value = String(p.scoreAtual[index]);
-      input.dataset.scoreIndex = String(index);
-      input.setAttribute('aria-label', label);
-      input.addEventListener('input', () => { title.textContent = label + ' · ' + input.value + '/10'; });
-      field.append(title, input);
-      inputContainer.appendChild(field);
-    });
-    document.getElementById('score-entry-form').addEventListener('submit', event => {
-      event.preventDefault();
-      const date = scoreDate.value;
-      if (!date || date > todayISO) {
-        document.getElementById('score-entry-feedback').textContent = 'Selecione uma data válida, até hoje.';
-        return;
-      }
-      const values = Array.from(inputContainer.querySelectorAll('input')).map(input => Number(input.value));
-      const previousHistory = scoreHistory;
-      scoreHistory = scoreHistory.filter(entry => entry.date !== date);
-      scoreHistory.push({ date, values });
-      scoreHistory.sort((a, b) => a.date.localeCompare(b.date));
-      try {
-        localStorage.setItem(scoreHistoryKey, JSON.stringify(scoreHistory));
-      } catch (error) {
-        scoreHistory = previousHistory;
-        console.error('Não foi possível salvar o Score Lapidar.', error);
-        document.getElementById('score-entry-feedback').textContent = 'Não foi possível salvar neste navegador.';
-        return;
-      }
-      try {
-        const timelineKey = 'lapidar-diario-historico-' + p.id;
-        const timelineData = JSON.parse(localStorage.getItem(timelineKey) || '{"events":[]}');
-        timelineData.events = Array.isArray(timelineData.events) ? timelineData.events : [];
-        timelineData.events.push({
-          date,
-          time:new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }),
-          type:'Score Lapidar',
-          title:'Score Lapidar atualizado',
-          changes:[{ label:'Score', detail:'Atualização das 11 dimensões para o dia escolhido.' }],
-        });
-        localStorage.setItem(timelineKey, JSON.stringify(timelineData));
-      } catch (error) {
-        console.error('O Score foi salvo, mas não foi possível registrar a alteração na timeline.', error);
-      }
-      p.scoreAtual = scoreHistory[scoreHistory.length - 1].values;
-      p.scoreAtual.forEach((value, index) => {
-        const diff = value - p.scoreAnterior[index];
-        const diffSign = diff > 0 ? '+' : '';
-        document.getElementById('score-value-' + index).textContent = value + '/10';
-        const diffElement = document.getElementById('score-diff-' + index);
-        diffElement.textContent = '(' + diffSign + diff + ')';
-        diffElement.style.color = diff >= 0 ? 'var(--oliva)' : 'var(--red-text)';
-        const bar = document.querySelector('[data-score-bar="' + index + '"]');
-        bar.style.width = value * 10 + '%';
-        bar.style.background = value >= 7 ? 'var(--oliva)' : value >= 5 ? 'var(--dourado)' : '#DC2626';
-      });
-      const radar = document.getElementById('radar-chart');
-      if (radar) drawRadarChart(radar, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
-      document.getElementById('score-entry-feedback').textContent = 'Score salvo com a data escolhida.';
-      renderScoreHistory();
-    });
-  }
 
   // ── TAB 4: RISCO CARDIOVASCULAR ──
-  const rv = p.riscoCV;
+  const riskHistoryKey = 'lapidar-risk-cv-' + p.id;
+  const riskActiveIndexKey = 'lapidar-risk-cv-active-' + p.id;
+  let riskHistory = [];
+  try {
+    const savedRiskHistory = JSON.parse(localStorage.getItem(riskHistoryKey) || '[]');
+    if (Array.isArray(savedRiskHistory)) riskHistory = savedRiskHistory;
+  } catch (error) {
+    console.error('Não foi possível carregar o histórico cardiovascular.', error);
+  }
+  const seedRisk = p.riscoCV || {};
+  if (!riskHistory.length && Object.keys(seedRisk).length) {
+    const samples = Array.isArray(p.riscoCVHistorico) ? p.riscoCVHistorico : [];
+    riskHistory = samples.concat(seedRisk).map((record, index) => ({ ...record, id:record.id || 'demo-' + index }));
+  }
+  const requestedRiskIndex = Number(localStorage.getItem(riskActiveIndexKey));
+  const activeRiskIndex = Number.isInteger(requestedRiskIndex) && requestedRiskIndex >= 0 && requestedRiskIndex < riskHistory.length
+    ? requestedRiskIndex
+    : Math.max(0, riskHistory.length - 1);
+  const rv = riskHistory[activeRiskIndex] || seedRisk;
+  function escapeRiskText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+    }[char]));
+  }
+  function riskDateLabel(value) {
+    const parts = String(value || '').split('-').map(Number);
+    return parts.length === 3 && parts.every(Number.isFinite)
+      ? new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('pt-BR')
+      : escapeRiskText(value);
+  }
   const cvRequiredFields = {
     nivel: 'Classificação de risco',
+    data: 'Data da avaliação',
     ldl: 'LDL',
-    metaLdl: 'Meta de LDL',
     naoHdl: 'Não-HDL',
-    metaNaoHdl: 'Meta de não-HDL',
     reducaoLdl: 'Redução de LDL',
-    has: 'HAS',
-    dm: 'Diabetes',
-    tabagismo: 'Tabagismo',
-    historiaFamiliar: 'História familiar',
-    apob: 'ApoB',
-    metaApob: 'Meta de ApoB',
+    dopplerCarotidas: 'Ecografia com Doppler de carótidas',
     lpa: 'Lp(a)',
-    metaLpa: 'Meta de Lp(a)',
     pcrUs: 'PCR-us',
-    metaPcrUs: 'Meta de PCR-us',
-    preventScore: 'Escore PREVENT'
   };
   const missingCvData = Object.entries(cvRequiredFields)
     .filter(([key]) => rv[key] === undefined || rv[key] === null || rv[key] === '')
@@ -907,11 +1072,39 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Estratificação de Risco Cardiovascular</h4>
-              <p style="font-size:11px;color:var(--text-muted);">${rv.preventScore || 'Escore PREVENT não calculado'}</p>
+              <p style="font-size:11px;color:var(--text-muted);">${rv.data ? 'Avaliação informada pela médica · ' + riskDateLabel(rv.data) : 'Dados registrados pela médica; sem cálculo automático.'}</p>
           </div>
-            <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel || 'Não calculado'}</span>
+            <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel || 'Não informado'}</span>
             ${isDoctorView ? `<button class="btn btn-subtle btn-sm" id="toggle-risk-release">${riskReleased ? 'Revogar acesso da paciente' : 'Liberar para paciente'}</button>` : ''}
         </div>
+
+        ${riskHistory.length > 1 ? `<label class="form-group"><span class="form-label">Histórico de avaliações</span><select class="form-select" id="risk-history-select">${riskHistory.map((record, index) => `<option value="${index}" ${index===activeRiskIndex?'selected':''}>${record.data ? riskDateLabel(record.data) : 'Avaliação ' + (index + 1)}</option>`).join('')}</select></label>` : ''}
+        ${isDoctorView ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px;"><button class="btn btn-primary btn-sm" type="button" id="new-risk-record">Novo registro</button><button class="btn btn-subtle btn-sm" type="button" id="edit-risk-record">Editar avaliação selecionada</button></div>
+          <form id="risk-record-form" class="card" hidden style="margin-bottom:16px;background:var(--bege);" novalidate>
+            <h4 style="font-size:13px;color:var(--vinho);margin-bottom:10px;" id="risk-form-title">Nova avaliação cardiovascular</h4>
+            <div class="form-grid">
+              <label class="form-group"><span class="form-label">Data *</span><input class="form-input" id="risk-date" type="date" required></label>
+              <label class="form-group"><span class="form-label">Classificação registrada *</span><select class="form-select" id="risk-level" required><option value="">Selecionar</option><option>Baixo</option><option>Intermediário</option><option>Alto</option><option>Muito Alto</option><option>Extremo</option></select></label>
+              <label class="form-group"><span class="form-label">LDL (mg/dL)</span><input class="form-input" id="risk-ldl" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Meta de LDL (mg/dL)</span><input class="form-input" id="risk-meta-ldl" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Não-HDL (mg/dL)</span><input class="form-input" id="risk-non-hdl" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Meta de não-HDL (mg/dL)</span><input class="form-input" id="risk-meta-non-hdl" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Redução de LDL (%)</span><input class="form-input" id="risk-ldl-reduction" type="number" min="0" max="100" step="any"></label>
+              <label class="form-group"><span class="form-label">Lp(a) (nmol/L)</span><input class="form-input" id="risk-lpa" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Meta de Lp(a) (nmol/L)</span><input class="form-input" id="risk-meta-lpa" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">PCR-us (mg/L)</span><input class="form-input" id="risk-pcr" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Meta de PCR-us (mg/L)</span><input class="form-input" id="risk-meta-pcr" type="number" min="0" step="any"></label>
+              <label class="form-group"><span class="form-label">Ecografia com Doppler de carótidas</span><select class="form-select" id="risk-doppler"><option value="">Não informado</option><option value="true">Sim</option><option value="false">Não</option></select></label>
+              <label class="form-group"><span class="form-label">Hipertensão (HAS)</span><input class="form-input" id="risk-has" maxlength="100"></label>
+              <label class="form-group"><span class="form-label">Diabetes (DM)</span><input class="form-input" id="risk-dm" maxlength="100"></label>
+              <label class="form-group"><span class="form-label">Tabagismo</span><input class="form-input" id="risk-smoking" maxlength="100"></label>
+              <label class="form-group"><span class="form-label">História familiar</span><input class="form-input" id="risk-family-history" maxlength="200"></label>
+              <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Fatores de risco</span><textarea class="form-input" id="risk-factors" rows="3"></textarea></label>
+              <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Sugestões de estratégia</span><textarea class="form-input" id="risk-strategies" rows="3"></textarea></label>
+            </div>
+            <p id="risk-form-error" role="alert" hidden style="color:var(--red-text);font-size:12px;margin-top:8px;"></p>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"><button class="btn btn-subtle btn-sm" type="button" id="cancel-risk-record">Cancelar</button><button class="btn btn-primary btn-sm" type="submit">Salvar avaliação</button></div>
+          </form>` : ''}
 
           ${missingCvData.length ? `<div role="note" style="margin-bottom:14px;padding:10px 12px;border-left:3px solid var(--yellow-text);background:var(--yellow-bg);font-size:12px;color:var(--text-secondary);"><strong style="color:var(--yellow-text);">Dados cardiovasculares faltantes:</strong> ${missingCvData.join(', ')}.</div>` : ''}
 
@@ -919,24 +1112,27 @@
           <div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
               <span style="font-weight:600;">Colesterol LDL</span>
-              <span style="color:${rv.ldl<=rv.metaLdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.ldl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaLdl ?? '—'})</span></span>
+              <span style="color:${rv.ldl != null && rv.metaLdl != null ? (rv.ldl<=rv.metaLdl?'var(--oliva)':'var(--red-text)') : 'var(--text-muted)'};font-weight:700;">${rv.ldl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaLdl ?? '—'})</span></span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.ldl/rv.metaLdl)*100,100)}%;background:${rv.ldl<=rv.metaLdl?'var(--oliva)':'#DC2626'};"></div></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${rv.ldl != null && rv.metaLdl > 0 ? Math.min((rv.ldl/rv.metaLdl)*100,100) : 0}%;background:${rv.ldl != null && rv.metaLdl != null && rv.ldl<=rv.metaLdl?'var(--oliva)':'#DC2626'};"></div></div>
           </div>
 
           <div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
               <span style="font-weight:600;">Colesterol Não-HDL</span>
-              <span style="color:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'var(--red-text)'};font-weight:700;">${rv.naoHdl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaNaoHdl ?? '—'})</span></span>
+              <span style="color:${rv.naoHdl != null && rv.metaNaoHdl != null ? (rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'var(--red-text)') : 'var(--text-muted)'};font-weight:700;">${rv.naoHdl ?? '—'} mg/dL <span style="color:var(--text-muted);font-weight:400;">(meta: &le; ${rv.metaNaoHdl ?? '—'})</span></span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${Math.min((rv.naoHdl/rv.metaNaoHdl)*100,100)}%;background:${rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'#DC2626'};"></div></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${rv.naoHdl != null && rv.metaNaoHdl > 0 ? Math.min((rv.naoHdl/rv.metaNaoHdl)*100,100) : 0}%;background:${rv.naoHdl != null && rv.metaNaoHdl != null && rv.naoHdl<=rv.metaNaoHdl?'var(--oliva)':'#DC2626'};"></div></div>
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:4px;">
             <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
-              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">ApoB</div>
-              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.apob ?? '—'} <small style="font-size:10px;">mg/dL</small></div>
-              <div style="font-size:10px;color:var(--text-muted);">Meta: &lt; ${rv.metaApob ?? '—'}</div>
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Doppler de carótidas</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.dopplerCarotidas === true ? 'Sim' : rv.dopplerCarotidas === false ? 'Não' : 'Não informado'}</div>
+            </div>
+            <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Redução de LDL</div>
+              <div style="font-weight:700;color:var(--vinho);font-size:16px;">${rv.reducaoLdl ?? '—'} <small style="font-size:10px;">%</small></div>
             </div>
             <div style="background:var(--bege);border-radius:var(--radius);padding:10px;text-align:center;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Lp(a)</div>
@@ -957,36 +1153,213 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Hipertensão (HAS)</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.has ?? 'Não informado'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${escapeRiskText(rv.has ?? 'Não informado')}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Diabetes (DM)</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.dm ?? 'Não informado'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${escapeRiskText(rv.dm ?? 'Não informado')}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">Tabagismo</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.tabagismo ?? 'Não informado'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${escapeRiskText(rv.tabagismo ?? 'Não informado')}</div>
           </div>
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--white);">
             <div style="font-size:10.5px;color:var(--text-muted);">História Familiar</div>
-            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${rv.historiaFamiliar ?? 'Não informado'}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${escapeRiskText(rv.historiaFamiliar ?? 'Não informado')}</div>
           </div>
         </div>
 
+        ${Array.isArray(rv.fatores) && rv.fatores.length ? `<p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;"><strong>Fatores considerados:</strong> ${rv.fatores.map(escapeRiskText).join(' · ')}</p>` : ''}
         <h4 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Sugestões de Estratégia Clínica</h4>
         <ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--text-secondary);display:flex;flex-direction:column;gap:6px;">
-          ${(rv.sugestoes || [
-            'Otimização do estilo de vida com aumento de fibras solúveis',
-            'Cardio contínuo moderado 150 min/semana (Zona 2)',
-            'Monitorar perfil lipídico trimestralmente'
-          ]).map(s => `<li>${s}</li>`).join('')}
+          ${Array.isArray(rv.sugestoes) && rv.sugestoes.length ? rv.sugestoes.map(s => `<li>${escapeRiskText(s)}</li>`).join('') : '<li>Sem sugestões registradas pela médica.</li>'}
         </ul>
       </div>
+      <section class="card" style="grid-column:1/-1;" aria-labelledby="risk-history-title">
+        <h4 id="risk-history-title" style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Histórico de metas lipídicas</h4>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Evolução de LDL e não-HDL em relação às metas registradas em cada avaliação.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-bottom:8px;"><span style="color:#591B1C;">● LDL</span><span style="color:#3D6984;">● Meta LDL</span><span style="color:#A65A19;">● Não-HDL</span><span style="color:#66724A;">● Meta não-HDL</span></div>
+        <div style="max-width:100%;overflow-x:auto;"><canvas id="risk-history-chart" aria-label="Gráfico histórico de LDL e não-HDL contra as metas" style="width:100%;min-width:520px;height:220px;display:block;"></canvas></div>
+        <div id="risk-history-records" style="display:grid;gap:8px;margin-top:12px;"></div>
+      </section>
     </div>`;
+  function renderRiskHistory() {
+    const canvas = document.getElementById('risk-history-chart');
+    const records = riskHistory.map((record, index) => ({ record, index }))
+      .filter(item => item.record && item.record.data)
+      .sort((a, b) => String(a.record.data).localeCompare(String(b.record.data)));
+    const width = Math.max(canvas.parentElement.clientWidth, 520);
+    const height = 220;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    const values = records.flatMap(({record}) => [record.ldl, record.metaLdl, record.naoHdl, record.metaNaoHdl])
+      .map(Number).filter(Number.isFinite);
+    if (records.length && values.length) {
+      const max = Math.max(200, ...values) * 1.12;
+      const pad = { left:38, right:18, top:14, bottom:34 };
+      const chartWidth = width - pad.left - pad.right;
+      const chartHeight = height - pad.top - pad.bottom;
+      const x = index => pad.left + (records.length < 2 ? chartWidth / 2 : index * chartWidth / (records.length - 1));
+      const y = value => pad.top + chartHeight - Number(value) / max * chartHeight;
+      ctx.font = '10px Montserrat, sans-serif';
+      ctx.textAlign = 'right';
+      [0,.5,1].forEach(step => {
+        const value = max * step;
+        const lineY = y(value);
+        ctx.strokeStyle = '#E3D8C8';
+        ctx.beginPath(); ctx.moveTo(pad.left,lineY); ctx.lineTo(width-pad.right,lineY); ctx.stroke();
+        ctx.fillStyle = '#78685A'; ctx.fillText(String(Math.round(value)),pad.left-6,lineY+3);
+      });
+      const series = [
+        { key:'ldl', color:'#591B1C', dash:[] },
+        { key:'metaLdl', color:'#3D6984', dash:[5,4] },
+        { key:'naoHdl', color:'#A65A19', dash:[] },
+        { key:'metaNaoHdl', color:'#66724A', dash:[5,4] },
+      ];
+      series.forEach(({key,color,dash}) => {
+        let started = false;
+        ctx.beginPath(); ctx.setLineDash(dash); ctx.strokeStyle = color; ctx.lineWidth = 2;
+        records.forEach(({record}, index) => {
+          const value = Number(record[key]);
+          if (!Number.isFinite(value)) return;
+          if (started) ctx.lineTo(x(index),y(value)); else { ctx.moveTo(x(index),y(value)); started = true; }
+        });
+        if (started) ctx.stroke();
+        ctx.setLineDash([]);
+        records.forEach(({record}, index) => {
+          const value = Number(record[key]);
+          if (!Number.isFinite(value)) return;
+          ctx.beginPath(); ctx.arc(x(index),y(value),3,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+        });
+      });
+      records.forEach(({record}, index) => {
+        ctx.fillStyle = '#78685A'; ctx.textAlign = index === 0 ? 'left' : index === records.length - 1 ? 'right' : 'center';
+        ctx.fillText(riskDateLabel(record.data),x(index),height-10);
+      });
+    } else {
+      ctx.fillStyle = '#78685A'; ctx.font = '12px Montserrat, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Registre avaliações com LDL e não-HDL para ver a evolução.',width/2,height/2);
+    }
+    const list = document.getElementById('risk-history-records');
+    const chronological = riskHistory.map((record,index) => ({record,index}))
+      .sort((a,b) => String(a.record.data || '').localeCompare(String(b.record.data || '')));
+    list.innerHTML = chronological.map(({record,index}, position) => {
+      const previous = position ? chronological[position-1].record : null;
+      const ldlDelta = previous && Number.isFinite(Number(record.ldl)) && Number.isFinite(Number(previous.ldl))
+        ? Number(record.ldl)-Number(previous.ldl) : null;
+      const nonHdlDelta = previous && Number.isFinite(Number(record.naoHdl)) && Number.isFinite(Number(previous.naoHdl))
+        ? Number(record.naoHdl)-Number(previous.naoHdl) : null;
+      const targetsMet = Number.isFinite(Number(record.ldl)) && Number.isFinite(Number(record.metaLdl)) && Number(record.ldl) <= Number(record.metaLdl) &&
+        Number.isFinite(Number(record.naoHdl)) && Number.isFinite(Number(record.metaNaoHdl)) && Number(record.naoHdl) <= Number(record.metaNaoHdl);
+      return `<button type="button" data-risk-record="${index}" class="btn btn-subtle btn-sm" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;text-align:left;min-height:44px;${index===activeRiskIndex?'border-color:var(--vinho);background:var(--vinho-xlight);':''}">
+        <strong>${riskDateLabel(record.data || '')}</strong><span>LDL ${record.ldl ?? '—'} ${ldlDelta === null ? '' : '(' + (ldlDelta > 0 ? '+' : '') + ldlDelta.toFixed(1) + ' vs. anterior)'}</span>
+        <span>Não-HDL ${record.naoHdl ?? '—'} ${nonHdlDelta === null ? '' : '(' + (nonHdlDelta > 0 ? '+' : '') + nonHdlDelta.toFixed(1) + ' vs. anterior)'}</span>
+        <span class="badge ${targetsMet?'badge-green':'badge-yellow'}">${targetsMet?'Meta atingida':'Meta não atingida'}</span>
+      </button>`;
+    }).join('');
+    list.querySelectorAll('[data-risk-record]').forEach(button => button.addEventListener('click', () => {
+      localStorage.setItem(riskActiveIndexKey, button.dataset.riskRecord);
+      location.reload();
+    }));
+  }
+  renderRiskHistory();
   if (isDoctorView) {
     document.getElementById('toggle-risk-release').addEventListener('click', () => {
       patientReleases.riskCV = !riskReleased;
       localStorage.setItem(patientReleasesKey, JSON.stringify(patientReleases));
+      location.reload();
+    });
+    const riskForm = document.getElementById('risk-record-form');
+    const todayIso = new Date().toISOString().slice(0, 10);
+    let editingRiskRecord = false;
+    function setRiskForm(record, isEditing) {
+      riskForm.hidden = false;
+      editingRiskRecord = isEditing;
+      document.getElementById('risk-form-title').textContent = isEditing ? 'Editar avaliação cardiovascular' : 'Nova avaliação cardiovascular';
+      document.getElementById('risk-date').value = record?.data || todayIso;
+      document.getElementById('risk-level').value = record?.nivel || '';
+      document.getElementById('risk-ldl').value = record?.ldl ?? '';
+      document.getElementById('risk-meta-ldl').value = record?.metaLdl ?? '';
+      document.getElementById('risk-non-hdl').value = record?.naoHdl ?? '';
+      document.getElementById('risk-meta-non-hdl').value = record?.metaNaoHdl ?? '';
+      document.getElementById('risk-ldl-reduction').value = record?.reducaoLdl ?? '';
+      document.getElementById('risk-lpa').value = record?.lpa ?? '';
+      document.getElementById('risk-meta-lpa').value = record?.metaLpa ?? '';
+      document.getElementById('risk-pcr').value = record?.pcrUs ?? '';
+      document.getElementById('risk-meta-pcr').value = record?.metaPcrUs ?? '';
+      document.getElementById('risk-doppler').value = record?.dopplerCarotidas == null ? '' : String(record.dopplerCarotidas);
+      document.getElementById('risk-has').value = record?.has || '';
+      document.getElementById('risk-dm').value = record?.dm || '';
+      document.getElementById('risk-smoking').value = record?.tabagismo || '';
+      document.getElementById('risk-family-history').value = record?.historiaFamiliar || '';
+      document.getElementById('risk-factors').value = Array.isArray(record?.fatores) ? record.fatores.join('\n') : '';
+      document.getElementById('risk-strategies').value = Array.isArray(record?.sugestoes) ? record.sugestoes.join('\n') : '';
+    }
+    document.getElementById('new-risk-record').addEventListener('click', () => setRiskForm(null, false));
+    document.getElementById('edit-risk-record').addEventListener('click', () => setRiskForm(rv, true));
+    document.getElementById('cancel-risk-record').addEventListener('click', () => { riskForm.hidden = true; });
+    riskForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const error = document.getElementById('risk-form-error');
+      error.hidden = true;
+      const date = document.getElementById('risk-date').value;
+      const level = document.getElementById('risk-level').value;
+      const numericIds = ['risk-ldl','risk-meta-ldl','risk-non-hdl','risk-meta-non-hdl','risk-ldl-reduction','risk-lpa','risk-meta-lpa','risk-pcr','risk-meta-pcr'];
+      const invalidNumber = numericIds.some(id => {
+        const value = document.getElementById(id).value;
+        return value !== '' && (!Number.isFinite(Number(value)) || Number(value) < 0 || (id === 'risk-ldl-reduction' && Number(value) > 100));
+      });
+      if (!date || date > todayIso || !level || invalidNumber) {
+        error.textContent = 'Informe uma data válida e a classificação já definida pela médica.';
+        if (invalidNumber) error.textContent = 'Confira os valores numéricos; eles devem ser positivos e a redução de LDL não pode exceder 100%.';
+        error.hidden = false;
+        return;
+      }
+      const numberValue = id => document.getElementById(id).value === '' ? null : Number(document.getElementById(id).value);
+      const record = {
+        id:editingRiskRecord ? rv.id : String(Date.now()),
+        data:date,
+        nivel:level,
+        ldl:numberValue('risk-ldl'),
+        metaLdl:numberValue('risk-meta-ldl'),
+        naoHdl:numberValue('risk-non-hdl'),
+        metaNaoHdl:numberValue('risk-meta-non-hdl'),
+        reducaoLdl:numberValue('risk-ldl-reduction'),
+        lpa:numberValue('risk-lpa'),
+        metaLpa:numberValue('risk-meta-lpa'),
+        pcrUs:numberValue('risk-pcr'),
+        metaPcrUs:numberValue('risk-meta-pcr'),
+        dopplerCarotidas:document.getElementById('risk-doppler').value === '' ? null : document.getElementById('risk-doppler').value === 'true',
+        has:document.getElementById('risk-has').value.trim(),
+        dm:document.getElementById('risk-dm').value.trim(),
+        tabagismo:document.getElementById('risk-smoking').value.trim(),
+        historiaFamiliar:document.getElementById('risk-family-history').value.trim(),
+        fatores:document.getElementById('risk-factors').value.split(/\r?\n/).map(value => value.trim()).filter(Boolean),
+        sugestoes:document.getElementById('risk-strategies').value.split(/\r?\n/).map(value => value.trim()).filter(Boolean),
+      };
+      const nextHistory = [...riskHistory];
+      if (editingRiskRecord && activeRiskIndex < nextHistory.length) nextHistory[activeRiskIndex] = record;
+      else nextHistory.push(record);
+      const nextActiveIndex = editingRiskRecord ? activeRiskIndex : nextHistory.length - 1;
+      try {
+        localStorage.setItem(riskHistoryKey, JSON.stringify(nextHistory));
+        localStorage.setItem(riskActiveIndexKey, String(nextActiveIndex));
+      } catch (storageError) {
+        console.error('Não foi possível salvar a avaliação cardiovascular.', storageError);
+        error.textContent = 'Não foi possível salvar neste navegador.';
+        error.hidden = false;
+        return;
+      }
+      location.reload();
+    });
+    document.getElementById('risk-history-select')?.addEventListener('change', event => {
+      localStorage.setItem(riskActiveIndexKey, event.target.value);
       location.reload();
     });
   }
@@ -1161,7 +1534,7 @@
   // ── TAB 6: ARQUIVOS (Estilo Revista com Filtros) ──
   const arquivos = p.arquivos || [
     { id:1, titulo:'Receita TRH e Suplementação', tipo:'Receitas', data:'15/09/2026', origem:'Enviado', tamanho:'245 KB', icon:'📄', desc:'Progesterona micronizada e Estradiol gel' },
-    { id:2, titulo:'Pedido de Exames Trimestral', tipo:'Pedidos', data:'15/09/2026', origem:'Enviado', tamanho:'180 KB', icon:'📋', desc:'Lipidograma, ApoB, Lp(a), Hormônios' },
+    { id:2, titulo:'Pedido de Exames Trimestral', tipo:'Pedidos', data:'15/09/2026', origem:'Enviado', tamanho:'180 KB', icon:'📋', desc:'Lipidograma, Lp(a), Hormônios' },
     { id:3, titulo:'Laudo Fleury — Bioquímica e Hormônios', tipo:'Exames', data:'02/09/2026', origem:'Recebido', tamanho:'1.8 MB', icon:'🔬', desc:'Resultado de exames laboratoriais' },
     { id:4, titulo:'Relatório de Bioimpedância InBody', tipo:'Exames', data:'15/09/2026', origem:'Recebido', tamanho:'920 KB', icon:'📊', desc:'Composição corporal comparativa' }
   ];
@@ -1472,7 +1845,7 @@
       if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#591B1C' : '#59633D');
     });
     const rc = document.getElementById('radar-chart');
-    if (rc) drawRadarChart(rc, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
+    if (rc) drawRadarChart(rc, visibleScoreLabels, visibleScoreIndices.map(index => p.scoreAtual[index]), visibleScoreIndices.map(index => p.scoreAnterior[index]));
   }, 100);
 
   // ── Tabs switching logic ──
@@ -1535,7 +1908,7 @@
       if (btn.dataset.tab === 'score') {
         setTimeout(() => {
           const rc = document.getElementById('radar-chart');
-          if (rc) drawRadarChart(rc, p.scoreLabels, p.scoreAtual, p.scoreAnterior);
+          if (rc) drawRadarChart(rc, visibleScoreLabels, visibleScoreIndices.map(index => p.scoreAtual[index]), visibleScoreIndices.map(index => p.scoreAnterior[index]));
         }, 50);
       }
     });
@@ -1584,5 +1957,7 @@
   }
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

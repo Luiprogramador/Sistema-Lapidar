@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .consultations-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
     .consultation-list { display:flex; flex-direction:column; gap:8px; }
@@ -26,61 +27,117 @@
 
 <main class="main-content page-enter">
   <div class="page-header">
-    <h1 class="page-title">Consultas</h1>
-    <p class="page-subtitle">Agenda e histórico de atendimentos por paciente</p>
+    <h1 class="page-title" id="consultations-title">Consultas</h1>
+    <p class="page-subtitle" id="consultations-subtitle">Agenda e histórico de atendimentos por paciente</p>
   </div>
 
   <div class="grid-responsive-2" style="gap:12px;margin-bottom:20px;">
+    <div class="card-stat"><span class="card-stat-label">Total de consultas</span><span class="card-stat-value" id="total-count">0</span><span class="card-stat-sub">No período selecionado</span></div>
     <div class="card-stat"><span class="card-stat-label">Próximas consultas</span><span class="card-stat-value" id="upcoming-count">0</span><span class="card-stat-sub">Agendadas</span></div>
-    <div class="card-stat"><span class="card-stat-label">Pacientes atendidas</span><span class="card-stat-value" id="patient-count">0</span><span class="card-stat-sub">Nesta lista</span></div>
+    <div class="card-stat"><span class="card-stat-label">Exames pendentes</span><span class="card-stat-value" id="pending-exams-count">0</span><span class="card-stat-sub">Aguardando resultado</span></div>
+    <div class="card-stat" id="clinical-alert-stat"><span class="card-stat-label">Alertas clínicos</span><span class="card-stat-value" id="clinical-alert-count">0</span><span class="card-stat-sub">Precisam de atenção</span></div>
   </div>
 
   <div class="consultations-layout">
     <section class="card" aria-labelledby="consultations-list-title">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
         <h2 id="consultations-list-title" style="font-size:14px;font-weight:600;color:var(--vinho);">Agenda de atendimentos</h2>
-        <button class="btn btn-subtle btn-sm" onclick="Router.navigate('agenda')">Abrir calendário</button>
+        <button class="btn btn-subtle btn-sm" id="open-calendar" type="button">Abrir calendário</button>
       </div>
+      <div class="audit-filter-row" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <label class="form-group" style="flex:1 1 210px;margin:0;"><span class="form-label">Buscar</span><input class="form-input" type="search" id="consult-search" placeholder="Buscar por paciente..." aria-label="Buscar consultas por paciente"></label>
+        <label class="form-group" style="margin:0;"><span class="form-label">Status</span><select class="form-select" id="consult-status"><option value="">Todos</option><option value="agendada">Agendada</option><option value="concluida">Realizada</option><option value="remarcada">Remarcada</option><option value="cancelada">Cancelada</option><option value="nao_compareceu">Não compareceu</option></select></label>
+        <label class="form-group" style="margin:0;"><span class="form-label">De</span><input class="form-input" type="date" id="consult-date-from" aria-label="Filtrar consultas a partir da data"></label>
+        <label class="form-group" style="margin:0;"><span class="form-label">Até</span><input class="form-input" type="date" id="consult-date-to" aria-label="Filtrar consultas até a data"></label>
+        <button class="btn btn-subtle btn-sm" id="clear-consult-dates" type="button">Limpar datas</button>
+      </div>
+      <p id="consultation-filter-feedback" role="status" style="font-size:12px;color:var(--red-text);margin-bottom:8px;"></p>
       <div class="consultation-list" id="consultation-list"></div>
     </section>
 
   </div>
 </main>
-<div id="bottombar-container"></div>
 
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
 <script>
-  if (Router.getRole() !== 'doctor') {
-    Router.navigate('agenda');
+  const role = Router.getRole();
+  if (!Router.can('seeConsultations')) {
+    Router.navigate(role === 'secretary' ? 'agenda' : Router.getHomePage());
   } else {
   initShell('consultations');
 
-  const today = new Date();
-  const sortedConsultations = CONSULTAS.slice().sort((a, b) => (a.data + a.horario).localeCompare(b.data + b.horario));
-  const patientNames = new Set(sortedConsultations.map(consultation => consultation.paciente));
+  const currentPatient = role === 'patient' ? Router.getSelectedPatient() : null;
+  const patientConsultations = currentPatient
+    ? CONSULTAS.filter(consultation => consultation.paciente === currentPatient.nome)
+    : CONSULTAS;
+  const sortedConsultations = patientConsultations.slice().sort((a, b) => (a.data + a.horario).localeCompare(b.data + b.horario));
+  if (role === 'patient') {
+    document.getElementById('consultations-title').textContent = 'Minhas consultas';
+    document.getElementById('consultations-subtitle').textContent = 'Acompanhe suas consultas, exames e orientações da equipe';
+    document.getElementById('clinical-alert-stat').hidden = true;
+    document.getElementById('consultations-list-title').textContent = 'Minhas consultas';
+    document.getElementById('open-calendar').hidden = true;
+  }
+  document.getElementById('total-count').textContent = sortedConsultations.length;
   document.getElementById('upcoming-count').textContent = sortedConsultations.filter(consultation => consultation.status === 'agendada').length;
-  document.getElementById('patient-count').textContent = patientNames.size;
+  document.getElementById('pending-exams-count').textContent = sortedConsultations.reduce((total, consultation) =>
+    total + (Array.isArray(consultation.exames) ? consultation.exames.filter(exam => exam.status === 'pendente').length : 0), 0);
+  document.getElementById('clinical-alert-count').textContent = role === 'doctor' ? ALERTAS.length : 0;
 
-  document.getElementById('consultation-list').innerHTML = sortedConsultations.map(consultation => {
-    const patient = PACIENTES.find(item => item.nome === consultation.paciente);
-    const statusClass = consultation.status === 'agendada' ? 'badge-vinho' : 'badge-green';
-    return `<button class="consultation-row" type="button" data-patient-id="${patient ? patient.id : ''}" data-consultation-id="${consultation.id}">
-      <span class="consultation-date">${formatDate(consultation.data)}<br>${consultation.horario}</span>
-      <span class="consultation-details"><span class="consultation-patient">${consultation.paciente}</span><br><span class="consultation-meta">${consultation.tipo} · ${consultation.protocolo}</span></span>
-      <span class="badge ${statusClass}">${consultation.status}</span>
-    </button>`;
-  }).join('');
-
-  document.querySelectorAll('.consultation-row').forEach(row => {
-    row.addEventListener('click', () => Router.navigate('consultation', {
-      patientId: Number(row.dataset.patientId),
-      consultationId: Number(row.dataset.consultationId)
-    }));
+  function renderConsultations() {
+    const from = document.getElementById('consult-date-from').value;
+    const to = document.getElementById('consult-date-to').value;
+    const search = document.getElementById('consult-search').value.trim().toLocaleLowerCase('pt-BR');
+    const status = document.getElementById('consult-status').value;
+    const feedback = document.getElementById('consultation-filter-feedback');
+    if (from && to && from > to) {
+      feedback.textContent = 'A data inicial deve ser anterior ou igual à data final.';
+      document.getElementById('consultation-list').replaceChildren();
+      return;
+    }
+    feedback.textContent = '';
+    const filtered = sortedConsultations.filter(consultation =>
+      (!from || consultation.data >= from) && (!to || consultation.data <= to) &&
+      (!search || consultation.paciente.toLocaleLowerCase('pt-BR').includes(search)) &&
+      (!status || consultation.status === status)
+    );
+    document.getElementById('total-count').textContent = filtered.length;
+    const statusLabels = {
+      agendada: 'Agendada', concluida: 'Realizada', remarcada: 'Reagendada',
+      cancelada: 'Cancelada', nao_compareceu: 'Paciente não compareceu'
+    };
+    document.getElementById('consultation-list').innerHTML = filtered.map(consultation => {
+      const patient = PACIENTES.find(item => item.nome === consultation.paciente);
+      const statusClass = consultation.status === 'agendada' || consultation.status === 'remarcada'
+        ? 'badge-vinho'
+        : consultation.status === 'cancelada' || consultation.status === 'nao_compareceu' ? 'badge-yellow' : 'badge-green';
+      return `<button class="consultation-row" type="button" data-patient-id="${patient ? patient.id : ''}" data-consultation-id="${consultation.id}">
+        <span class="consultation-date">${formatDate(consultation.data)}<br>${consultation.horario}</span>
+        <span class="consultation-details"><span class="consultation-patient">${consultation.paciente}</span><br><span class="consultation-meta">${consultation.tipo} · ${consultation.protocolo}</span></span>
+        <span class="badge ${statusClass}">${statusLabels[consultation.status] || consultation.status}</span>
+      </button>`;
+    }).join('') || '<p class="empty-state" style="padding:18px;">Não há consultas neste período.</p>';
+    document.querySelectorAll('.consultation-row').forEach(row => row.addEventListener('click', () => Router.navigate('consultation', {
+      patientId: role === 'patient' ? currentPatient.id : Number(row.dataset.patientId), consultationId:Number(row.dataset.consultationId)
+    })));
+  }
+  document.getElementById('open-calendar').addEventListener('click', () => Router.navigate('agenda'));
+  document.getElementById('consult-search').addEventListener('input', renderConsultations);
+  document.getElementById('consult-status').addEventListener('change', renderConsultations);
+  document.getElementById('consult-date-from').addEventListener('change', renderConsultations);
+  document.getElementById('consult-date-to').addEventListener('change', renderConsultations);
+  document.getElementById('clear-consult-dates').addEventListener('click', () => {
+    document.getElementById('consult-date-from').value = '';
+    document.getElementById('consult-date-to').value = '';
+    renderConsultations();
   });
+  renderConsultations();
 
   }
 </script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
 </body>
 </html>

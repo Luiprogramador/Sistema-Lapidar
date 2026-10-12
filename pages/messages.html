@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mensagens — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <style>
+    .messages-page { max-width: 1180px; margin: 0 auto; }
+    .messages-header { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+    .messages-header h1 { font-family:var(--font-serif); color:var(--vinho); font-size:28px; }
+    .messages-header p { color:var(--text-muted); font-size:13px; margin-top:4px; }
+    .messages-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .messages-toolbar .search-bar { flex:1 1 280px; }
+    .messages-toolbar .filter-chips { margin:0; }
+    .messages-card-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+    .messages-card-head h3 { font-size:14px; font-weight:600; color:var(--vinho); }
+    .messages-card-head p { font-size:12px; color:var(--text-muted); }
+    .msg-row { cursor:pointer; }
+    .msg-row:hover td { background:var(--bege); }
+    .msg-row.unread td { font-weight:600; color:var(--text-primary); }
+    .msg-subject { display:block; }
+    .msg-preview { display:block; color:var(--text-muted); font-size:11.5px; font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px; }
+    .msg-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--vinho); margin-right:6px; vertical-align:middle; }
+    .msg-stack { display:none; flex-direction:column; gap:10px; }
+    .msg-stack-item { border:1px solid var(--border); border-radius:var(--radius); padding:12px; background:var(--white); cursor:pointer; }
+    .msg-stack-item.unread { border-left:3px solid var(--vinho); }
+    .msg-stack-top { display:flex; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--text-muted); margin-bottom:4px; }
+    .msg-stack-item strong { display:block; font-size:13px; margin-bottom:2px; }
+    .messages-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; font-size:12px; color:var(--text-muted); }
+    .messages-pagination div { display:flex; gap:8px; align-items:center; }
+    .msg-meta { display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--text-secondary); margin-bottom:12px; }
+    .msg-meta b { color:var(--text-primary); }
+    .msg-body { white-space:pre-wrap; font-size:13.5px; line-height:1.6; background:var(--bege); border-radius:var(--radius); padding:14px; }
+    .msg-attachments { display:flex; flex-direction:column; gap:6px; margin-top:10px; font-size:12px; }
+    .msg-attachments a { color:var(--vinho); text-decoration:underline; overflow-wrap:anywhere; }
+    .patient-msg-list { display:flex; flex-direction:column; gap:12px; }
+    .patient-msg { border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--white); padding:16px; }
+    .patient-msg.from-team { border-left:3px solid var(--dourado); }
+    .patient-msg.unread { box-shadow:0 0 0 2px var(--vinho-xlight); }
+    .patient-msg-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:var(--text-muted); }
+    .patient-msg-head strong { color:var(--vinho); font-size:12.5px; }
+    .patient-msg h4 { font-size:14px; margin-bottom:6px; color:var(--text-primary); }
+    .patient-msg p { font-size:13px; line-height:1.6; color:var(--text-secondary); white-space:pre-wrap; }
+    .msg-toast { position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:var(--vinho-dark); color:#fff; padding:10px 16px; border-radius:999px; font-size:13px; z-index:3000; opacity:0; transition:opacity .2s; pointer-events:none; }
+    .msg-toast.show { opacity:1; }
+    .form-error { color:var(--red-text); font-size:11.5px; margin-top:4px; }
+    @media (max-width:768px) {
+      .messages-table { display:none; }
+      .msg-stack { display:flex; }
+      .messages-header h1 { font-size:24px; }
+    }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+
+<main class="main-content page-enter">
+  <div class="messages-page" id="messages-root"></div>
+</main>
+
+
+<div class="modal-overlay" id="msg-read-modal" role="dialog" aria-modal="true" aria-labelledby="msg-read-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="msg-read-title"></span>
+      <button class="modal-close" data-close-modal aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body" id="msg-read-body"></div>
+    <div class="modal-footer" id="msg-read-actions"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="msg-compose-modal" role="dialog" aria-modal="true" aria-labelledby="msg-compose-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="msg-compose-title">Nova mensagem</span>
+      <button class="modal-close" data-close-modal aria-label="Fechar">&times;</button>
+    </div>
+    <form id="msg-compose-form" novalidate>
+      <div class="modal-body">
+        <div class="form-group" id="compose-patient-group">
+          <label class="form-label" for="compose-patient">Paciente</label>
+          <select class="form-select" id="compose-patient"></select>
+          <div class="form-error" id="compose-patient-error" hidden>Selecione a paciente.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="compose-subject">Assunto</label>
+          <input class="form-input" id="compose-subject" maxlength="80" placeholder="Ex.: Orientações pós-consulta">
+          <div class="form-error" id="compose-subject-error" hidden>Informe o assunto.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="compose-body">Mensagem</label>
+          <textarea class="form-textarea" id="compose-body" rows="6" placeholder="Escreva a mensagem..."></textarea>
+          <div class="form-error" id="compose-body-error" hidden>Escreva a mensagem.</div>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-subtle btn-sm" type="button" id="compose-attachment-button">Enviar arquivo</button>
+          <input class="form-input" id="compose-attachments" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple hidden>
+          <p id="compose-attachment-names" role="status" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></p>
+          <p id="compose-attachment-error" role="alert" hidden class="form-error"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-subtle btn-sm" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary btn-sm" type="submit">Enviar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="msg-toast" id="msg-toast" role="status" aria-live="polite"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  initShell('messages');
+
+  const PAGE_SIZE = 10;
+  const role = Router.getRole();
+  const isPatientView = role === 'patient';
+  const currentPatientId = 1;
+
+  let messages = loadMessages();
+  function saveMessages() { saveStoredMessages(messages); }
+  const maxAttachmentBytes = 2 * 1024 * 1024;
+  function readMessageAttachment(file) {
+    return new Promise((resolve, reject) => {
+      if (file.size > maxAttachmentBytes) {
+        reject(new Error('Cada arquivo pode ter até 2 MB.'));
+        return;
+      }
+      if (!/^(application\/pdf|image\/png|image\/jpeg)$/.test(file.type)) {
+        reject(new Error('Formato inválido. Envie um PDF, PNG ou JPG.'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name:file.name, data:reader.result });
+      reader.onerror = () => reject(new Error('Não foi possível ler o arquivo selecionado.'));
+      reader.readAsDataURL(file);
+    });
+  }
+  function attachmentMarkup(attachments) {
+    const safeAttachments = Array.isArray(attachments) ? attachments.filter(file =>
+      file && typeof file.name === 'string' && typeof file.data === 'string' &&
+      /^data:(application\/pdf|image\/png|image\/jpeg);base64,/.test(file.data)
+    ) : [];
+    return safeAttachments.length
+      ? '<div class="msg-attachments"><strong>Arquivos enviados</strong>' + safeAttachments.map(file =>
+        '<a href="' + file.data + '" target="_blank" rel="noopener">' + escapeHtml(file.name) + '</a>'
+      ).join('') + '</div>'
+      : '';
+  }
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const patientName = id => (PACIENTES.find(p => p.id === id) || {}).nome || 'Paciente';
+  const isUnread = m => m.direction === 'recebida' && !m.read;
+  const statusLabel = m => m.direction === 'recebida' ? (m.read ? 'Lida' : 'Não lida') : (m.read ? 'Lida pela paciente' : 'Aguardando leitura');
+  const statusBadge = m => {
+    const cls = isUnread(m) ? 'badge-red' : (m.direction === 'enviada' && !m.read ? 'badge-yellow' : 'badge-green');
+    return '<span class="badge ' + cls + '">' + statusLabel(m) + '</span>';
+  };
+  const directionBadge = m => '<span class="badge ' + (m.direction === 'recebida' ? 'badge-blue' : 'badge-gray') + '">' + (m.direction === 'recebida' ? '↙ Recebida' : '↗ Enviada') + '</span>';
+  function formatDateTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  }
+  const byDateDesc = (a, b) => new Date(b.date) - new Date(a.date);
+
+  function toast(text) {
+    const el = document.getElementById('msg-toast');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('[data-close-modal]').forEach(btn =>
+    btn.addEventListener('click', () => btn.closest('.modal-overlay').classList.remove('open')));
+  document.querySelectorAll('.modal-overlay').forEach(overlay =>
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); }));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open'));
+  });
+
+  // ---------- Compose ----------
+  let composeContext = null;
+  function openCompose(context) {
+    composeContext = context || {};
+    const select = document.getElementById('compose-patient');
+    const patientGroup = document.getElementById('compose-patient-group');
+    patientGroup.hidden = isPatientView;
+    select.innerHTML = '<option value="">Selecione a paciente</option>' +
+      PACIENTES.map(p => '<option value="' + p.id + '">' + escapeHtml(p.nome) + '</option>').join('');
+    select.value = composeContext.patientId ? String(composeContext.patientId) : '';
+    select.disabled = Boolean(composeContext.replyTo);
+    document.getElementById('compose-subject').value = composeContext.replyTo
+      ? ('Re: ' + composeContext.replyTo.subject.replace(/^Re:\s*/i, '')).slice(0, 80) : '';
+    document.getElementById('compose-body').value = '';
+    document.getElementById('compose-attachments').value = '';
+    document.getElementById('compose-attachment-names').textContent = '';
+    document.getElementById('compose-attachment-error').hidden = true;
+    document.getElementById('msg-compose-title').textContent = isPatientView
+      ? 'Mensagem para a equipe' : composeContext.replyTo ? 'Responder mensagem' : 'Nova mensagem';
+    document.querySelectorAll('#msg-compose-form .form-error').forEach(el => el.hidden = true);
+    openModal('msg-compose-modal');
+    setTimeout(() => document.getElementById(composeContext.replyTo ? 'compose-body' : (isPatientView ? 'compose-subject' : 'compose-patient')).focus(), 50);
+  }
+
+  document.getElementById('compose-attachment-button').addEventListener('click', () => {
+    document.getElementById('compose-attachments').click();
+  });
+  document.getElementById('compose-attachments').addEventListener('change', event => {
+    const files = Array.from(event.target.files || []);
+    document.getElementById('compose-attachment-names').textContent = files.map(file => file.name).join(' · ');
+    document.getElementById('compose-attachment-error').hidden = true;
+  });
+
+  document.getElementById('msg-compose-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const patientId = isPatientView ? currentPatientId : Number(document.getElementById('compose-patient').value);
+    const subject = document.getElementById('compose-subject').value.trim();
+    const body = document.getElementById('compose-body').value.trim();
+    document.getElementById('compose-patient-error').hidden = Boolean(patientId);
+    document.getElementById('compose-subject-error').hidden = Boolean(subject);
+    document.getElementById('compose-body-error').hidden = Boolean(body);
+    if (!patientId || !subject || !body) return;
+    const attachmentError = document.getElementById('compose-attachment-error');
+    attachmentError.hidden = true;
+    let attachments;
+    try {
+      attachments = await Promise.all(Array.from(document.getElementById('compose-attachments').files || []).map(readMessageAttachment));
+    } catch (error) {
+      attachmentError.textContent = error.message;
+      attachmentError.hidden = false;
+      return;
+    }
+    const newMessage = {
+      id: 'm' + Date.now(),
+      patientId,
+      direction: isPatientView ? 'recebida' : 'enviada',
+      subject,
+      body,
+      attachments,
+      date: new Date().toISOString(),
+      read: false,
+      replyToId: composeContext && composeContext.replyTo ? composeContext.replyTo.id : null,
+    };
+    messages.push(newMessage);
+    try {
+      saveMessages();
+    } catch (error) {
+      messages.pop();
+      console.error('Não foi possível salvar a mensagem e seus anexos.', error);
+      attachmentError.textContent = 'Não foi possível salvar a mensagem. Remova arquivos ou tente novamente.';
+      attachmentError.hidden = false;
+      return;
+    }
+    closeModal('msg-compose-modal');
+    toast(isPatientView ? 'Mensagem enviada para a equipe.' : 'Mensagem enviada.');
+    render();
+  });
+
+  // ---------- Read ----------
+  function openMessage(id) {
+    const message = messages.find(m => m.id === id);
+    if (!message) return;
+    if (isUnread(message)) { message.read = true; saveMessages(); render(); }
+    const original = message.replyToId ? messages.find(m => m.id === message.replyToId) : null;
+    document.getElementById('msg-read-title').textContent = message.subject;
+    document.getElementById('msg-read-body').innerHTML =
+      '<div class="msg-meta">' +
+        '<span><b>' + (message.direction === 'recebida' ? 'De' : 'Para') + ':</b> ' + escapeHtml(patientName(message.patientId)) + '</span>' +
+        '<span><b>Data:</b> ' + formatDateTime(message.date) + '</span>' +
+        (original ? '<span><b>Em resposta a:</b> ' + escapeHtml(original.subject) + '</span>' : '') +
+        '<span style="display:flex;gap:6px;margin-top:4px;">' + directionBadge(message) + statusBadge(message) + '</span>' +
+      '</div>' +
+      '<div class="msg-body">' + escapeHtml(message.body) + attachmentMarkup(message.attachments) + '</div>';
+    const actions = document.getElementById('msg-read-actions');
+    actions.innerHTML = '<button class="btn btn-subtle btn-sm" type="button" id="msg-close">Fechar</button>' +
+      '<button class="btn btn-primary btn-sm" type="button" id="msg-reply">' + (message.direction === 'recebida' ? 'Responder' : 'Nova mensagem') + '</button>';
+    actions.querySelector('#msg-close').addEventListener('click', () => closeModal('msg-read-modal'));
+    actions.querySelector('#msg-reply').addEventListener('click', () => {
+      closeModal('msg-read-modal');
+      openCompose(message.direction === 'recebida'
+        ? { patientId: message.patientId, replyTo: message }
+        : { patientId: message.patientId });
+    });
+    openModal('msg-read-modal');
+  }
+
+  // ---------- Clinic view ----------
+  const FILTERS = [
+    { id:'todas', label:'Todas', accepts: () => true },
+    { id:'recebidas', label:'Recebidas', accepts: m => m.direction === 'recebida' },
+    { id:'enviadas', label:'Enviadas', accepts: m => m.direction === 'enviada' },
+    { id:'naoLidas', label:'Não lidas', accepts: isUnread },
+  ];
+  const view = { query:'', filter:'todas', page:0 };
+
+  function renderClinic() {
+    const root = document.getElementById('messages-root');
+    if (!root.dataset.ready) {
+      root.innerHTML =
+        '<div class="messages-header"><div><h1>Mensagens</h1><p id="messages-subtitle"></p></div>' +
+          '<button class="btn btn-primary btn-sm" id="new-message-btn" type="button">' + Icons.plus + ' Nova mensagem</button></div>' +
+        '<div class="messages-toolbar">' +
+          '<div class="search-bar">' + Icons.search + '<input class="search-input" id="messages-search" type="search" placeholder="Buscar por paciente ou assunto..." aria-label="Buscar mensagens"></div>' +
+          '<div class="filter-chips" id="messages-filters">' + FILTERS.map(f => '<button class="filter-chip" type="button" data-filter="' + f.id + '">' + f.label + '</button>').join('') + '</div>' +
+        '</div>' +
+        '<section class="card"><div class="messages-card-head"><div><h3>Histórico de mensagens</h3><p id="messages-count"></p></div></div>' +
+          '<div id="messages-list"></div><div class="messages-pagination" id="messages-pagination"></div></section>';
+      root.dataset.ready = '1';
+      root.querySelector('#new-message-btn').addEventListener('click', () => openCompose());
+      root.querySelector('#messages-search').addEventListener('input', e => { view.query = e.target.value; view.page = 0; renderClinic(); });
+      root.querySelectorAll('[data-filter]').forEach(btn => btn.addEventListener('click', () => { view.filter = btn.dataset.filter; view.page = 0; renderClinic(); }));
+    }
+    const unreadCount = messages.filter(isUnread).length;
+    root.querySelector('#messages-subtitle').textContent = unreadCount + ' não lida(s) • ' + messages.length + ' mensagens no histórico';
+    root.querySelectorAll('[data-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === view.filter));
+
+    const filter = FILTERS.find(f => f.id === view.filter);
+    const query = view.query.trim().toLowerCase();
+    const filtered = messages.filter(m => filter.accepts(m) && (!query ||
+      patientName(m.patientId).toLowerCase().includes(query) || m.subject.toLowerCase().includes(query))).sort(byDateDesc);
+    root.querySelector('#messages-count').textContent = filtered.length + ' mensagem(ns) no filtro atual';
+
+    const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    view.page = Math.min(view.page, pageCount - 1);
+    const pageItems = filtered.slice(view.page * PAGE_SIZE, (view.page + 1) * PAGE_SIZE);
+    const list = root.querySelector('#messages-list');
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty-state"><h3>Nenhuma mensagem encontrada</h3><p>Ajuste a busca ou o filtro do histórico.</p></div>';
+    } else {
+      list.innerHTML =
+        '<div class="table-wrapper messages-table"><table class="data-table"><thead><tr><th>Data</th><th>Paciente</th><th>Assunto</th><th>Tipo</th><th>Situação</th></tr></thead><tbody>' +
+        pageItems.map(m => '<tr class="msg-row ' + (isUnread(m) ? 'unread' : '') + '" data-message="' + m.id + '" tabindex="0">' +
+          '<td style="white-space:nowrap;">' + formatDateTime(m.date) + '</td>' +
+          '<td>' + (isUnread(m) ? '<span class="msg-dot" aria-hidden="true"></span>' : '') + escapeHtml(patientName(m.patientId)) + '</td>' +
+          '<td><span class="msg-subject">' + escapeHtml(m.subject) + '</span><span class="msg-preview">' + escapeHtml(m.body) + '</span></td>' +
+          '<td>' + directionBadge(m) + '</td><td>' + statusBadge(m) + '</td></tr>').join('') +
+        '</tbody></table></div>' +
+        '<div class="msg-stack">' + pageItems.map(m => '<div class="msg-stack-item ' + (isUnread(m) ? 'unread' : '') + '" data-message="' + m.id + '" tabindex="0">' +
+          '<div class="msg-stack-top"><span>' + escapeHtml(patientName(m.patientId)) + '</span><span>' + formatDateTime(m.date) + '</span></div>' +
+          '<strong>' + escapeHtml(m.subject) + '</strong>' +
+          '<div style="display:flex;gap:6px;margin-top:6px;">' + directionBadge(m) + statusBadge(m) + '</div></div>').join('') + '</div>';
+      list.querySelectorAll('[data-message]').forEach(el => {
+        el.addEventListener('click', () => openMessage(el.dataset.message));
+        el.addEventListener('keydown', e => { if (e.key === 'Enter') openMessage(el.dataset.message); });
+      });
+    }
+    const start = filtered.length ? view.page * PAGE_SIZE + 1 : 0;
+    const end = Math.min(filtered.length, (view.page + 1) * PAGE_SIZE);
+    const pagination = root.querySelector('#messages-pagination');
+    pagination.innerHTML = '<span>Mostrando ' + start + '–' + end + ' de ' + filtered.length + ' ' + (filtered.length === 1 ? 'mensagem' : 'mensagens') + '</span>' +
+      '<div><button class="btn btn-subtle btn-sm" type="button" id="page-prev" ' + (view.page === 0 ? 'disabled' : '') + '>' + Icons.chevronL + ' Anterior</button>' +
+      '<span>Página ' + (view.page + 1) + ' de ' + pageCount + '</span>' +
+      '<button class="btn btn-subtle btn-sm" type="button" id="page-next" ' + (view.page >= pageCount - 1 ? 'disabled' : '') + '>Próxima ' + Icons.chevronR + '</button></div>';
+    pagination.querySelector('#page-prev').addEventListener('click', () => { view.page--; renderClinic(); });
+    pagination.querySelector('#page-next').addEventListener('click', () => { view.page++; renderClinic(); });
+  }
+
+  // ---------- Patient view ----------
+  function renderPatient() {
+    const root = document.getElementById('messages-root');
+    const own = messages.filter(m => m.patientId === currentPatientId).sort(byDateDesc);
+    const unreadForPatient = own.filter(m => m.direction === 'enviada' && !m.read).length;
+    root.innerHTML =
+      '<div class="messages-header"><div><h1>Mensagens</h1><p>' + (unreadForPatient === 0 ? 'Recados entre você e a equipe Lapidar' : unreadForPatient + ' não lida(s)') + '</p></div>' +
+        '<button class="btn btn-primary btn-sm" id="new-message-btn" type="button">' + Icons.plus + ' Nova mensagem</button></div>' +
+      (own.length ? '<div class="patient-msg-list">' + own.map(m => {
+        const fromTeam = m.direction === 'enviada';
+        const unread = fromTeam && !m.read;
+        return '<article class="patient-msg ' + (fromTeam ? 'from-team' : '') + (unread ? ' unread' : '') + '">' +
+          '<div class="patient-msg-head"><strong>' + (fromTeam ? 'Equipe Lapidar' : 'Você') + '</strong>' +
+          '<span style="display:flex;gap:6px;align-items:center;">' + (unread ? '<span class="badge badge-vinho">Nova</span>' : '') + formatDateTime(m.date) + '</span></div>' +
+          '<h4>' + escapeHtml(m.subject) + '</h4><p>' + escapeHtml(m.body) + '</p>' + attachmentMarkup(m.attachments) + '</article>';
+      }).join('') + '</div>'
+      : '<div class="empty-state"><h3>Nenhuma mensagem ainda</h3><p>Escreva para a equipe quando precisar.</p></div>');
+    root.querySelector('#new-message-btn').addEventListener('click', () => openCompose());
+    // Ao abrir a página, a paciente lê as mensagens da equipe.
+    let changed = false;
+    own.forEach(m => { if (m.direction === 'enviada' && !m.read) { m.read = true; changed = true; } });
+    if (changed) saveMessages();
+  }
+
+  function render() { isPatientView ? renderPatient() : renderClinic(); }
+  render();
+</script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
+</body>
+</html>
