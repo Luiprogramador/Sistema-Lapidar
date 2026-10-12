@@ -124,6 +124,9 @@
     .contents-modal-body { display:flex; flex-direction:column; gap:14px; padding:22px; }
     .contents-modal-body p { color:var(--text-secondary); font-size:13px; line-height:1.7; }
     .contents-modal-art { min-height:170px; border-radius:var(--radius); }
+    .content-art.contents-modal-art.content-art--ebooks { background:#94702e; }
+    .content-art.contents-modal-art.content-art--videos { background:#356f9b; }
+    .content-art.contents-modal-art.content-art--sites { background:#39765d; }
     .contents-modal-actions { display:flex; justify-content:flex-end; gap:8px; padding:0 22px 22px; }
     @media (max-width:1000px) { .contents-gallery-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @media (max-width:700px) {
@@ -421,9 +424,11 @@
   function openContent(item) {
     if (!item) return;
     const modal = document.getElementById('contents-modal');
+    const category = typeFor(item);
+    const categoryClass = `content-art--${category === 'Vídeos' ? 'videos' : category.toLowerCase()}`;
     document.getElementById('contents-modal-title').textContent = item.title;
     document.getElementById('contents-modal-body').innerHTML = `
-      <div class="content-art contents-modal-art" data-tone="${escapeHTML(item.tone || 'gold')}">
+      <div class="content-art contents-modal-art ${categoryClass}" data-tone="${escapeHTML(item.tone || 'gold')}">
         <span class="content-art-type">${escapeHTML(item.type)}</span>
         <span class="content-art-label">${escapeHTML(item.title)}</span>
       </div>
