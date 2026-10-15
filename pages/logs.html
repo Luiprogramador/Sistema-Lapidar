@@ -179,11 +179,14 @@
       render();
     });
     render();
-    const profileByStaffRole = role => {
-      if (/desenvolvedor/i.test(role || '')) return 'developer';
-      if (/secret/i.test(role || '')) return /admin/i.test(role || '') ? 'secretary-admin' : 'secretary';
-      if (/administrador do sistema/i.test(role || '')) return 'doctor-admin';
-      if (/m[eé]dico/i.test(role || '')) return 'doctor-admin';
+    const profileByStaffRole = employee => {
+      if (!employee) return 'doctor';
+      const roles = Array.isArray(employee.roles) ? employee.roles : String(employee.role || '').split(' · ');
+      const role = roles.join(' · ');
+      if (/desenvolvedor/i.test(role)) return 'developer';
+      if (/secret/i.test(role)) return /admin|administrador/i.test(role) ? 'secretary-admin' : 'secretary';
+      if (/admin|administrador/i.test(role)) return 'doctor-admin';
+      if (employee.isDoctor || /m[eé]dico/i.test(role)) return 'doctor-admin';
       return 'doctor';
     };
     const recipient = document.getElementById('announcement-recipient');
@@ -204,7 +207,7 @@
       const selected = recipient.value;
       if (!title || !detail) return;
       const profileTargets = selected === 'all' ? ['doctor-admin','doctor','secretary-admin','secretary'] : selected.startsWith('staff:')
-        ? [profileByStaffRole(staff.find(person => 'staff:' + person.id === selected)?.role)]
+        ? [profileByStaffRole(staff.find(person => 'staff:' + person.id === selected))]
         : [selected];
       const notice = { id:'notice-' + Date.now(), title, detail, time:new Date().toLocaleString('pt-BR'), unread:true };
       try {

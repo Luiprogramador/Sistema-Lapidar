@@ -32,12 +32,12 @@ const ROLE_LABELS = {
 
 // Perfis de demonstração equivalentes ao seletor do Flutter (papel + isAdmin).
 const DEMO_PROFILES = [
-  { id:'doctor-admin',    label:'Médica administradora', description:'Acesso clínico completo, equipe e sistema' },
-  { id:'doctor',          label:'Médica sem admin', description:'Consultas, agenda e ficha clínica sem administração' },
-  { id:'secretary-admin', label:'Secretária administradora', description:'Operação, financeiro e cadastros do sistema' },
-  { id:'secretary',       label:'Secretária sem admin', description:'Agenda, contatos e financeiro pessoal' },
-  { id:'patient',         label:'Paciente', description:'Diário e informações da própria jornada' },
-  { id:'developer',       label:'Desenvolvedor', description:'Logs e configurações do sistema' },
+  { id:'developer',       label:'Desenvolvedor', description:'Só logs do sistema e configurações' },
+  { id:'doctor-admin',    label:'Médica', description:'Acesso completo: clínico, financeiro geral e sistema' },
+  { id:'doctor',          label:'Médica (sem admin)', description:'Consultas e agenda; ficha só leitura; financeiro próprio' },
+  { id:'secretary-admin', label:'Secretária (Admin)', description:'Agenda, contatos, financeiro geral e sistema' },
+  { id:'secretary',       label:'Secretária', description:'Agenda, contatos e o próprio financeiro' },
+  { id:'patient',         label:'Paciente', description:'Diário, ficha, consultas e conteúdos' },
 ];
 
 function getProfileLabel() {
@@ -153,10 +153,16 @@ function renderTopbar(activePage) {
   }
   const notifCount = notifications.filter(notification => notification.unread === true).length;
   const unreadMessages = getUnreadMessagesCount();
+  const formatBadgeCount = count => count > 9 ? '9+' : count;
   const profile = DEMO_PROFILES.find(item => item.id === Router.getProfileId()) || DEMO_PROFILES[0];
+  const displayName = ROLE_LABELS[role] || profile.label;
+  const avatarInitials = role === 'doctor' ? 'DG' : role === 'secretary' ? 'G' : role === 'patient' ? 'P' : 'D';
+  const roleDescription = role === 'doctor' ? 'Ginecologista endócrina' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
+  const mobileRoleLabel = role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretaria' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
   const pageTitles = {
     dashboard:'Dashboard', patients:'Pacientes', agenda:'Agenda', consultations:'Consultas',
     'patient-detail':role === 'patient' ? 'Minha ficha' : 'Ficha da paciente',
+    'patient-profile':role === 'patient' ? 'Meu perfil' : 'Perfil da paciente',
     'patient-registration':'Cadastro de paciente', consultation:'Consulta', messages:'Mensagens',
     financial:'Financeiro', contents:'Conteúdos', settings:'Configurações', habits:'Diário Lapidar',
     journey:'Jornada operacional', logs:'Logs do sistema', profile:'Perfil',
@@ -192,25 +198,40 @@ function renderTopbar(activePage) {
         </span>
         Lapidar
       </div>
-      <span class="topbar-mobile-title">${escapePatientCardText(pageTitles[activePage] || 'Lapidar')}</span>
+      <div class="topbar-mobile-heading">
+        <span class="topbar-mobile-title">${escapePatientCardText(pageTitles[activePage] || 'Lapidar')}</span>
+        <span class="topbar-mobile-subtitle">${escapePatientCardText(mobileRoleLabel)} · Lapidar</span>
+      </div>
       <div class="topbar-date-summary"><strong>${escapePatientCardText(date)}</strong><span>${weekConsultations} consultas na semana${role === 'doctor' ? ` · ${ALERTAS.length} alertas` : ''}</span></div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-role-select">
-        <label for="role-select">Ver como:</label>
-        <select id="role-select" aria-label="Ver como outro perfil">
-          ${DEMO_PROFILES.map(item => `<option value="${item.id}" title="${item.description}" ${item.id === Router.getProfileId() ? 'selected' : ''}>${item.label}</option>`).join('')}
-        </select>
+      <div class="topbar-role-menu">
+        <button class="topbar-role-trigger" id="role-menu-trigger" type="button" aria-label="Ver como outro perfil" aria-expanded="false" aria-controls="role-menu">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M7.5 17c.9-1.7 2.4-2.5 4.5-2.5s3.6.8 4.5 2.5"/>
+          </svg>
+        </button>
+        <div class="topbar-role-dropdown" id="role-menu" role="menu" aria-label="Trocar tipo de conta" hidden>
+          <div class="topbar-role-menu-heading">
+            <strong>Ver como</strong>
+            <span>Modo teste — será removido com o login real</span>
+          </div>
+          ${DEMO_PROFILES.map(item => `
+            <button class="topbar-role-option" type="button" role="menuitemradio" aria-checked="${item.id === Router.getProfileId()}" data-profile-id="${item.id}">
+              <span class="topbar-role-option-copy"><strong>${escapePatientCardText(item.label)}</strong><small>${escapePatientCardText(item.description)}</small></span>
+              <span class="topbar-role-option-check" aria-hidden="true">${item.id === Router.getProfileId() ? '✓' : ''}</span>
+            </button>`).join('')}
+        </div>
       </div>
       <div class="topbar-actions">
         <button class="topbar-icon-btn" id="messages-btn" aria-label="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}" title="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}">
           ${Icons.message}
-          ${unreadMessages > 0 ? `<span class="notif-badge">${unreadMessages}</span>` : ''}
+          ${unreadMessages > 0 ? `<span class="notif-badge">${formatBadgeCount(unreadMessages)}</span>` : ''}
         </button>
         <div class="topbar-notifications">
           <button class="topbar-icon-btn" id="notif-btn" aria-label="Notificações">
             ${Icons.bell}
-            ${notifCount > 0 ? `<span class="notif-badge">${notifCount}</span>` : ''}
+            ${notifCount > 0 ? `<span class="notif-badge">${formatBadgeCount(notifCount)}</span>` : ''}
           </button>
           <div class="notif-dropdown" id="notif-dropdown">
           <div class="notif-header">
@@ -223,10 +244,10 @@ function renderTopbar(activePage) {
         <button class="topbar-icon-btn" id="settings-shortcut" aria-label="Configurações" title="Configurações">${Icons.settings}</button>
         <div class="topbar-user-menu">
           <button class="topbar-user-trigger" id="topbar-user-trigger" type="button" aria-expanded="false" aria-controls="topbar-user-dropdown">
-            <span class="avatar">${escapePatientCardText(profile.label.slice(0, 1))}</span><span class="topbar-user-copy"><strong>${escapePatientCardText(profile.label)}</strong><small>${escapePatientCardText(role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor')}</small></span><span aria-hidden="true">⌄</span>
+            <span class="avatar">${escapePatientCardText(avatarInitials)}</span><span class="topbar-user-copy"><strong>${escapePatientCardText(displayName)}</strong><small>${escapePatientCardText(roleDescription)}</small></span><span aria-hidden="true">⌄</span>
           </button>
           <div class="topbar-user-dropdown" id="topbar-user-dropdown" hidden>
-            <button type="button" data-user-action="profile">Perfil</button>
+            ${role !== 'developer' ? `<button type="button" data-user-action="profile">Meu perfil</button>` : ''}
             <button type="button" data-user-action="settings">Configurações</button>
             <button type="button" data-user-action="logout">Sair</button>
           </div>
@@ -239,6 +260,9 @@ function renderTopbar(activePage) {
 function renderSidebar(activePage) {
   const role = Router.getRole();
   const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
+  const displayName = ROLE_LABELS[role] || 'Perfil Lapidar';
+  const avatarInitials = role === 'doctor' ? 'DG' : role === 'secretary' ? 'G' : role === 'patient' ? 'P' : 'D';
+  const roleDescription = role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
 
   return `
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -258,9 +282,11 @@ function renderSidebar(activePage) {
       `).join('')}
     </div>
     <div class="sidebar-footer">
-      <button class="btn btn-subtle btn-sm btn-full" id="logout-btn">
-        ${Icons.logout} Sair
-      </button>
+      <div class="sidebar-account">
+        <span class="sidebar-account-avatar">${escapePatientCardText(avatarInitials)}</span>
+        <span class="sidebar-account-copy"><strong>${escapePatientCardText(displayName)}</strong><small>${escapePatientCardText(roleDescription)}</small></span>
+        <button class="sidebar-logout" id="logout-btn" type="button" aria-label="Sair" title="Sair">${Icons.logout}</button>
+      </div>
     </div>
   </nav>`;
 }
@@ -299,71 +325,64 @@ function escapePatientCardText(value) {
 
 function renderPatientCard(p, index = 0) {
   const goals = Array.isArray(p.metas) ? p.metas : [];
-  const completedGoals = Math.max(0, Math.min(Number(p.metasConcluidas) || 0, goals.length));
-  const pct = goals.length ? Math.round((completedGoals / goals.length) * 100) : 0;
-  const hasWeight = p.pesoAtual !== null && p.pesoAtual !== undefined && p.pesoAtual !== '' && Number.isFinite(Number(p.pesoAtual));
-  const hasWeightStart = p.pesoInicial !== null && p.pesoInicial !== undefined && p.pesoInicial !== '' && Number.isFinite(Number(p.pesoInicial));
-  const hasWeightGoal = p.meta !== null && p.meta !== undefined && p.meta !== '' && Number.isFinite(Number(p.meta));
-  const allergyList = Array.isArray(p.alergias) ? p.alergias : [];
-  const allergySummary = allergyList.length ? allergyList.join(', ') : 'Não informadas';
   const inactive = p.ativo === false || p.status === 'Inativa';
+  const patientAlerts = [...new Set((Array.isArray(ALERTAS) ? ALERTAS : [])
+    .filter(alert => alert.paciente === p.nome)
+    .map(alert => alert.tipo === 'Bioimpedância pendente' ? 'Bioimpedâncias pendentes' : alert.tipo))];
+  const conditions = Array.isArray(p.riscoCV?.fatores) ? p.riscoCV.fatores : [];
+  const personalizedHabits = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas.map(goal => goal.nome) : [];
+  const habits = [...new Set([
+    ...(p.nutricaoMetas ? ['Fibras', 'Proteínas', 'Água'] : []),
+    ...personalizedHabits.map(name => /caminhada|cardio|corrida/i.test(name) ? 'Cardio' : name),
+  ])];
+  const alertMarkup = patientAlerts.length
+    ? `${patientAlerts.slice(0, 2).map(alert => `<span class="patient-tag patient-alert-tag">${escapePatientCardText(alert)}</span>`).join('')}${patientAlerts.length > 2 ? `<span class="patient-tag patient-alert-tag">+${patientAlerts.length - 2}</span>` : ''}`
+    : '<span class="patient-tag patient-empty-tag">Nenhum alerta</span>';
   const profileButton = Router.getRole() === 'secretary'
-    ? `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver contatos de ${escapePatientCardText(p.nome)}">Ver contatos</button>`
+    ? `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver contatos de ${escapePatientCardText(p.nome)}">Ver detalhes</button>`
     : `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver perfil de ${escapePatientCardText(p.nome)}">Ver perfil</button>`;
   if (Router.getRole() === 'secretary') {
     return `
     <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
-      <div class="card-patient-header">
-        <div class="avatar avatar-lg">${escapePatientCardText(p.iniciais)}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="card-patient-name">${escapePatientCardText(p.nome)}</div>
-          <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--text-secondary);">${escapePatientCardText(p.telefone)}</div>
-      <div style="font-size:12px;color:var(--text-secondary);">${escapePatientCardText(p.email || 'E-mail não informado')}</div>
-      <div style="display:flex;justify-content:flex-end;margin-top:4px;">${profileButton}</div>
+      ${renderPatientCardHeader(p, inactive)}
+      <section class="patient-card-section"><h3>CONTATOS</h3><p>${escapePatientCardText(p.telefone)} · ${escapePatientCardText(p.email || 'E-mail não informado')}</p></section>
+      <div class="patient-card-footer">${profileButton}</div>
     </div>`;
   }
-
-  const pesoLoss = hasWeight && hasWeightStart ? (Number(p.pesoInicial) - Number(p.pesoAtual)).toFixed(1) : null;
   return `
-  <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
-    <div class="card-patient-header">
-      <div class="avatar avatar-lg">${escapePatientCardText(p.iniciais)}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="card-patient-name">${escapePatientCardText(p.nome)}</div>
-        <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
-        <div class="card-patient-meta">${escapePatientCardText(p.idade)} anos · ${escapePatientCardText(p.consultaAtual)}</div>
-        <div style="margin-top:4px;">${getProtocolBadge(p.protocolo)}</div>
-      </div>
+  <div class="card-patient patient-reference-card stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
+    ${renderPatientCardHeader(p, inactive)}
+    <section class="patient-card-section">
+      <h3>ALERTAS</h3><div class="patient-tag-list">${alertMarkup}</div>
+    </section>
+    <section class="patient-card-section">
+      <h3>CONDIÇÕES</h3><div class="patient-tag-list">${conditions.length ? conditions.slice(0, 3).map(item => `<span class="patient-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div>
+    </section>
+    <section class="patient-card-section">
+      <h3>OBJETIVOS</h3><p>${escapePatientCardText(p.objetivo || 'Objetivo não informado')}</p>
+    </section>
+    <section class="patient-card-section patient-card-split">
+      <div><h3>METAS</h3><div class="patient-tag-list">${goals.length ? goals.slice(0, 2).map(item => `<span class="patient-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div></div>
+      <div><h3>HÁBITOS</h3><div class="patient-tag-list">${habits.length ? habits.slice(0, 5).map(item => `<span class="patient-tag patient-habit-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div></div>
+    </section>
+    <div class="patient-card-dates">
+      <span>Última consulta <strong>${escapePatientCardText(p.ultimaConsulta || '—')}</strong></span>
+      <span>Próxima consulta <strong>${escapePatientCardText(p.proximaConsulta || '—')}</strong></span>
     </div>
-    <div style="display:flex;gap:16px;font-size:12px;">
-      <div>
-        <div style="color:var(--text-muted);">Peso atual</div>
-        <div style="font-weight:600;color:var(--vinho);">${hasWeight ? `${Number(p.pesoAtual)} kg` : 'Não informado'}</div>
-      </div>
-      <div>
-        <div style="color:var(--text-muted);">Perda total</div>
-        <div style="font-weight:600;color:var(--oliva);">${pesoLoss === null ? '—' : `${pesoLoss} kg`}</div>
-      </div>
-      <div>
-        <div style="color:var(--text-muted);">Meta</div>
-        <div style="font-weight:600;color:var(--text-secondary);">${hasWeightGoal ? `${Number(p.meta)} kg` : 'Sem meta de peso'}</div>
-      </div>
-    </div>
-    <div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;">
-        <span>Metas atingidas</span>
-        <span>${goals.length ? `${pct}%` : 'Sem metas definidas'}</span>
-      </div>
-      ${goals.length ? `<div class="progress-bar">
-        <div class="progress-fill" style="width:${pct}%;"></div>
-      </div>` : ''}
-    </div>
-    <div style="font-size:12px;color:var(--text-muted);">Alergias: ${escapePatientCardText(allergySummary)}</div>
-    <div style="display:flex;justify-content:flex-end;margin-top:4px;">${profileButton}</div>
+    <div class="patient-card-footer">${profileButton}</div>
   </div>`;
+}
+
+function renderPatientCardHeader(patient, inactive) {
+  return `
+    <div class="patient-reference-header">
+      <div class="avatar avatar-lg">${escapePatientCardText(patient.iniciais)}</div>
+      <div class="patient-reference-copy">
+        <div class="card-patient-name">${escapePatientCardText(patient.nome)}</div>
+        <div class="card-patient-meta">${escapePatientCardText(patient.idade)} anos · ${escapePatientCardText(patient.protocolo || 'Sem protocolo')}</div>
+      </div>
+      <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
+    </div>`;
 }
 
 /* ── Inicialização global do shell (topbar + sidebar) ── */
@@ -371,12 +390,40 @@ function initShell(activePage) {
   document.getElementById('topbar-container').innerHTML = renderTopbar(activePage);
   document.getElementById('sidebar-container').innerHTML = renderSidebar(activePage);
 
-  // Role selector
-  const roleSelect = document.getElementById('role-select');
-  if (roleSelect) {
-    roleSelect.addEventListener('change', e => {
-      Router.setProfile(e.target.value);
+  // Demo role switcher
+  const roleTrigger = document.getElementById('role-menu-trigger');
+  const roleMenu = document.getElementById('role-menu');
+  if (roleTrigger && roleMenu) {
+    roleTrigger.addEventListener('click', event => {
+      event.stopPropagation();
+      const expanded = roleTrigger.getAttribute('aria-expanded') === 'true';
+      roleTrigger.setAttribute('aria-expanded', String(!expanded));
+      roleMenu.hidden = expanded;
+    });
+    roleMenu.addEventListener('click', event => {
+      const option = event.target.closest('[data-profile-id]');
+      if (!option) return;
+      const profileId = option.dataset.profileId;
+      if (!DEMO_PROFILES.some(profile => profile.id === profileId)) {
+        throw new TypeError(`Perfil de demonstração inválido: ${profileId}`);
+      }
+      roleTrigger.setAttribute('aria-expanded', 'false');
+      roleMenu.hidden = true;
+      Router.setProfile(profileId);
       Router.navigate(Router.getHomePage());
+    });
+    document.addEventListener('click', event => {
+      if (!roleTrigger.contains(event.target) && !roleMenu.contains(event.target)) {
+        roleTrigger.setAttribute('aria-expanded', 'false');
+        roleMenu.hidden = true;
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !roleMenu.hidden) {
+        roleTrigger.setAttribute('aria-expanded', 'false');
+        roleMenu.hidden = true;
+        roleTrigger.focus();
+      }
     });
   }
 
@@ -399,7 +446,9 @@ function initShell(activePage) {
       if (!action) return;
       userTrigger.setAttribute('aria-expanded', 'false');
       userDropdown.hidden = true;
-      if (action === 'profile') Router.navigate('profile');
+      if (action === 'profile') {
+        Router.navigate(Router.getRole() === 'patient' ? 'patient-profile' : 'profile');
+      }
       if (action === 'settings') Router.navigate('settings');
       if (action === 'logout') Router.navigate('login');
     });

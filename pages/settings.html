@@ -11,12 +11,9 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
-    html { font-size: clamp(10px, 1.223vw, 16px); }
     body { min-width: 320px; background: var(--bege); }
-    #sidebar-container, .sidebar { display: none !important; }
-    .topbar .hamburger-btn { display: none; }
-    .main-content.settings-main { width: 100%; min-height: 100vh; margin: 0; padding: calc(var(--topbar-height) + 1.75rem) clamp(17px, 2.2vw, 29px) 1.5rem; }
-    .settings-main .page-header { display: block; margin: 0; }
+    .main-content.settings-main { min-height: calc(100vh - var(--topbar-height)); }
+    .settings-main .page-header { display: block; margin: 0 0 28px; }
     .settings-main .page-title { color: var(--text-primary); font-size: 2.375rem; font-weight: 700; line-height: 1.15; }
     .settings-main .page-subtitle { margin-top: .25rem; color: var(--text-secondary); font-size: 1rem; line-height: 1.4; }
     .settings-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin: 2.15rem 0 2.3rem; }
@@ -46,7 +43,7 @@
       border: 1px solid #dfd0ce; border-radius: .75rem; background: #f0e8e6; color: var(--vinho);
     }
     .settings-icon svg { width: 1.4rem; height: 1.4rem; }
-    .settings-card-head h2 { margin: 0; color: var(--text-primary); font-size: 1.18rem; font-weight: 750; line-height: 1.3; }
+    .settings-card-head h2 { margin: 0; color: var(--text-primary); font-family: var(--font-sans); font-size: 1.18rem; font-weight: 750; line-height: 1.3; }
     .settings-card-head p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .95rem; line-height: 1.4; }
     .account-grid .settings-card { min-height: 33.125rem; padding-bottom: 1.1rem; }
     .account-grid .settings-card-head { padding-bottom: 1.05rem; }
@@ -107,8 +104,8 @@
     .switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
     .switch-track { position: absolute; inset: 0; border: 1px solid #9a8386; border-radius: 1rem; background: #f0e3e3; cursor: pointer; }
     .switch-track::after { content: ""; position: absolute; top: .18rem; left: .2rem; width: 1.05rem; height: 1.05rem; border-radius: 50%; background: #89797d; transition: transform .16s ease, background .16s ease; }
-    .switch input:checked + .switch-track { border-color: #b5949b; background: #b5949b; }
-    .switch input:checked + .switch-track::after { transform: translateX(.96rem); background: var(--vinho); }
+    .switch input:checked + .switch-track { border-color: var(--vinho); background: var(--vinho); }
+    .switch input:checked + .switch-track::after { transform: translateX(.96rem); background: #fffaf1; }
     .select-label { display: block; margin: .4rem 0 .3rem; color: var(--text-primary); font-size: .82rem; font-weight: 700; }
     .settings-select { width: 100%; height: 3.1rem; min-height: 0; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .55rem; background: #fff; color: var(--text-primary); font-size: .75rem; }
     .settings-help { margin-top: .35rem; color: var(--text-secondary); font-size: .7rem; line-height: 1.45; }
@@ -196,6 +193,11 @@
     .staff-form .staff-span { grid-column: 1 / -1; }
     .staff-checkbox { display: flex !important; align-items: center; gap: .5rem !important; }
     .staff-checkbox input { width: auto; min-height: auto; }
+    .staff-role-fieldset { min-width: 0; margin: 0; padding: .7rem; border: 1px solid var(--border); border-radius: .5rem; }
+    .staff-role-fieldset legend { padding: 0 .25rem; color: var(--text-secondary); font-size: .75rem; font-weight: 700; }
+    .staff-role-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem .75rem; }
+    .staff-role-list label { display: flex; align-items: center; gap: .45rem; min-width: 0; font-weight: 500; }
+    .staff-role-list input { flex: 0 0 auto; width: 1rem; min-height: 1rem; accent-color: var(--vinho); }
     .staff-actions, .staff-row-actions { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
     .staff-list { margin-top: .8rem; }
     .staff-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
@@ -213,7 +215,7 @@
     .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
     .easy-interaction button, .easy-interaction input, .easy-interaction select { min-height: max(2.6rem, 2.8em); }
     @media (max-width: 700px) {
-      .main-content.settings-main { padding: calc(var(--topbar-height) + 1.2rem) 1.2rem 1.2rem; }
+      .main-content.settings-main { padding: 20px 16px; }
       .settings-main .page-title { font-size: 2rem; }
       .settings-tabs { gap: .4rem; margin: 1.5rem 0; }
       .settings-tab { flex: 1 1 auto; }
@@ -434,16 +436,18 @@
         <label class="staff-span">Nome completo<input id="staff-name" maxlength="100" autocomplete="name" required></label>
         <label>E-mail<input id="staff-email" type="email" maxlength="120" autocomplete="email" required></label>
         <label>Telefone<input id="staff-phone" type="tel" maxlength="30" autocomplete="tel"></label>
-        <label class="staff-span">Função
-          <select id="staff-role" required>
-            <option value="Secretária">Secretária</option>
-            <option value="Contador(a)">Contador(a)</option>
-            <option value="Desenvolvedor(a)">Desenvolvedor(a)</option>
-            <option value="Admin do sistema">Admin do sistema</option>
-            <option value="Gestor(a) de conteúdo">Gestor(a) de conteúdo</option>
-            <option value="Outra">Outra</option>
-          </select>
-        </label>
+        <fieldset class="staff-role-fieldset staff-span">
+          <legend>Funções (selecione todas as aplicáveis)</legend>
+          <div class="staff-role-list" id="staff-role-list">
+            <label><input type="checkbox" name="staff-role" value="Secretaria"> Secretaria</label>
+            <label><input type="checkbox" name="staff-role" value="Gestor(a) de conteúdo"> Gestor(a) de conteúdo</label>
+            <label><input type="checkbox" name="staff-role" value="Gestor(a) financeiro(a)"> Gestor(a) financeiro(a)</label>
+            <label><input type="checkbox" name="staff-role" value="Administrador(a) do sistema"> Administrador(a) do sistema</label>
+            <label><input type="checkbox" name="staff-role" value="Desenvolvedor(a)"> Desenvolvedor(a)</label>
+            <label><input type="checkbox" name="staff-role" value="Contador(a)"> Contador(a)</label>
+            <label><input type="checkbox" name="staff-role" value="Outra"> Outra</label>
+          </div>
+        </fieldset>
         <label id="staff-other-role-field" class="staff-span" hidden>Descreva a função<input id="staff-other-role" maxlength="80"></label>
         <label class="staff-checkbox staff-span"><input id="staff-is-doctor" type="checkbox"> Este funcionário também é médico</label>
         <label id="staff-crm-field" class="staff-span" hidden>CRM<input id="staff-crm" maxlength="30" placeholder="UF e número"></label>
@@ -675,7 +679,7 @@
     function applyAccessibility() {
       fontOutput.value = accessibility.fontSize + '%';
       fontOutput.textContent = accessibility.fontSize + '%';
-      document.documentElement.style.fontSize = 'clamp(10px, calc(1.223vw * ' + (accessibility.fontSize / 100) + '), 16px)';
+      document.documentElement.style.fontSize = (17 * accessibility.fontSize / 100) + 'px';
       document.body.classList.toggle('high-contrast', accessibility.highContrast);
       document.body.classList.toggle('easy-interaction', accessibility.easyInteraction);
       document.body.classList.toggle('reduce-motion', accessibility.reduceMotion);
@@ -763,7 +767,7 @@
     });
 
     const defaultColors = {
-      primary: '#5B2333', accent: '#C6A15B', page: '#FAF3E9', card: '#FFFDFA',
+      primary: '#5B2333', accent: '#C6A15B', page: '#F4EFE7', card: '#FFFDFA',
       title: '#1C1418', text: '#1C1418', secondary: '#473A3F', border: '#CFBCAE'
     };
     const colorDefinitions = [
@@ -1174,9 +1178,20 @@
     const staffCrmInput = document.getElementById('staff-crm');
     const staffSpecialtyField = document.getElementById('staff-specialty-field');
     const staffSpecialtyInput = document.getElementById('staff-specialty');
-    const staffRoleInput = document.getElementById('staff-role');
+    const staffRoleCheckboxes = Array.from(document.querySelectorAll('input[name="staff-role"]'));
     const staffOtherRoleField = document.getElementById('staff-other-role-field');
     const staffOtherRoleInput = document.getElementById('staff-other-role');
+    const staffKnownRoles = staffRoleCheckboxes.map(function(input) { return input.value; }).filter(function(value) { return value !== 'Outra'; });
+    const staffRoleAliases = { 'Secretária':'Secretaria', 'Admin do sistema':'Administrador(a) do sistema' };
+    function getEmployeeRoles(employee) {
+      const source = Array.isArray(employee.roles) ? employee.roles : String(employee.role || '').split(' · ');
+      const roles = source.map(function(value) { return staffRoleAliases[value] || value; }).filter(Boolean);
+      if (employee.customRole && !roles.includes(employee.customRole)) roles.push(employee.customRole);
+      return Array.from(new Set(roles));
+    }
+    function selectedStaffRoles() {
+      return staffRoleCheckboxes.filter(function(input) { return input.checked && input.value !== 'Outra'; }).map(function(input) { return input.value; });
+    }
     let editingStaffId = null;
     let staffState = { employees:[], logs:[] };
     try {
@@ -1192,7 +1207,9 @@
       console.error('Não foi possível carregar o cadastro da equipe.', error);
       notify(staffFeedback, 'Não foi possível carregar os dados da equipe salvos neste navegador.', error);
     }
-    const hasSystemAdmin = employee => Boolean(employee && (employee.isAdmin || /admin do sistema|administrador do sistema/i.test(employee.role || '')));
+    const hasSystemAdmin = employee => Boolean(employee && (employee.isAdmin || getEmployeeRoles(employee).some(function(role) {
+      return role === 'Administrador(a) do sistema' || /admin do sistema|administrador(a)? do sistema/i.test(role);
+    })));
     if (!staffState.employees.some(employee => hasSystemAdmin(employee) && employee.active !== false)) {
       const systemAdmin = {
         id:'system-admin', name:'Dra. Andressa Gomide', email:'admin-demo@lapidar.invalid',
@@ -1207,21 +1224,23 @@
         notify(staffFeedback, 'Não foi possível salvar o perfil administrativo inicial neste navegador.', error);
       }
     }
-    function toggleDoctorFields() {
+    function toggleStaffFields() {
       const isDoctor = staffDoctorCheckbox.checked;
       staffCrmField.hidden = !isDoctor;
       staffCrmInput.required = isDoctor;
       staffSpecialtyField.hidden = !isDoctor;
-      staffOtherRoleField.hidden = staffRoleInput.value !== 'Outra';
-      staffOtherRoleInput.required = staffRoleInput.value === 'Outra';
+      const hasOtherRole = staffRoleCheckboxes.some(function(input) { return input.value === 'Outra' && input.checked; });
+      staffOtherRoleField.hidden = !hasOtherRole;
+      staffOtherRoleInput.required = hasOtherRole;
     }
     function accessDescription(employee) {
       if (hasSystemAdmin(employee)) return 'Acesso administrativo e configurações do sistema';
       if (employee.isDoctor) return 'Acesso clínico de médica';
-      if (/secret/i.test(employee.role || '')) return 'Agenda, contato da paciente e operações permitidas à secretaria';
-      if (/contador/i.test(employee.role || '')) return 'Acesso financeiro demonstrativo';
-      if (/desenvolvedor/i.test(employee.role || '')) return 'Logs do sistema e configurações';
-      if (/conteúdo/i.test(employee.role || '')) return 'Gestão de conteúdos';
+      const roles = getEmployeeRoles(employee);
+      if (roles.includes('Secretaria')) return 'Agenda, contato da paciente e operações permitidas à secretaria';
+      if (roles.includes('Gestor(a) financeiro(a)') || roles.includes('Contador(a)')) return 'Acesso financeiro demonstrativo';
+      if (roles.includes('Desenvolvedor(a)')) return 'Logs do sistema e configurações';
+      if (roles.includes('Gestor(a) de conteúdo')) return 'Gestão de conteúdos';
       return 'Acesso a definir conforme a função e as permissões reais do sistema';
     }
     function renderStaff() {
@@ -1240,7 +1259,7 @@
         const name = document.createElement('strong');
         const details = document.createElement('span');
         name.textContent = employee.name + (employee.isDoctor ? ' · Médica(o)' : '') + (employee.active === false ? ' · Inativo' : '');
-        details.textContent = [employee.role, employee.email, employee.phone, employee.isDoctor && employee.crm ? 'CRM ' + employee.crm : '', employee.isDoctor && employee.specialty ? employee.specialty : ''].filter(Boolean).join(' · ');
+        details.textContent = [getEmployeeRoles(employee).join(', '), employee.email, employee.phone, employee.isDoctor && employee.crm ? 'CRM ' + employee.crm : '', employee.isDoctor && employee.specialty ? employee.specialty : ''].filter(Boolean).join(' · ');
         const profile = document.createElement('p');
         profile.className = 'checklist-help';
         profile.hidden = true;
@@ -1327,14 +1346,12 @@
     function resetStaffForm() {
       editingStaffId = null;
       staffForm.reset();
-      staffRoleInput.value = 'Secretária';
       staffOtherRoleInput.value = '';
       staffSpecialtyInput.value = '';
       staffCrmField.hidden = true;
       staffCrmInput.required = false;
       staffSpecialtyField.hidden = true;
-      staffOtherRoleField.hidden = true;
-      staffOtherRoleInput.required = false;
+      toggleStaffFields();
       document.getElementById('save-staff').textContent = 'Cadastrar funcionário';
       document.getElementById('cancel-staff-edit').hidden = true;
     }
@@ -1343,18 +1360,17 @@
       document.getElementById('staff-name').value = employee.name;
       document.getElementById('staff-email').value = employee.email;
       document.getElementById('staff-phone').value = employee.phone || '';
-      staffRoleInput.value = employee.role;
-      if (!Array.from(staffRoleInput.options).some(function(option) { return option.value === employee.role; })) {
-        const legacyRole = document.createElement('option');
-        legacyRole.value = employee.role;
-        legacyRole.textContent = employee.role;
-        staffRoleInput.appendChild(legacyRole);
-      }
+      const roles = getEmployeeRoles(employee);
+      staffRoleCheckboxes.forEach(function(input) {
+        input.checked = input.value === 'Outra'
+          ? roles.some(function(role) { return !staffKnownRoles.includes(role); })
+          : roles.includes(input.value);
+      });
       staffDoctorCheckbox.checked = Boolean(employee.isDoctor);
       staffCrmInput.value = employee.crm || '';
       staffSpecialtyInput.value = employee.specialty || '';
-      staffOtherRoleInput.value = employee.customRole || '';
-      toggleDoctorFields();
+      staffOtherRoleInput.value = roles.filter(function(role) { return !staffKnownRoles.includes(role); }).join(', ');
+      toggleStaffFields();
       document.getElementById('save-staff').textContent = 'Salvar alterações';
       document.getElementById('cancel-staff-edit').hidden = false;
       staffForm.scrollIntoView({ behavior:'smooth', block:'center' });
@@ -1392,8 +1408,8 @@
       };
       persistStaff(nextState, makingInactive ? 'Inativação de funcionário' : 'Reativação de funcionário', id);
     }
-    staffDoctorCheckbox.addEventListener('change', toggleDoctorFields);
-    staffRoleInput.addEventListener('change', toggleDoctorFields);
+    staffDoctorCheckbox.addEventListener('change', toggleStaffFields);
+    staffRoleCheckboxes.forEach(function(input) { input.addEventListener('change', toggleStaffFields); });
     document.getElementById('cancel-staff-edit').addEventListener('click', resetStaffForm);
     staffForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -1401,11 +1417,12 @@
       const email = document.getElementById('staff-email').value.trim();
       const isDoctor = staffDoctorCheckbox.checked;
       const crm = staffCrmInput.value.trim();
-      const selectedRole = staffRoleInput.value;
       const customRole = staffOtherRoleInput.value.trim();
       const current = editingStaffId ? staffState.employees.find(function(item) { return item.id === editingStaffId; }) : null;
-      const roleValue = selectedRole === 'Outra' ? customRole : selectedRole;
-      if (!name || !email || (isDoctor && !crm) || (selectedRole === 'Outra' && !customRole)) {
+      const hasOtherRole = staffRoleCheckboxes.some(function(input) { return input.value === 'Outra' && input.checked; });
+      const roles = current && current.protected ? getEmployeeRoles(current) : selectedStaffRoles();
+      if (hasOtherRole && customRole) roles.push.apply(roles, customRole.split(',').map(function(role) { return role.trim(); }).filter(Boolean));
+      if (!name || !email || !roles.length || (isDoctor && !crm) || (hasOtherRole && !customRole)) {
         notify(staffFeedback, 'Informe nome, e-mail, função e, para médicos, CRM.');
         return;
       }
@@ -1421,12 +1438,13 @@
         name:name,
         email:email,
         phone:document.getElementById('staff-phone').value.trim(),
-        role:current && current.protected ? current.role : roleValue,
-        customRole:selectedRole === 'Outra' ? customRole : '',
+        role:roles.join(' · '),
+        roles:roles,
+        customRole:hasOtherRole ? customRole : '',
         isDoctor:isDoctor,
         crm:isDoctor ? crm : '',
         specialty:isDoctor ? staffSpecialtyInput.value.trim() : '',
-        isAdmin:selectedRole === 'Admin do sistema' || Boolean(current && current.protected),
+        isAdmin:roles.includes('Administrador(a) do sistema') || Boolean(current && current.protected),
         protected:Boolean(current && current.protected),
         active:current ? current.active !== false : true
       };

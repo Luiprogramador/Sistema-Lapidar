@@ -12,69 +12,88 @@ function drawBarChart(canvas, data, opts = {}) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
   canvas.width  = rect.width  * dpr;
   canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
 
   const W = rect.width;
   const H = rect.height;
-  const color   = opts.color   || '#591B1C';
-  const padding = { top: 16, right: 8, bottom: 32, left: 32 };
-
-  const chartW = W - padding.left - padding.right;
-  const chartH = H - padding.top  - padding.bottom;
-
-  const maxVal = Math.max(...data.map(d => d.value), 1);
-  const barW   = (chartW / data.length) * 0.6;
-  const gap    = (chartW / data.length) * 0.4;
-
+  const color = opts.color || '#5B2333';
+  const padding = { top:18, right:6, bottom:48, left:38 };
+  const chartW = Math.max(0, W - padding.left - padding.right);
+  const chartH = Math.max(0, H - padding.top - padding.bottom);
+  const maxDataValue = Math.max(...data.map(d => d.value), 0);
+  const maxVal = Math.max(10, Math.ceil(maxDataValue / 5) * 5);
+  const average = opts.average ?? (data.reduce((sum, d) => sum + d.value, 0) / Math.max(data.length, 1));
+  const slotW = data.length ? chartW / data.length : chartW;
+  const barW = Math.min(28, slotW * .56);
+  const hoveredIndex = Number.isInteger(opts.hoveredIndex) ? opts.hoveredIndex : -1;
   ctx.clearRect(0, 0, W, H);
 
-  // Grid lines
-  const gridLines = 4;
-  ctx.strokeStyle = '#E3D8C8';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= gridLines; i++) {
-    const y = padding.top + (chartH / gridLines) * i;
+  for (let value = 0; value <= maxVal; value += 5) {
+    const y = padding.top + chartH - (value / maxVal) * chartH;
     ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(padding.left + chartW, y);
+    ctx.setLineDash(value === 0 ? [] : [4, 6]);
+    ctx.strokeStyle = '#D8C7B9';
+    ctx.lineWidth = 1;
+    ctx.moveTo(padding.left, Math.round(y) + .5);
+    ctx.lineTo(W - padding.right, Math.round(y) + .5);
     ctx.stroke();
-
-    // Y labels
-    const val = Math.round(maxVal - (maxVal / gridLines) * i);
-    ctx.fillStyle = '#78685A';
-    ctx.font = `500 11px Montserrat, sans-serif`;
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#55484A';
+    ctx.font = `500 13px Montserrat, sans-serif`;
     ctx.textAlign = 'right';
-    ctx.fillText(val, padding.left - 4, y + 4);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(value), padding.left - 8, y);
   }
 
   data.forEach((d, i) => {
-    const x = padding.left + i * (chartW / data.length) + gap / 2;
-    const barH = (d.value / maxVal) * chartH;
+    const centerX = padding.left + slotW * (i + .5);
+    const x = centerX - barW / 2;
+    const barH = Math.max(0, (d.value / maxVal) * chartH);
     const y = padding.top + chartH - barH;
-
-    // Bar with gradient
-    const grad = ctx.createLinearGradient(0, y, 0, y + barH);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, color + '99');
+    const isToday = d.isToday === true;
+    const barColor = isToday ? '#C6A15B' : color;
 
     ctx.beginPath();
-    ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
-    ctx.fillStyle = grad;
+    ctx.roundRect(centerX - barW / 2, padding.top, barW, chartH, [barW / 2, barW / 2, 0, 0]);
+    ctx.fillStyle = '#F2EBE4';
     ctx.fill();
 
-    // X label
-    ctx.fillStyle = '#78685A';
-    ctx.font = `500 12px Montserrat, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(d.label, x + barW / 2, H - padding.bottom + 14);
+    if (barH > 0) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, barH, [barW / 2, barW / 2, 0, 0]);
+      ctx.fillStyle = barColor;
+      ctx.fill();
+    }
 
-    // Value on top
-    ctx.fillStyle = color;
-    ctx.font = `600 12px Montserrat, sans-serif`;
-    ctx.fillText(d.value, x + barW / 2, y - 4);
+    ctx.fillStyle = isToday ? '#806123' : '#473A3F';
+    ctx.font = `${isToday ? 700 : 600} 13px Montserrat, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(d.shortLabel || d.label.slice(0, 3), centerX, H - 26);
+    ctx.fillStyle = '#78685A';
+    ctx.font = `400 11px Montserrat, sans-serif`;
+    ctx.fillText(d.dateLabel || '', centerX, H - 8);
+
+    if (i === hoveredIndex) {
+      ctx.fillStyle = barColor;
+      ctx.font = `700 13px Montserrat, sans-serif`;
+      ctx.fillText(String(d.value), centerX, Math.max(padding.top + 13, y - 8));
+    }
   });
+  const averageY = padding.top + chartH - (Math.min(average, maxVal) / maxVal) * chartH;
+  ctx.beginPath();
+  ctx.setLineDash([6, 5]);
+  ctx.strokeStyle = '#A77E7F';
+  ctx.lineWidth = 1.5;
+  ctx.moveTo(padding.left, averageY);
+  ctx.lineTo(W - padding.right, averageY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.textBaseline = 'alphabetic';
+  canvas.__barChartLayout = { left:padding.left, slotW, count:data.length };
 }
 
 /**
@@ -129,18 +148,19 @@ function drawDonutChart(canvas, data) {
   // Donut hole
   ctx.beginPath();
   ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#FFFDF9';
   ctx.fill();
 
   // Center label
-  ctx.fillStyle = '#591B1C';
-  ctx.font = `600 20px 'Playfair Display', serif`;
+  const centerFontSize = Math.max(24, Math.min(44, innerR * 0.56));
+  ctx.fillStyle = '#5B2333';
+  ctx.font = `600 ${centerFontSize}px 'Playfair Display', serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(total, cx, cy - 6);
-  ctx.font = `400 12px Montserrat, sans-serif`;
+  ctx.fillText(total, cx, cy - centerFontSize * 0.18);
+  ctx.font = `600 ${Math.max(12, Math.min(15, centerFontSize * 0.38))}px Montserrat, sans-serif`;
   ctx.fillStyle = '#78685A';
-  ctx.fillText('pacientes', cx, cy + 10);
+  ctx.fillText('PACIENTES', cx, cy + centerFontSize * 0.48);
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -163,7 +183,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
   const H = rect.height;
   const cx = W / 2;
   const cy = H / 2;
-  const R  = Math.min(W, H) / 2 - 28;
+  const R  = Math.min(W, H) / 2 - 60;
   const n  = labels.length;
   const max = 10;
 
@@ -174,7 +194,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
   const py = (i, r) => cy + Math.sin(angle(i)) * r;
 
   // Grid circles
-  [2, 4, 6, 8, 10].forEach(lvl => {
+  [2.5, 5, 7.5, 10].forEach(lvl => {
     const r = (lvl / max) * R;
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
@@ -182,9 +202,14 @@ function drawRadarChart(canvas, labels, values, prev = null) {
               : ctx.lineTo(px(i, r), py(i, r));
     }
     ctx.closePath();
-    ctx.strokeStyle = lvl === 10 ? '#E8E0D0' : '#F0EAE0';
+    ctx.strokeStyle = lvl === 10 ? '#DCCBBB' : '#E9DED4';
     ctx.lineWidth = 1;
     ctx.stroke();
+    ctx.fillStyle = '#75696A';
+    ctx.font = '500 9px Montserrat, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(lvl).replace('.', ','), cx - r * .23, cy - r * .23);
   });
 
   // Spokes
@@ -206,13 +231,20 @@ function drawRadarChart(canvas, labels, values, prev = null) {
               : ctx.lineTo(px(i, r), py(i, r));
     });
     ctx.closePath();
-    ctx.fillStyle = 'rgba(198,161,91,0.15)';
+    ctx.fillStyle = 'rgba(79,65,68,0.06)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(198,161,91,0.5)';
+    ctx.strokeStyle = 'rgba(79,65,68,0.78)';
     ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 3]);
+    ctx.setLineDash([4, 4]);
     ctx.stroke();
     ctx.setLineDash([]);
+    prev.forEach((v, i) => {
+      const r = (v / max) * R;
+      ctx.beginPath();
+      ctx.arc(px(i, r), py(i, r), 2.5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#4F4144';
+      ctx.fill();
+    });
   }
 
   // Current data polygon
@@ -223,9 +255,9 @@ function drawRadarChart(canvas, labels, values, prev = null) {
             : ctx.lineTo(px(i, r), py(i, r));
   });
   ctx.closePath();
-  ctx.fillStyle = 'rgba(89,27,28,0.15)';
+  ctx.fillStyle = 'rgba(91,35,51,0.15)';
   ctx.fill();
-  ctx.strokeStyle = '#591B1C';
+  ctx.strokeStyle = '#5B2333';
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -234,7 +266,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
     const r = (v / max) * R;
     ctx.beginPath();
     ctx.arc(px(i, r), py(i, r), 4, 0, 2 * Math.PI);
-    ctx.fillStyle = '#591B1C';
+    ctx.fillStyle = '#5B2333';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
@@ -249,10 +281,13 @@ function drawRadarChart(canvas, labels, values, prev = null) {
     const r = R + 14;
     const ax = px(i, r);
     const ay = py(i, r);
+    const labelLines = lbl.length > 13 && lbl.includes(' ') ? lbl.split(' ') : [lbl];
     ctx.textAlign = ax < cx - 10 ? 'right'
                   : ax > cx + 10 ? 'left'
                   : 'center';
-    ctx.fillText(lbl, ax, ay);
+    labelLines.forEach((line, lineIndex) => {
+      ctx.fillText(line, ax, ay + (lineIndex - (labelLines.length - 1) / 2) * 12);
+    });
   });
   ctx.textBaseline = 'alphabetic';
 }
@@ -263,7 +298,7 @@ function drawRadarChart(canvas, labels, values, prev = null) {
  * @param {number[]} values
  * @param {string} color
  */
-function drawSparkline(canvas, values, color = '#591B1C') {
+function drawSparkline(canvas, values, color = '#5B2333') {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();

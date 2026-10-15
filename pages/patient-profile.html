@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil da paciente — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <style>
+    .patient-profile-page { max-width: 980px; margin: 0 auto; }
+    .patient-profile-heading { display:flex; align-items:center; gap:16px; margin:0 0 22px; }
+    .patient-profile-avatar { display:grid; width:68px; height:68px; flex:0 0 68px; place-items:center; border:2px solid var(--vinho); border-radius:50%; background:#f3e8ed; color:var(--vinho); font:600 24px var(--font-serif); }
+    .patient-profile-heading h1 { margin:0; color:var(--text-primary); font:700 34px/1.15 var(--font-serif); }
+    .patient-profile-heading p { margin:5px 0 0; color:var(--text-secondary); }
+    .patient-profile-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .patient-profile-field { min-width:0; padding:14px 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--white); }
+    .patient-profile-field dt { margin-bottom:4px; color:var(--text-muted); font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+    .patient-profile-field dd { margin:0; color:var(--text-primary); font-size:15px; overflow-wrap:anywhere; }
+    .patient-profile-empty { padding:22px; border:1px dashed var(--border-dark); border-radius:var(--radius); color:var(--text-secondary); text-align:center; }
+    .patient-profile-consent-list { display:grid; gap:10px; margin:14px 0; }
+    .patient-profile-consent { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--white); }
+    .patient-profile-consent input { width:18px; height:18px; accent-color:var(--vinho); }
+    .patient-profile-consent span { color:var(--text-primary); font-size:14px; }
+    .patient-profile-feedback { min-height:1.25em; margin-top:10px; color:var(--oliva); font-size:13px; }
+    @media(max-width:600px) {
+      .patient-profile-fields { grid-template-columns:1fr; }
+      .patient-profile-heading h1 { font-size:28px; }
+      .patient-profile-avatar { width:56px; height:56px; flex-basis:56px; }
+    }
+  </style>
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter">
+  <div class="patient-profile-page">
+    <div style="margin-bottom:16px;">
+      <button class="btn btn-subtle btn-sm" type="button" id="profile-back">← Voltar</button>
+    </div>
+    <section class="card">
+      <header class="patient-profile-heading">
+        <div class="patient-profile-avatar" id="patient-avatar" aria-hidden="true"></div>
+        <div>
+          <h1 id="patient-name"></h1>
+          <p id="profile-subtitle"></p>
+        </div>
+      </header>
+      <div id="profile-content"></div>
+    </section>
+  </div>
+</main>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  const role = Router.getRole();
+  if ((role !== 'doctor' && role !== 'patient') || (role === 'doctor' && !Router.getSelectedPatient())) {
+    Router.navigate(role === 'secretary' ? 'agenda' : 'logs');
+  } else {
+    initShell('patient-profile');
+    const patient = Router.getSelectedPatient() || PACIENTES[0];
+    const dataKey = 'lapidar-patient-profile-data-' + patient.id;
+    const sharingKey = 'lapidar-patient-profile-sharing-' + patient.id;
+    const escapeText = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[char]);
+    const readJson = (key, fallback) => {
+      try {
+        const stored = localStorage.getItem(key);
+        if (!stored) return fallback;
+        const parsed = JSON.parse(stored);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+      } catch (error) {
+        console.error('Não foi possível carregar as preferências do perfil da paciente.', error);
+        return fallback;
+      }
+    };
+    const personal = readJson(dataKey, {});
+    const sharing = readJson(sharingKey, {});
+    const fields = [
+      { key:'displayName', label:'Nome', value:personal.displayName || patient.nome },
+      { key:'birthDate', label:'Data de nascimento', value:personal.birthDate || patient.nascimento },
+      { key:'phone', label:'Telefone', value:personal.phone || patient.telefone },
+      { key:'email', label:'E-mail', value:personal.email || patient.email },
+      { key:'cpf', label:'CPF', value:personal.cpf },
+      { key:'address', label:'Endereço', value:personal.address },
+      { key:'emergencyContact', label:'Contato de emergência', value:personal.emergencyContact },
+    ];
+    const isPatient = role === 'patient';
+    const canShowName = isPatient || sharing.displayName === true;
+    document.getElementById('patient-avatar').textContent = canShowName ? (patient.iniciais || '') : 'P';
+    document.getElementById('patient-name').textContent = isPatient
+      ? 'Meu perfil'
+      : canShowName ? (personal.displayName || patient.nome) : 'Perfil da paciente';
+    document.getElementById('profile-subtitle').textContent = isPatient
+      ? 'Escolha quais informações pessoais deseja compartilhar com a médica.'
+      : 'Informações pessoais que a paciente autorizou compartilhar.';
+    document.getElementById('profile-back').addEventListener('click', () => {
+      Router.goBack(isPatient ? 'patient-detail' : 'patients', isPatient ? { patientId:patient.id } : {});
+    });
+
+    function renderSharedFields() {
+      const available = fields.filter(field => sharing[field.key] === true && String(field.value || '').trim());
+      const container = document.getElementById('profile-content');
+      container.innerHTML = available.length
+        ? `<dl class="patient-profile-fields">${available.map(field => `<div class="patient-profile-field"><dt>${escapeText(field.label)}</dt><dd>${escapeText(field.value)}</dd></div>`).join('')}</dl>`
+        : '<p class="patient-profile-empty">A paciente ainda não autorizou o compartilhamento de informações pessoais.</p>';
+    }
+    if (!isPatient) {
+      renderSharedFields();
+    } else {
+      document.getElementById('profile-content').innerHTML = `
+        <p class="text-muted" style="margin-bottom:16px;">Os dados ficam neste navegador de demonstração. Marque somente as informações que aceita compartilhar.</p>
+        <form id="patient-profile-form">
+          <div class="form-grid">
+            <label class="form-group"><span class="form-label">Nome</span><input class="form-input" name="displayName" maxlength="100" value="${escapeText(personal.displayName || patient.nome)}"></label>
+            <label class="form-group"><span class="form-label">Data de nascimento</span><input class="form-input" name="birthDate" type="text" maxlength="30" value="${escapeText(personal.birthDate || patient.nascimento || '')}"></label>
+            <label class="form-group"><span class="form-label">Telefone</span><input class="form-input" name="phone" type="tel" maxlength="30" value="${escapeText(personal.phone || patient.telefone || '')}"></label>
+            <label class="form-group"><span class="form-label">E-mail</span><input class="form-input" name="email" type="email" maxlength="120" value="${escapeText(personal.email || patient.email || '')}"></label>
+            <label class="form-group"><span class="form-label">CPF</span><input class="form-input" name="cpf" inputmode="numeric" maxlength="20" value="${escapeText(personal.cpf || '')}"></label>
+            <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Endereço</span><input class="form-input" name="address" maxlength="180" value="${escapeText(personal.address || '')}"></label>
+            <label class="form-group" style="grid-column:1/-1;"><span class="form-label">Contato de emergência</span><input class="form-input" name="emergencyContact" maxlength="120" value="${escapeText(personal.emergencyContact || '')}" placeholder="Nome e telefone"></label>
+          </div>
+          <h2 style="margin:22px 0 4px;color:var(--text-primary);font-size:17px;">O que deseja compartilhar?</h2>
+          <p class="text-muted" style="font-size:13px;">Você pode alterar ou retirar sua autorização quando quiser.</p>
+          <div class="patient-profile-consent-list">
+            ${fields.map(field => `<label class="patient-profile-consent"><input type="checkbox" name="share-${field.key}" ${sharing[field.key] === true ? 'checked' : ''}><span>${escapeText(field.label)}</span></label>`).join('')}
+          </div>
+          <p id="profile-feedback" class="patient-profile-feedback" role="status" aria-live="polite"></p>
+          <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary" type="submit">Salvar meu perfil</button></div>
+        </form>`;
+      document.getElementById('patient-profile-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const nextPersonal = Object.fromEntries(fields.map(field => [field.key, form.elements[field.key].value.trim()]));
+        const nextSharing = Object.fromEntries(fields.map(field => [field.key, form.elements['share-' + field.key].checked]));
+        try {
+          localStorage.setItem(dataKey, JSON.stringify(nextPersonal));
+          localStorage.setItem(sharingKey, JSON.stringify(nextSharing));
+          Object.assign(personal, nextPersonal);
+          Object.assign(sharing, nextSharing);
+          fields.forEach(field => { field.value = nextPersonal[field.key]; });
+          document.getElementById('profile-feedback').textContent = 'Perfil e autorizações salvos neste navegador.';
+        } catch (error) {
+          console.error('Não foi possível salvar o perfil e as autorizações da paciente.', error);
+          document.getElementById('profile-feedback').textContent = 'Não foi possível salvar. Verifique o armazenamento deste navegador.';
+        }
+      });
+    }
+  }
+</script>
+<script src="../js/parity-enhancements.js"></script>
+<script src="../js/round2-visual.js"></script>
+</body>
+</html>

@@ -26,10 +26,47 @@
     .bio-meta-line { font-size:11px; color:var(--text-muted); margin-top:6px; }
     .bio-meta-set { margin-top:7px; padding:0; color:var(--vinho); font-size:11px; font-weight:600; }
     .bio-goal-success { display:flex; align-items:center; gap:8px; padding:12px 14px; border-radius:var(--radius); margin:0 0 14px; color:var(--green-text); background:var(--green-bg); font-size:13px; font-weight:600; }
-    .score-dimensions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .score-dimension-card { padding:12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bege); }
-    .score-dimension-card h5 { color:var(--vinho); font-size:12px; margin-bottom:6px; }
-    .score-dimension-card p { color:var(--text-muted); font-size:11px; line-height:1.45; min-height:32px; }
+    .score-overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .score-panel { min-width:0; padding:22px; border:1px solid #ddcbbb; border-radius:16px; background:#fffdfa; box-shadow:0 2px 5px rgba(74,39,37,.06),0 8px 24px rgba(74,39,37,.045); }
+    .score-panel-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .score-panel-heading h4 { color:#292124; font-size:17px; font-weight:750; }
+    .score-panel-heading p { margin-top:4px; color:var(--text-secondary); font-size:13px; line-height:1.45; }
+    .score-average-badge { flex:0 0 auto; padding:7px 10px; border:1px solid #bf9655; border-radius:8px; background:#f1e2bf; color:#775414; font-size:12px; font-weight:800; }
+    .score-radar-canvas { display:block; width:100%; height:380px; }
+    .score-radar-legend { display:flex; flex-wrap:wrap; gap:16px; margin-top:4px; color:#393235; font-size:13px; }
+    .score-radar-legend span { display:inline-flex; align-items:center; gap:8px; }
+    .score-legend-swatch { width:13px; height:13px; border-radius:4px; background:#4f4144; }
+    .score-legend-swatch.current { background:#5b2333; }
+    .score-average-canvas { display:block; width:100%; height:330px; }
+    .score-indicators { margin-top:22px; }
+    .score-indicators-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; color:#63585a; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+    .score-patient-note { margin:0 0 12px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bege); color:var(--text-secondary); font-size:12px; }
+    .score-dimensions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .score-dimension-card { min-width:0; padding:18px; border:1px solid #ddcbbb; border-radius:15px; background:#fffdfa; box-shadow:0 2px 5px rgba(74,39,37,.045); }
+    .score-dimension-card-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+    .score-dimension-card h5 { min-width:0; color:#292124; font-size:16px; font-weight:750; }
+    .score-dimension-card p { color:var(--text-secondary); font-size:12px; line-height:1.45; }
+    .score-dimension-value { flex:0 0 auto; color:#292124; font-size:12px; font-weight:600; }
+    .score-dimension-delta { display:inline-flex; align-items:center; gap:4px; margin-left:5px; padding:6px 9px; border:1px solid #86a18a; border-radius:8px; background:#dce9dd; color:#456b4c; font-size:11px; font-weight:800; white-space:nowrap; }
+    .score-dimension-delta.negative { border-color:#c49699; background:#f2e1e2; color:#8b3942; }
+    .score-dimension-delta.neutral { border-color:#aaa09e; background:#e8e1df; color:#554b4c; }
+    .score-dimension-canvas { display:block; width:100%; height:128px; margin-top:12px; }
+    @media (max-width:900px) { .score-dimensions { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:700px) {
+      .score-overview-grid,.score-dimensions { grid-template-columns:minmax(0,1fr); }
+      .score-panel { padding:16px; }
+      .score-radar-canvas { height:330px; }
+      .score-average-canvas { height:260px; }
+    }
+    @media (max-width:420px) {
+      .score-dimension-card { padding:14px; }
+      .score-dimension-card h5 { font-size:14px; }
+      .score-dimension-delta { padding:5px 7px; font-size:10px; }
+    }
+    .clinical-visit-dates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:4px 0 8px; border-bottom:1px solid var(--border); }
+    .clinical-visit-dates div { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .clinical-visit-dates span { color:var(--text-muted); font-size:11px; }
+    .clinical-visit-dates strong { color:var(--text-primary); font-size:13px; font-weight:600; overflow-wrap:anywhere; }
     .bio-chart-canvas { display:block; width:100%; height:280px; }
     @media (max-width:640px) { .score-dimensions { grid-template-columns:1fr; } }
     .bio-card-label {
@@ -88,7 +125,7 @@
       font-size: 32px;
       margin-bottom: 12px;
       color: var(--vinho);
-      border: 1px dashed rgba(89,27,28,0.2);
+      border: 1px dashed rgba(91,35,51,0.2);
     }
     .file-card-title {
       font-weight: 600;
@@ -130,6 +167,46 @@
       outline: 2px solid var(--dourado);
       outline-offset: 3px;
     }
+    .timeline-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .timeline-toolbar button, .timeline-toolbar select, .timeline-toolbar input { min-height:42px; }
+    .timeline-toolbar .timeline-date-control { display:flex; align-items:center; gap:8px; }
+    .timeline-count { width:100%; margin:2px 0 0; color:var(--text-secondary); font-size:12px; }
+    .timeline-bulk-actions { display:flex; gap:16px; margin:0 0 16px; }
+    .timeline-bulk-actions button { padding:0; border:0; background:transparent; color:var(--vinho); font-size:12px; font-weight:600; cursor:pointer; }
+    .timeline-day { position:relative; padding:0 0 14px 54px; }
+    .timeline-day::before { position:absolute; top:40px; bottom:0; left:21px; width:3px; border-radius:2px; background:#d7c8c0; content:''; }
+    .timeline-day:last-child::before { display:none; }
+    .timeline-day-header { position:relative; display:flex; align-items:center; gap:8px; min-height:40px; margin:0 0 8px; }
+    .timeline-day-marker { position:absolute; top:0; left:-50px; display:flex; width:46px; height:48px; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; background:var(--vinho); color:#fff; line-height:1; }
+    .timeline-day-marker strong { font-family:var(--font-serif); font-size:18px; }
+    .timeline-day-marker span { margin-top:2px; font-size:10px; font-weight:700; text-transform:uppercase; }
+    .timeline-day-title { min-width:0; flex:1; color:#292124; font-size:14px; font-weight:750; }
+    .timeline-day-count { display:inline-flex; min-width:28px; height:30px; align-items:center; justify-content:center; border:1px solid #a67982; border-radius:8px; background:#ead7da; color:#69414a; font-size:13px; }
+    .timeline-day-toggle { width:28px; height:30px; padding:0; border:0; background:transparent; color:#55484a; font-size:17px; cursor:pointer; }
+    .timeline-day-events { display:grid; gap:8px; }
+    .timeline-event-card { display:grid; grid-template-columns:38px minmax(0,1fr) 24px; align-items:start; gap:10px; width:100%; min-width:0; padding:12px; border:1px solid #cdb8ae; border-radius:13px; background:#fffdfa; text-align:left; cursor:pointer; }
+    .timeline-event-card:hover, .timeline-event-card:focus-visible { border-color:var(--vinho); box-shadow:0 3px 10px rgba(74,39,37,.08); }
+    .timeline-event-icon { display:grid; width:36px; height:36px; place-items:center; border-radius:50%; background:#eee2e3; font-size:17px; }
+    .timeline-event-copy { display:grid; min-width:0; gap:3px; }
+    .timeline-event-title { color:#292124; font-size:14px; font-weight:750; line-height:1.4; overflow-wrap:anywhere; }
+    .timeline-event-meta { color:var(--vinho); font-size:11px; font-weight:700; }
+    .timeline-event-date { color:var(--text-secondary); font-size:12px; line-height:1.4; }
+    .timeline-event-tag { justify-self:start; margin-top:4px; padding:5px 10px; border:1px solid #817775; border-radius:8px; background:#e7dedb; color:#41383a; font-size:11px; font-weight:650; }
+    .timeline-event-chevron { justify-self:end; color:#514749; font-size:21px; line-height:1; }
+    .timeline-empty { padding:22px; border:1px dashed var(--border-dark); border-radius:12px; color:var(--text-secondary); text-align:center; }
+    @media (max-width:600px) {
+      .timeline-toolbar { align-items:stretch; }
+      .timeline-toolbar .timeline-date-control { flex:1 1 100%; }
+      .timeline-toolbar .timeline-date-control input { min-width:0; flex:1; }
+      .timeline-toolbar > select { width:100%; }
+      .timeline-day { padding-left:46px; }
+      .timeline-day::before { left:17px; }
+      .timeline-day-marker { left:-44px; width:40px; height:44px; }
+      .timeline-day-marker strong { font-size:16px; }
+      .timeline-event-card { grid-template-columns:34px minmax(0,1fr) 18px; gap:8px; padding:10px; }
+      .timeline-event-icon { width:32px; height:32px; font-size:15px; }
+      .timeline-event-title { font-size:13px; }
+    }
     #tabs-nav {
       width: 100%;
       min-width: 0;
@@ -152,7 +229,7 @@
       #topbar-container, #sidebar-container,
       .top-actions-bar, .tabs, .no-print { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; }
-      .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #591B1C; padding-bottom: 12px; }
+      .print-header { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #5B2333; padding-bottom: 12px; }
       .tab-content { display: block !important; margin-bottom: 24px; page-break-inside: avoid; }
       .tab-content[hidden] { display: none !important; }
       .card, .section-card, .bio-card { border: 1px solid #ccc !important; box-shadow: none !important; }
@@ -198,6 +275,9 @@
       <button class="btn btn-subtle btn-sm" id="btn-diario-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Diário Lapidar
+      </button>
+      <button class="btn btn-subtle btn-sm" id="btn-patient-profile" hidden>
+        Meu perfil
       </button>
       <button class="btn btn-primary btn-sm" id="btn-consulta">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -326,6 +406,9 @@
   // Flutter: só a médica administradora edita a ficha clínica (AuthSession.canEditChart).
   const isDoctorView = Router.can('editChart');
   const isPatientView = Router.getRole() === 'patient';
+  const profileButton = document.getElementById('btn-patient-profile');
+  profileButton.hidden = !isPatientView;
+  profileButton.addEventListener('click', () => Router.navigate('patient-profile', { patientId:p.id }));
   const scoreHistoryKey = 'lapidar-score-history-' + p.id;
   let scoreHistory = [];
   try {
@@ -334,8 +417,16 @@
   } catch (error) {
     console.error('Não foi possível carregar o histórico do Score Lapidar.', error);
   }
+  const isFortyPlus = p.protocolo === 'Lapidar 40+' || (Array.isArray(p.protocolos) && p.protocolos.includes('Lapidar 40+'));
+  const scoreGoals = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [];
+  const hasMovementScoreInput = scoreGoals.some(goal =>
+    /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento|bike|bicicleta|natacao|natação/i.test([goal.nome,goal.tipo,goal.desc].join(' '))
+  );
+  const hasAdherenceScoreInput = scoreGoals.length > 0 || ['proteina','fibras','agua'].some(key => p.nutricaoMetas && p.nutricaoMetas[key]);
   const visibleScoreIndices = p.scoreLabels.map((_, index) => index).filter(index =>
-    p.protocolo === 'Lapidar 40+' || index !== 6
+    (isFortyPlus || ![6,7,8].includes(index)) &&
+    (index !== 9 || hasMovementScoreInput) &&
+    (index !== 10 || hasAdherenceScoreInput)
   );
   scoreHistory = scoreHistory.filter(entry =>
     entry && entry.source === 'diary' && Array.isArray(entry.values) &&
@@ -357,6 +448,19 @@
         Number.isFinite(previousScore.values[index]) ? previousScore.values[index] : value
       );
     }
+  }
+  const scoreTrendEntries = scoreHistory.map(entry => ({
+    date:entry.date,
+    values:entry.values,
+    label:entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }) : '',
+  }));
+  if (!scoreTrendEntries.length) {
+    scoreTrendEntries.push(
+      { date:'', values:p.scoreAnterior.slice(), label:'Início' },
+      { date:'', values:p.scoreAtual.slice(), label:'Atual' }
+    );
+  } else if (scoreTrendEntries.length === 1) {
+    scoreTrendEntries.unshift({ date:'', values:p.scoreAnterior.slice(), label:'Início' });
   }
   const patientReleasesKey = 'lapidar-patient-releases-' + p.id;
   let patientReleases = {};
@@ -609,13 +713,9 @@
             <span style="color:var(--text-muted);">Contraceptivo Atual</span>
             <span style="font-weight:500;">${p.contraceptivo}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
-            <span style="color:var(--text-muted);">Última Consulta Realizada</span>
-            <span style="font-weight:500;">${p.ultimaConsulta}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border);">
-            <span style="color:var(--text-muted);">Próxima Consulta Agendada</span>
-            <span style="font-weight:600;color:var(--vinho);">${p.proximaConsulta}</span>
+          <div class="clinical-visit-dates">
+            <div><span>Última consulta</span><strong>${p.ultimaConsulta || '—'}</strong></div>
+            <div><span>Próxima consulta</span><strong>${p.proximaConsulta || '—'}</strong></div>
           </div>
           ${isPatientView ? '' : `<div style="display:flex;justify-content:space-between;">
             <span style="color:var(--text-muted);">Observações Clínicas</span>
@@ -945,16 +1045,16 @@
     });
     if (hasGoal) {
       ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = '#59633D';
+      ctx.strokeStyle = '#66724A';
       ctx.beginPath(); ctx.moveTo(pad.left, y(goal)); ctx.lineTo(rect.width - pad.right, y(goal)); ctx.stroke();
       ctx.setLineDash([]);
     }
     ctx.beginPath();
     values.forEach((value, index) => index ? ctx.lineTo(x(index), y(value)) : ctx.moveTo(x(index), y(value)));
-    ctx.strokeStyle = '#591B1C'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.strokeStyle = '#5B2333'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
     values.forEach((value, index) => {
       ctx.beginPath(); ctx.arc(x(index), y(value), 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#591B1C'; ctx.fill();
+      ctx.fillStyle = '#5B2333'; ctx.fill();
       ctx.textAlign = index === 0 ? 'left' : index === values.length - 1 ? 'right' : 'center';
       ctx.fillStyle = '#78685A';
       ctx.fillText(bio[index].data, x(index), rect.height - 12);
@@ -962,60 +1062,213 @@
   }
 
   // ── TAB 3: SCORE LAPIDAR (11 Dimensões) ──
+  const scoreInitialValues = scoreTrendEntries[0].values;
+  const scoreCurrentValues = scoreTrendEntries[scoreTrendEntries.length - 1].values;
+  const averageVisibleScores = values => visibleScoreIndices.length
+    ? visibleScoreIndices.reduce((total, index) => total + Number(values[index] || 0), 0) / visibleScoreIndices.length
+    : 0;
+  const scoreAverageTrend = scoreTrendEntries.map(entry => ({
+    value:averageVisibleScores(entry.values),
+    label:entry.label,
+  }));
+  const currentScoreAverage = averageVisibleScores(scoreCurrentValues);
   document.getElementById('tab-score').innerHTML = `
-    <div class="grid-responsive-2" style="gap:20px;">
-      <div class="card" style="display:flex;flex-direction:column;align-items:center;">
-        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:12px;">
+    <div class="score-overview-grid">
+      <section class="score-panel">
+        <header class="score-panel-heading">
           <div>
-            <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Score Lapidar — Radar 11 Eixos</h4>
-            <p style="font-size:11px;color:var(--text-muted);">Avaliação integrada: atual (vinho) vs anterior (dourado tracejado)</p>
+            <h4>Radar do Score</h4>
+            <p>Primeiro registro x registro atual (0 a 10)</p>
           </div>
-          <button class="btn btn-subtle btn-sm" onclick="Router.navigate('habits',{patientId:${p.id}})">
-            Ver Diário
-          </button>
+        </header>
+        <canvas id="radar-chart" class="score-radar-canvas" aria-label="Radar comparando o primeiro registro com o registro atual do Score Lapidar"></canvas>
+        <div class="score-radar-legend">
+          <span><i class="score-legend-swatch" aria-hidden="true"></i>Primeiro registro</span>
+          <span><i class="score-legend-swatch current" aria-hidden="true"></i>Registro atual</span>
         </div>
-        <canvas id="radar-chart" style="width:340px;height:340px;max-width:100%;" aria-label="Gráfico radar do Score Lapidar"></canvas>
+      </section>
+      <section class="score-panel">
+        <header class="score-panel-heading">
+          <div>
+            <h4>Média geral</h4>
+            <p>Calculado a partir do check-in do Diário</p>
+          </div>
+          <span class="score-average-badge" id="score-average-value">${currentScoreAverage.toFixed(1).replace('.', ',')} / 10</span>
+        </header>
+        <canvas id="score-average-chart" class="score-average-canvas" aria-label="Evolução da média geral do Score Lapidar ao longo dos check-ins"></canvas>
+      </section>
+    </div>
+    <section class="score-indicators">
+      <div class="score-indicators-heading">
+        <span>Indicadores (0 a 10)</span>
+        <button class="btn btn-subtle btn-sm" type="button" onclick="Router.navigate('habits',{patientId:${p.id}})">Ver Diário</button>
       </div>
+      ${isPatientView ? '<p class="score-patient-note">Seus registros do Diário Lapidar atualizam estes indicadores automaticamente.</p>' : ''}
+      <div class="score-dimensions">
+        ${visibleScoreIndices.map(i => {
+          const lbl = p.scoreLabels[i];
+          const val = Number(scoreCurrentValues[i]) || 0;
+          const initial = Number(scoreInitialValues[i]) || 0;
+          const previousValues = scoreTrendEntries.length > 1
+            ? scoreTrendEntries[scoreTrendEntries.length - 2].values
+            : scoreInitialValues;
+          const previous = Number(previousValues[i]) || 0;
+          const previousDiff = val - previous;
+          const initialDiff = val - initial;
+          const initialSign = initialDiff > 0 ? '+' : '';
+          const deltaClass = previousDiff > 0 ? '' : previousDiff < 0 ? ' negative' : ' neutral';
+          const deltaLabel = previousDiff > 0 ? `↗ +${previousDiff} vs anterior` : previousDiff < 0 ? `↘ ${previousDiff} vs anterior` : '→ 0 vs anterior';
+          const explanations = {
+            Saciedade:'Percepção de saciedade nas refeições.',
+            Fome:'Percepção de fome ao longo do dia.',
+            Energia:'Nível de energia percebido.',
+            Sono:'Qualidade percebida do sono.',
+            Humor:'Bem-estar emocional percebido.',
+            Libido:'Percepção de libido.',
+            Fogachos:'Frequência ou intensidade percebida de fogachos.',
+            'Perda urinária':'Percepção de sintomas urinários.',
+            Constipação:'Percepção do funcionamento intestinal.',
+            'Atividade física':'Consistência de atividade física relatada.',
+            Adesão:'Percepção de adesão ao plano combinado.',
+          };
+          return `
+            <article class="score-dimension-card">
+              <div class="score-dimension-card-header">
+                <h5>${lbl}</h5>
+                <span class="score-dimension-delta${deltaClass}">${deltaLabel}</span>
+              </div>
+              <p>atual <span class="score-dimension-value">${val.toFixed(1).replace('.', ',')}/10</span> · desde o início ${initialSign}${initialDiff}</p>
+              <canvas class="score-dimension-canvas" id="score-dimension-chart-${i}" aria-label="Histórico de ${lbl}"></canvas>
+            </article>`;
+        }).join('')}
+      </div>
+    </section>`;
 
-      <div class="card">
-        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:6px;">Dimensões do Score Lapidar</h4>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Valores alimentados pelas respostas do Diário Lapidar.</p>
-        ${isPatientView ? '<p style="padding:10px 12px;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bege);font-size:11px;color:var(--text-secondary);">Para atualizar estes dados, registre ou edite seu check-in no Diário Lapidar.</p>' : ''}
-        <div class="score-dimensions">
-          ${visibleScoreIndices.map(i => {
-            const lbl = p.scoreLabels[i];
-            const val = p.scoreAtual[i];
-            const prev = p.scoreAnterior[i];
-            const diff = val - prev;
-            const sign = diff > 0 ? '+' : '';
-            const explanations = {
-              Saciedade:'Percepção de saciedade nas refeições.',
-              Fome:'Percepção de fome ao longo do dia.',
-              Energia:'Nível de energia percebido.',
-              Sono:'Qualidade percebida do sono.',
-              Humor:'Bem-estar emocional percebido.',
-              Libido:'Percepção de libido.',
-              Fogachos:'Frequência ou intensidade percebida de fogachos.',
-              'Perda urinária':'Percepção de sintomas urinários.',
-              Constipação:'Percepção do funcionamento intestinal.',
-              'Atividade física':'Consistência de atividade física relatada.',
-              Adesão:'Percepção de adesão ao plano combinado.',
-            };
-            return `
-              <div class="score-dimension-card">
-                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:5px;">
-                  <h5>${lbl}</h5>
-                  <strong style="white-space:nowrap;color:var(--vinho);font-size:12px;"><span id="score-value-${i}">${val}/10</span> <span id="score-diff-${i}" style="font-weight:400;color:${diff>=0?'var(--oliva)':'var(--red-text)'};">(${sign}${diff})</span></strong>
-                </div>
-                <p>${explanations[lbl] || 'Dimensão registrada no Score Lapidar.'}</p>
-                <div class="progress-bar" style="height:7px;">
-                  <div class="progress-fill" data-score-bar="${i}" style="width:${val*10}%;background:${val>=7?'var(--oliva)':val>=5?'var(--dourado)':'#DC2626'};"></div>
-                </div>
-              </div>`;
-          }).join('')}
-        </div>
-      </div>
-    </div>`;
+  function drawScoreTrend(canvas, points, options = {}) {
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const width = rect.width;
+    const height = rect.height;
+    const compact = options.compact === true;
+    const pad = compact
+      ? { left:24, right:8, top:10, bottom:24 }
+      : { left:34, right:10, top:26, bottom:34 };
+    const chartWidth = width - pad.left - pad.right;
+    const chartHeight = height - pad.top - pad.bottom;
+    const values = points.length ? points.map(point => Math.max(0, Math.min(10, Number(point.value) || 0))) : [0];
+    const x = index => pad.left + (values.length < 2 ? chartWidth / 2 : index / (values.length - 1) * chartWidth);
+    const y = value => pad.top + chartHeight - value / 10 * chartHeight;
+    const trace = () => {
+      ctx.moveTo(x(0), y(values[0]));
+      for (let index = 1; index < values.length; index++) {
+        const midpoint = (x(index - 1) + x(index)) / 2;
+        ctx.quadraticCurveTo(x(index - 1), y(values[index - 1]), midpoint, (y(values[index - 1]) + y(values[index])) / 2);
+      }
+      if (values.length > 1) ctx.lineTo(x(values.length - 1), y(values[values.length - 1]));
+    };
+    ctx.clearRect(0, 0, width, height);
+    ctx.font = `${compact ? 10 : 11}px Montserrat, sans-serif`;
+    ctx.textBaseline = 'middle';
+    [0, 2, 4, 6, 8, 10].forEach(value => {
+      const lineY = y(value);
+      ctx.beginPath();
+      ctx.strokeStyle = '#e7ddd2';
+      ctx.lineWidth = 1;
+      ctx.moveTo(pad.left, lineY);
+      ctx.lineTo(width - pad.right, lineY);
+      ctx.stroke();
+      if (!compact || value === 0 || value === 5 || value === 10) {
+        ctx.fillStyle = '#776b69';
+        ctx.textAlign = 'right';
+        ctx.fillText(String(value), pad.left - 7, lineY);
+      }
+    });
+    if (options.goal !== undefined) {
+      ctx.beginPath();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#6a866e';
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(pad.left, y(options.goal));
+      ctx.lineTo(width - pad.right, y(options.goal));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#fffdfa';
+      ctx.strokeStyle = '#9bb19c';
+      ctx.beginPath();
+      ctx.roundRect(pad.left + 4, y(options.goal) - 13, 42, 18, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#456b4c';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 10px Montserrat, sans-serif';
+      ctx.fillText('meta 7', pad.left + 9, y(options.goal) - 4);
+    }
+    const gradient = ctx.createLinearGradient(0, pad.top, 0, height - pad.bottom);
+    gradient.addColorStop(0, 'rgba(69, 105, 76, .22)');
+    gradient.addColorStop(1, 'rgba(69, 105, 76, .015)');
+    ctx.beginPath();
+    trace();
+    ctx.lineTo(x(values.length - 1), y(0));
+    ctx.lineTo(x(0), y(0));
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.beginPath();
+    trace();
+    ctx.strokeStyle = '#3f6748';
+    ctx.lineWidth = compact ? 2 : 2.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    if (compact) {
+      values.forEach((value, index) => {
+        if (index !== values.length - 1) return;
+        ctx.beginPath();
+        ctx.arc(x(index), y(value), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#3f6748';
+        ctx.fill();
+      });
+    } else {
+      const labelIndices = [...new Set([0, Math.floor((values.length - 1) / 2), values.length - 1])];
+      ctx.fillStyle = '#64595a';
+      ctx.font = '600 10px Montserrat, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      labelIndices.forEach(index => {
+        const label = points[index] && points[index].label || '';
+        if (!label) return;
+        ctx.textAlign = index === 0 ? 'left' : index === values.length - 1 ? 'right' : 'center';
+        ctx.fillText(label, x(index), height - 9);
+      });
+    }
+  }
+
+  function renderScoreVisualizations() {
+    const radar = document.getElementById('radar-chart');
+    if (radar && radar.getBoundingClientRect().width > 0) {
+      drawRadarChart(
+        radar,
+        visibleScoreLabels,
+        visibleScoreIndices.map(index => scoreCurrentValues[index]),
+        visibleScoreIndices.map(index => scoreInitialValues[index])
+      );
+    }
+    const averageCanvas = document.getElementById('score-average-chart');
+    if (averageCanvas) drawScoreTrend(averageCanvas, scoreAverageTrend, { goal:7 });
+    visibleScoreIndices.forEach(index => {
+      const canvas = document.getElementById(`score-dimension-chart-${index}`);
+      if (canvas) drawScoreTrend(canvas, scoreTrendEntries.map(entry => ({
+        value:entry.values[index],
+        label:entry.label,
+      })), { compact:true });
+    });
+  }
 
   // ── TAB 4: RISCO CARDIOVASCULAR ──
   const riskHistoryKey = 'lapidar-risk-cv-' + p.id;
@@ -1178,7 +1431,7 @@
       <section class="card" style="grid-column:1/-1;" aria-labelledby="risk-history-title">
         <h4 id="risk-history-title" style="font-size:14px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Histórico de metas lipídicas</h4>
         <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Evolução de LDL e não-HDL em relação às metas registradas em cada avaliação.</p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-bottom:8px;"><span style="color:#591B1C;">● LDL</span><span style="color:#3D6984;">● Meta LDL</span><span style="color:#A65A19;">● Não-HDL</span><span style="color:#66724A;">● Meta não-HDL</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-bottom:8px;"><span style="color:#5B2333;">● LDL</span><span style="color:#3D6984;">● Meta LDL</span><span style="color:#A65A19;">● Não-HDL</span><span style="color:#66724A;">● Meta não-HDL</span></div>
         <div style="max-width:100%;overflow-x:auto;"><canvas id="risk-history-chart" aria-label="Gráfico histórico de LDL e não-HDL contra as metas" style="width:100%;min-width:520px;height:220px;display:block;"></canvas></div>
         <div id="risk-history-records" style="display:grid;gap:8px;margin-top:12px;"></div>
       </section>
@@ -1217,7 +1470,7 @@
         ctx.fillStyle = '#78685A'; ctx.fillText(String(Math.round(value)),pad.left-6,lineY+3);
       });
       const series = [
-        { key:'ldl', color:'#591B1C', dash:[] },
+        { key:'ldl', color:'#5B2333', dash:[] },
         { key:'metaLdl', color:'#3D6984', dash:[5,4] },
         { key:'naoHdl', color:'#A65A19', dash:[] },
         { key:'metaNaoHdl', color:'#66724A', dash:[5,4] },
@@ -1673,7 +1926,7 @@
     </div>`;
 
   // ── TAB 8: TIMELINE ──
-  const tlColors = { 'Consulta':'#591B1C','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B','Diário':'#59633D' };
+  const tlColors = { 'Consulta':'#5B2333','WhatsApp':'#25D366','Ligação':'#3B82F6','Exame':'#8B5CF6','Mensagem':'#F59E0B','Diário':'#66724A' };
   function timelineDateValue(date) {
     const [day, month, year] = date.split('/').map(Number);
     return new Date(year, month - 1, day).getTime();
@@ -1796,57 +2049,159 @@
     activatePatientTab(currentHistoryItem.type === 'Consulta' ? 'painel' : 'diario');
   });
 
-  document.getElementById('tab-timeline').innerHTML = `
-    <div class="timeline">
-      ${sortedTimeline.map((ev, index) => `
-        <div class="timeline-item">
-          <div class="timeline-icon" style="background:${tlColors[ev.tipo]||'#78685A'}22;color:${tlColors[ev.tipo]||'#78685A'};">
-            <span style="font-size:18px;">${escapeFileText(ev.icone)}</span>
+  const timelineTab = document.getElementById('tab-timeline');
+  const timelineTypes = [...new Set(sortedTimeline.map(event => event.tipo))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const timelineDateLabel = date => {
+    const [day, month, year] = date.split('/').map(Number);
+    return new Date(year, month - 1, day, 12).toLocaleDateString('pt-BR', {
+      weekday:'long', day:'numeric', month:'long',
+    });
+  };
+  const timelineEventTime = event => {
+    const match = String(event.desc || '').match(/(?:às|as)\s+(\d{1,2}:\d{2})/i);
+    return event.horario || match && match[1] || '';
+  };
+  const renderTimeline = () => {
+    const selectedType = document.getElementById('timeline-type-filter').value;
+    const events = sortedTimeline
+      .map((event, index) => ({ ...event, historyIndex:index }))
+      .filter(event => !selectedType || event.tipo === selectedType);
+    const groups = new Map();
+    events.forEach(event => {
+      if (!groups.has(event.data)) groups.set(event.data, []);
+      groups.get(event.data).push(event);
+    });
+    const entries = [...groups.entries()];
+    document.getElementById('timeline-count').textContent =
+      `${events.length} evento(s) em ${entries.length} dia(s)`;
+    const eventsContainer = document.getElementById('timeline-days');
+    eventsContainer.innerHTML = entries.length ? entries.map(([date, dayEvents], dayIndex) => {
+      const [day, month] = date.split('/');
+      const monthLabel = new Date(Number(dayEvents[0].data.split('/')[2]), Number(month) - 1, Number(day), 12)
+        .toLocaleDateString('pt-BR', { month:'short' }).replace('.', '').toUpperCase();
+      return `
+        <section class="timeline-day" data-timeline-date="${escapeFileText(date)}">
+          <header class="timeline-day-header">
+            <span class="timeline-day-marker"><strong>${escapeFileText(day)}</strong><span>${escapeFileText(monthLabel)}</span></span>
+            <span class="timeline-day-title">${escapeFileText(timelineDateLabel(date))}</span>
+            <span class="timeline-day-count">${dayEvents.length}</span>
+            <button type="button" class="timeline-day-toggle" aria-expanded="true" aria-label="Recolher eventos de ${escapeFileText(timelineDateLabel(date))}" data-toggle-timeline-day="${dayIndex}">⌃</button>
+          </header>
+          <div class="timeline-day-events" data-timeline-events="${dayIndex}">
+            ${dayEvents.map(event => {
+              const time = timelineEventTime(event);
+              return `<button type="button" class="timeline-event-card" data-history-index="${event.historyIndex}">
+                <span class="timeline-event-icon" style="background:${tlColors[event.tipo] || '#78685A'}22;">${escapeFileText(event.icone || '•')}</span>
+                <span class="timeline-event-copy">
+                  <span class="timeline-event-title">${escapeFileText(event.titulo)}</span>
+                  <span class="timeline-event-meta">${escapeFileText(event.tipo)}${time ? ` · ${escapeFileText(time)}` : ''}</span>
+                  <span class="timeline-event-date">${escapeFileText(date)}${time ? ` às ${escapeFileText(time)}` : ''}</span>
+                  <span class="timeline-event-tag">${escapeFileText(event.arquivo && event.arquivo.tipo || event.tipo)}</span>
+                </span>
+                <span class="timeline-event-chevron" aria-hidden="true">›</span>
+              </button>`;
+            }).join('')}
           </div>
-          <div class="timeline-content">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="timeline-event-button timeline-title" data-history-index="${index}">${escapeFileText(ev.titulo)}</button>
-              <span class="badge badge-gray">${escapeFileText(ev.tipo)}</span>
-            </div>
-            <div class="timeline-date">${escapeFileText(ev.data)}</div>
-            <div class="timeline-body">${escapeFileText(ev.desc)}</div>
-            <button type="button" class="btn btn-subtle btn-sm timeline-event-button" data-history-index="${index}" style="margin-top:8px;padding:4px 9px;font-size:11px;">Ver detalhes →</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
-  document.querySelectorAll('#tab-timeline [data-history-index]').forEach(button => {
-    button.addEventListener('click', function() {
-      const event = sortedTimeline[Number(button.dataset.historyIndex)];
-      if (event.arquivo) {
+        </section>`;
+    }).join('') : '<div class="timeline-empty">Nenhum evento encontrado para esse tipo.</div>';
+  };
+  timelineTab.innerHTML = `
+    <div class="timeline-toolbar">
+      <div class="timeline-date-control">
+        <input type="date" class="form-input" id="timeline-jump-date" aria-label="Escolher dia da timeline">
+        <button type="button" class="btn btn-subtle" id="timeline-jump-button">▣ &nbsp; Ir para um dia</button>
+      </div>
+      <select class="form-select" id="timeline-type-filter" aria-label="Filtrar por tipo de evento">
+        <option value="">☷ &nbsp; Tipo de evento</option>
+        ${timelineTypes.map(type => `<option value="${escapeFileText(type)}">${escapeFileText(type)}</option>`).join('')}
+      </select>
+      <p class="timeline-count" id="timeline-count"></p>
+    </div>
+    <div class="timeline-bulk-actions">
+      <button type="button" id="timeline-expand-all">Expandir tudo</button>
+      <button type="button" id="timeline-collapse-all">Recolher tudo</button>
+    </div>
+    <div id="timeline-days"></div>`;
+  renderTimeline();
+  document.getElementById('timeline-type-filter').addEventListener('change', renderTimeline);
+  document.getElementById('timeline-expand-all').addEventListener('click', () => {
+    timelineTab.querySelectorAll('.timeline-day-events').forEach(events => { events.hidden = false; });
+    timelineTab.querySelectorAll('.timeline-day-toggle').forEach(button => {
+      button.setAttribute('aria-expanded', 'true');
+      button.textContent = '⌃';
+      button.setAttribute('aria-label', button.getAttribute('aria-label').replace('Expandir', 'Recolher'));
+    });
+  });
+  document.getElementById('timeline-collapse-all').addEventListener('click', () => {
+    timelineTab.querySelectorAll('.timeline-day-events').forEach(events => { events.hidden = true; });
+    timelineTab.querySelectorAll('.timeline-day-toggle').forEach(button => {
+      button.setAttribute('aria-expanded', 'false');
+      button.textContent = '⌄';
+      button.setAttribute('aria-label', button.getAttribute('aria-label').replace('Recolher', 'Expandir'));
+    });
+  });
+  document.getElementById('timeline-jump-button').addEventListener('click', () => {
+    const selectedDate = document.getElementById('timeline-jump-date').value;
+    if (!selectedDate) return;
+    const [year, month, day] = selectedDate.split('-');
+    const dateLabel = `${day}/${month}/${year}`;
+    const target = [...timelineTab.querySelectorAll('.timeline-day')]
+      .find(group => group.dataset.timelineDate === dateLabel);
+    if (!target) {
+      document.getElementById('timeline-count').textContent = `Nenhum evento em ${dateLabel}`;
+      return;
+    }
+    const events = target.querySelector('.timeline-day-events');
+    const toggle = target.querySelector('.timeline-day-toggle');
+    events.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.textContent = '⌃';
+    target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  timelineTab.addEventListener('click', event => {
+    const toggle = event.target.closest('[data-toggle-timeline-day]');
+    if (toggle) {
+      const events = timelineTab.querySelector(`[data-timeline-events="${toggle.dataset.toggleTimelineDay}"]`);
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      events.hidden = expanded;
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      toggle.textContent = expanded ? '⌄' : '⌃';
+      const dayLabel = toggle.closest('.timeline-day').querySelector('.timeline-day-title').textContent;
+      toggle.setAttribute('aria-label', `${expanded ? 'Expandir' : 'Recolher'} eventos de ${dayLabel}`);
+      return;
+    }
+    const button = event.target.closest('[data-history-index]');
+    if (!button) return;
+    const eventIndex = Number(button.dataset.historyIndex);
+    const historyEvent = sortedTimeline[eventIndex];
+      if (historyEvent.arquivo) {
         openHistoryDetails({
-          title:event.titulo,
-          type:event.tipo + ' · ' + (event.arquivo.tipo || 'Arquivo'),
-          date:event.data,
-          description:event.desc,
-          file:event.arquivo,
+          title:historyEvent.titulo,
+          type:historyEvent.tipo + ' · ' + (historyEvent.arquivo.tipo || 'Arquivo'),
+          date:historyEvent.data,
+          description:historyEvent.desc,
+          file:historyEvent.arquivo,
           fileRecord:true
         }, button);
         return;
       }
       openHistoryDetails({
-        title:event.titulo,
-        type:event.tipo,
-        date:event.data,
-        description:event.desc
+        title:historyEvent.titulo,
+        type:historyEvent.tipo,
+        date:historyEvent.data,
+        description:historyEvent.desc
       }, button);
-    });
   });
 
-  // Draw initial sparklines & radar
+  // Draw initial sparklines and score history charts.
   setTimeout(() => {
     bioFields.forEach(f => {
       const c = document.getElementById(`spark-${f.key}`);
-      if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#591B1C' : '#59633D');
+      if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
     });
-    const rc = document.getElementById('radar-chart');
-    if (rc) drawRadarChart(rc, visibleScoreLabels, visibleScoreIndices.map(index => p.scoreAtual[index]), visibleScoreIndices.map(index => p.scoreAnterior[index]));
+    renderScoreVisualizations();
   }, 100);
+  window.addEventListener('resize', () => requestAnimationFrame(renderScoreVisualizations));
 
   // ── Tabs switching logic ──
   const tabsNav = document.getElementById('tabs-nav');
@@ -1901,15 +2256,12 @@
         setTimeout(() => {
           bioFields.forEach(f => {
             const c = document.getElementById(`spark-${f.key}`);
-            if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#591B1C' : '#59633D');
+            if (c) drawSparkline(c, bio.map(b => b[f.key] || 0), f.inv ? '#5B2333' : '#66724A');
           });
         }, 50);
       }
       if (btn.dataset.tab === 'score') {
-        setTimeout(() => {
-          const rc = document.getElementById('radar-chart');
-          if (rc) drawRadarChart(rc, visibleScoreLabels, visibleScoreIndices.map(index => p.scoreAtual[index]), visibleScoreIndices.map(index => p.scoreAnterior[index]));
-        }, 50);
+        setTimeout(renderScoreVisualizations, 50);
       }
     });
   });

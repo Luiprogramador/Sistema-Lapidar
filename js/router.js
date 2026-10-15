@@ -97,18 +97,18 @@ const Router = {
     }
     if (role === 'patient') {
       if (page === 'dashboard') page = 'habits';
-      const allowedPages = ['login', 'patient-detail', 'habits', 'consultations', 'consultation', 'messages', 'contents', 'settings', 'profile'];
+      const allowedPages = ['login', 'patient-detail', 'patient-profile', 'habits', 'consultations', 'consultation', 'messages', 'contents', 'settings', 'profile'];
       return {
         page: allowedPages.includes(page) ? page : 'habits',
         params: { ...params, patientId: 1 },
       };
     }
     if (role === 'secretary') {
-      if (page === 'consultation' || page === 'consultations' || page === 'patient-detail') page = 'agenda';
+      if (page === 'consultation' || page === 'consultations' || page === 'patient-detail' || page === 'patient-profile') page = 'agenda';
       const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'messages', 'financial', 'journey', 'contents', 'settings', 'profile'];
       if (!allowedPages.includes(page)) page = 'dashboard';
     }
-    const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'consultations', 'patient-detail', 'consultation', 'messages', 'financial', 'contents', 'journey', 'settings', 'habits', 'profile', 'logs'];
+    const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'consultations', 'patient-detail', 'patient-profile', 'consultation', 'messages', 'financial', 'contents', 'journey', 'settings', 'habits', 'profile', 'logs'];
     if (!allowedPages.includes(page)) page = this.getHomePage();
     return { page, params };
   },
@@ -139,6 +139,7 @@ const Router = {
       patients:         '../pages/patients.html',
       consultations:    '../pages/consultations.html',
       'patient-detail': '../pages/patient-detail.html',
+      'patient-profile': '../pages/patient-profile.html',
       'patient-registration': '../pages/patient-registration.html',
       agenda:           '../pages/agenda.html',
       financial:        '../pages/financial.html',
@@ -201,6 +202,7 @@ const Router = {
       patients:         'pages/patients.html',
       consultations:    'pages/consultations.html',
       'patient-detail': 'pages/patient-detail.html',
+      'patient-profile': 'pages/patient-profile.html',
       'patient-registration': 'pages/patient-registration.html',
       agenda:           'pages/agenda.html',
       financial:        'pages/financial.html',

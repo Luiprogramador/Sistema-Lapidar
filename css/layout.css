@@ -13,7 +13,7 @@
 .topbar {
   position: fixed;
   top: 0;
-  left: 0;
+  left: var(--sidebar-width);
   right: 0;
   z-index: 100;
   height: var(--topbar-height);
@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-4);
+  padding: 0 24px;
   gap: var(--space-3);
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
@@ -60,14 +60,14 @@
 .topbar-date-summary {
   display: flex;
   flex-direction: column;
-  min-width: 150px;
-  margin-left: 12px;
+  min-width: 220px;
+  margin-left: 0;
   color: var(--dourado-light);
   font-size: 11px;
   line-height: 1.35;
 }
 .topbar-date-summary strong { color: var(--dourado-light); font-weight: 600; }
-.topbar-date-summary span { color: rgba(250,243,233,.82); }
+.topbar-date-summary span { color: rgba(244,239,231,.82); }
 .topbar-mobile-title { display:none; min-width:0; overflow:hidden; color:var(--bege); font-size:14px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
 .topbar-user-menu { position: relative; }
 .topbar-user-trigger {
@@ -75,9 +75,9 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  max-width: 220px;
-  padding: 3px 6px;
-  border-radius: var(--radius);
+  max-width: 290px;
+  padding: 8px 12px;
+  border-radius: 999px;
   color: var(--bege);
   text-align: left;
 }
@@ -88,7 +88,7 @@
 .topbar-user-copy strong,
 .topbar-user-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-user-copy strong { font-size: 11px; font-weight: 600; }
-.topbar-user-copy small { color: rgba(250,243,233,.75); font-size: 10px; }
+.topbar-user-copy small { color: rgba(244,239,231,.75); font-size: 10px; }
 .topbar-user-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -133,7 +133,7 @@
   background: rgba(255,255,255,0.16);
   color: var(--bege);
   border: 1px solid rgba(255,255,255,0.36);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 4px 8px;
   font-size: var(--text-xs);
   font-family: var(--font-sans);
@@ -285,11 +285,11 @@
 /* ── Sidebar ── */
 .sidebar {
   position: fixed;
-  top: var(--topbar-height);
+  top: 0;
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
-  background: var(--vinho-dark);
+  background: var(--vinho);
   border-right: 1px solid rgba(255,255,255,.1);
   display: flex;
   flex-direction: column;
@@ -303,10 +303,12 @@
 }
 .sidebar-brand {
   display:flex;
-  align-items:center;
-  gap:10px;
-  min-height:70px;
-  padding:12px 18px;
+  align-items:flex-start;
+  justify-content:center;
+  flex-direction:column;
+  gap:2px;
+  min-height:112px;
+  padding:16px 24px;
   border-bottom:1px solid rgba(255,255,255,.14);
   color:var(--dourado-light);
   font-family:var(--font-serif);
@@ -314,14 +316,17 @@
 }
 .sidebar-brand-mark {
   display:grid;
-  place-items:center;
-  flex:0 0 38px;
-  width:38px;
-  height:38px;
-  border:1px solid var(--dourado);
-  border-radius:50%;
+  place-items:start;
+  flex:0 0 auto;
+  width:auto;
+  height:auto;
+  border:0;
+  border-radius:0;
   color:var(--bege);
-  font-size:25px;
+  font-size:46px;
+  line-height:1;
+  font-weight:400;
+  font-family:var(--font-serif);
 }
 
 .sidebar-label {
@@ -329,7 +334,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(250,243,233,.55);
+  color: rgba(244,239,231,.55);
   padding: var(--space-2) var(--space-3) var(--space-1);
 }
 
@@ -337,9 +342,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 10px var(--space-3);
-  border-radius: var(--radius);
-  color: rgba(250,243,233,.82);
+  padding: 11px 14px;
+  border-radius: 11px;
+  color: rgba(244,239,231,.82);
   font-size: var(--text-sm);
   font-weight: 500;
   transition: var(--transition);
@@ -348,13 +353,14 @@
   text-align: left;
 }
 .sidebar-nav-item:hover {
-  background: rgba(250,243,233,.12);
+  background: rgba(244,239,231,.12);
   color: var(--bege);
 }
 .sidebar-nav-item.active {
-  background: var(--vinho-light);
+  background: rgba(255,255,255,.14);
   color: var(--bege);
   font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--dourado);
 }
 .sidebar-nav-item svg {
   flex-shrink: 0;
@@ -364,6 +370,7 @@
 .sidebar-nav-item:hover svg {
   opacity: 1;
 }
+.sidebar-nav-item svg { color: var(--dourado-light); }
 
 .sidebar-footer {
   margin-top: auto;
@@ -371,11 +378,11 @@
   border-top: 1px solid rgba(255,255,255,.14);
 }
 .sidebar-footer .btn-subtle {
-  border-color:rgba(250,243,233,.35);
+  border-color:rgba(244,239,231,.35);
   background:transparent;
   color:var(--bege);
 }
-.sidebar-footer .btn-subtle:hover { background:rgba(250,243,233,.12); }
+.sidebar-footer .btn-subtle:hover { background:rgba(244,239,231,.12); }
 
 /* Overlay mobile */
 .sidebar-overlay {
@@ -391,12 +398,16 @@
   margin-left: var(--sidebar-width);
   margin-top: var(--topbar-height);
   min-height: calc(100vh - var(--topbar-height));
-  padding: var(--space-6);
+  padding: 28px 30px;
   transition: margin-left 0.3s ease;
 }
 
 /* ── Responsividade ── */
-@media (max-width: 1023px) {
+@media (max-width: 1100px) {
+  .topbar {
+    left: 0;
+    padding: 0 16px;
+  }
   .sidebar {
     bottom: 0;
     transform: translateX(-100%);
@@ -410,6 +421,7 @@
   .main-content {
     margin-left: 0;
     padding: var(--space-4);
+    transition: none;
   }
   .hamburger-btn {
     display: flex;
@@ -442,50 +454,45 @@
 
 @media (max-width: 560px) {
   :root {
-    --topbar-height: 104px;
+    --topbar-height: 68px;
   }
   .topbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "brand actions"
-      "profile profile";
-    grid-template-rows: 40px 40px;
-    align-content: center;
-    row-gap: 4px;
-    column-gap: 8px;
-    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
   }
   .topbar-brand {
-    grid-area: brand;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 10px;
   }
-  .topbar-logo {
-    font-size: var(--text-lg);
+  .topbar-mobile-heading {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 1px;
+    line-height: 1.2;
   }
   .topbar-right {
-    display: contents;
+    display: flex;
+    flex: 0 0 auto;
+    min-width: 0;
   }
   .topbar-role-select {
-    grid-area: profile;
-    display: flex;
-    min-width: 0;
-    gap: 8px;
-  }
-  .topbar-role-select label {
-    display: inline;
-    flex: 0 0 auto;
-    color: var(--bege);
-  }
-  .topbar-role-select select {
-    flex: 1 1 auto;
-    width: 0;
-    min-height: 36px;
+    display: none;
   }
   .topbar-actions {
-    grid-area: actions;
-    justify-self: end;
+    flex: 0 0 auto;
+    gap: 5px;
   }
-  .topbar-actions .topbar-icon-btn { width:32px; height:32px; flex-basis:32px; }
+  .topbar-actions .topbar-icon-btn {
+    width: 32px;
+    height: 34px;
+    flex-basis: 32px;
+  }
+  .topbar-actions #settings-shortcut { display: none; }
+  .topbar-actions #profile-shortcut { display: flex; }
   .notif-dropdown {
     position: fixed;
     top: calc(var(--topbar-height) + 4px);
@@ -503,30 +510,30 @@
 /* ── Grids responsivos ── */
 .grid-responsive-2 {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
 .grid-responsive-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
 }
 .grid-responsive-4 {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
 @media (max-width: 1200px) {
-  .grid-responsive-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-responsive-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-  .grid-responsive-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-responsive-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .grid-responsive-2 { grid-template-columns: 1fr; }
-  .grid-responsive-3 { grid-template-columns: 1fr; }
-  .grid-responsive-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-responsive-2 { grid-template-columns: minmax(0, 1fr); }
+  .grid-responsive-3 { grid-template-columns: minmax(0, 1fr); }
+  .grid-responsive-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── Splash / Redirect Screen ── */

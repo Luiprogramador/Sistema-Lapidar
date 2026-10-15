@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
-<body>
+<body class="dashboard-page">
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
@@ -25,9 +25,9 @@
   <section aria-labelledby="dashboard-summary-title" style="margin-bottom:20px;">
     <div style="margin-bottom:12px;">
       <h2 id="dashboard-summary-title" style="font-size:17px;font-family:var(--font-serif);color:var(--vinho);">Resumo geral</h2>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Fotografia da carteira: quantas pacientes a clínica acompanha, como está a semana e o que pede atenção.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Fotografia da carteira: quantas pacientes a clínica acompanha, como está a semana e o que pede atenção</p>
     </div>
-  <div class="grid-responsive-4" style="gap:12px;margin-bottom:20px;">
+  <div class="grid-responsive-4 dashboard-summary-grid" style="gap:12px;margin-bottom:20px;">
     <button class="card-stat stagger-1 dashboard-stat" type="button" data-dashboard-action="patients">
       <span class="card-stat-label">Total de Pacientes</span>
       <span class="card-stat-value" id="total-patients-count">0</span>
@@ -45,25 +45,29 @@
     </button>
     <button class="card-stat stagger-4 dashboard-stat" type="button" data-dashboard-action="alerts">
       <span class="card-stat-label">Alertas Clínicos</span>
-      <span class="card-stat-value" id="dashboard-alert-count" style="color:var(--red-text);">0</span>
-      <span class="card-stat-sub" id="dashboard-alert-sub">em pacientes - por tipo</span>
+      <span class="card-stat-value" id="clinical-alerts-count" style="color:var(--red-text);">0</span>
+      <span class="card-stat-sub" id="clinical-alerts-sub">em 0 paciente(s) · abaixo, por tipo</span>
     </button>
   </div>
   </section>
 
   <!-- Protocol distribution -->
-  <details class="card details-accordion" id="protocol-accordion" open style="margin-bottom:20px;padding:0;">
-    <summary style="font-size:15px;color:var(--vinho);">Protocolos <span id="protocol-summary" style="font-size:11px;color:var(--text-muted);font-family:var(--font-sans);font-weight:400;"></span></summary>
-    <div style="padding:0 16px 16px;">
-      <div class="protocol-toolbar" style="display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);">
-          Filtrar protocolo
-          <select id="protocol-filter" aria-label="Filtrar por protocolo" style="min-width:190px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--white);color:var(--text-primary);">
-            <option value="Todos">Todos os protocolos</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid-responsive-4" style="gap:10px;margin-bottom:4px;" id="proto-cards"></div>
+  <details class="card dashboard-protocols" id="protocol-accordion" open>
+    <summary class="dashboard-protocols-heading">
+      <span class="section-heading-icon" aria-hidden="true">◇</span>
+      <span class="dashboard-protocols-title">
+        <strong>Protocolos</strong>
+        <small id="protocol-summary"></small>
+      </span>
+      <label class="protocol-toolbar">
+        <span>Filtrar protocolo</span>
+        <select id="protocol-filter" aria-label="Filtrar por protocolo">
+          <option value="Todos">Filtros</option>
+        </select>
+      </label>
+    </summary>
+    <div class="dashboard-protocols-content">
+      <div class="grid-responsive-4" id="proto-cards"></div>
     </div>
   </details>
 
@@ -71,65 +75,106 @@
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px;" class="charts-row">
     <!-- Donut -->
     <div class="card" id="protocol-distribution-card">
-      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:16px;">Distribuição de pacientes</h3>
-      <canvas id="donut-chart" style="width:100%;height:160px;display:block;"></canvas>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;" id="donut-legend"></div>
-    </div>
-    <!-- Bar chart -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Consultas por semana</h3>
-        <div class="week-navigation" aria-label="Navegar entre semanas">
-          <button class="btn btn-subtle btn-sm" id="week-prev" type="button" aria-label="Semana anterior">‹ Anterior</button>
-          <button class="btn btn-subtle btn-sm" id="week-next" type="button" aria-label="Próxima semana">Próxima ›</button>
+      <div class="donut-card-header">
+        <div>
+          <h3>Pacientes por protocolo</h3>
+          <p>Distribuição da carteira ativa</p>
         </div>
       </div>
-      <p id="week-range" style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Distribuição por dia da semana</p>
-      <div class="chart-scroll"><canvas id="bar-chart" style="width:100%;min-width:520px;height:190px;display:block;"></canvas></div>
+      <canvas id="donut-chart" style="width:100%;height:160px;display:block;"></canvas>
+      <div id="donut-legend"></div>
+    </div>
+    <!-- Bar chart -->
+    <div class="card weekly-consultations-card">
+      <header class="weekly-chart-header">
+        <h3>Consultas da semana</h3>
+        <p>Agendamentos por dia, de segunda a domingo</p>
+      </header>
+      <div class="weekly-chart-navigation" aria-label="Navegar entre semanas">
+        <button class="week-arrow" id="week-prev" type="button" aria-label="Semana anterior">‹</button>
+        <div class="week-date">
+          <strong id="week-title">Semana atual</strong>
+          <span id="week-range"></span>
+        </div>
+        <button class="week-arrow" id="week-next" type="button" aria-label="Próxima semana">›</button>
+      </div>
+      <div class="weekly-chart-metrics">
+        <div><span>Total</span><strong id="week-total">0</strong><small>consultas</small></div>
+        <div><span>Média</span><strong id="week-average">0,0</strong><small>por dia</small></div>
+        <div><span>Pico</span><strong id="week-peak">0</strong><small id="week-peak-day">sem consultas</small></div>
+      </div>
+      <div class="weekly-chart-plot">
+        <canvas id="bar-chart" style="width:100%;height:250px;display:block;" role="img" aria-label="Gráfico de consultas por dia da semana"></canvas>
+      </div>
+      <div class="weekly-chart-legend" aria-label="Legenda do gráfico">
+        <span><i class="legend-today"></i>Hoje (destacado)</span>
+        <span><i class="legend-bar"></i>Consultas no dia · passe o mouse para ver o valor</span>
+        <span><i class="legend-average"></i><span id="week-average-legend">Média da semana</span></span>
+      </div>
     </div>
   </div>
 
-  <!-- Bottom row: alerts + contacts -->
-  <div class="grid-responsive-2" style="gap:20px;">
-    <!-- Alertas -->
-    <div class="card" id="clinical-alerts-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Alertas Clínicos</h3>
-        <span class="badge badge-red" id="alert-count"></span>
-      </div>
-      <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;" id="alerts-subtitle">Exames · Bioimpedâncias · LDL · Vitamina D</p>
-      <div class="filter-chips" id="alert-filters"></div>
-      <div style="margin-top:14px;" id="alert-list"></div>
+  <section id="diary-summary-card" class="dashboard-section dashboard-diary">
+    <header class="dashboard-section-heading diary-section-heading">
+      <span class="section-heading-icon" aria-hidden="true">▧</span>
+      <div><h2>Diário Lapidar</h2><p>Registros diários das pacientes entre uma consulta e outra</p></div>
+    </header>
+    <div class="diary-metrics-grid">
+      <article class="diary-metric diary-metric-green">
+        <span class="diary-metric-icon" aria-hidden="true">✓</span><span class="diary-metric-label">Check-ins hoje</span>
+        <strong id="diary-checkins-today">0</strong><small id="diary-checkins-today-sub">de 0 pacientes no diário</small>
+      </article>
+      <article class="diary-metric">
+        <span class="diary-metric-icon" aria-hidden="true">▣</span><span class="diary-metric-label">Registraram na semana</span>
+        <strong id="diary-checkins-week">0</strong><small>com ao menos 1 check-in em 7 dias</small>
+      </article>
+      <article class="diary-metric">
+        <span class="diary-metric-icon" aria-hidden="true">↗</span><span class="diary-metric-label">Constância média</span>
+        <strong id="diary-average-consistency">0 / 7</strong><small>registros por paciente nesta semana</small>
+      </article>
+      <article class="diary-metric diary-metric-risk">
+        <span class="diary-metric-icon" aria-hidden="true">✉</span><span class="diary-metric-label">Sem check-in há 7 dias</span>
+        <strong id="diary-no-recent-checkin">0</strong><small>pacientes para acolher, sem cobrança</small>
+      </article>
     </div>
+  </section>
 
-    <!-- Próximos contatos -->
-    <div class="card">
-      <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Próximos Contatos — Terça-feira</h3>
-      <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;" id="contact-date"></p>
-      <div style="display:flex;flex-direction:column;gap:0;" id="contacts-list"></div>
+  <section id="attention-section" class="dashboard-section attention-section">
+    <header class="dashboard-section-heading attention-section-heading">
+      <span class="section-heading-icon" aria-hidden="true">♧</span>
+      <div><h2>Pontos de atenção</h2><p id="alerts-subtitle">Pendências clínicas por tipo e contatos da terça-feira</p></div>
+    </header>
+    <div class="card attention-card" id="clinical-alerts-card">
+      <header class="attention-card-header">
+        <span class="attention-card-icon" aria-hidden="true">✚</span>
+        <div class="attention-card-title"><h3>Alertas clínicos</h3><p><strong id="alert-count">0</strong> pendência(s) para revisar</p></div>
+        <label class="attention-filter">
+          <span>Filtrar alertas por tipo</span>
+          <select id="alert-filter" aria-label="Filtrar alertas por tipo"><option value="Todos">Filtros</option></select>
+        </label>
+      </header>
+      <div id="alert-list" class="attention-alert-list"></div>
+      <nav class="financial-transactions-pagination" id="alerts-pagination" aria-label="Paginação de alertas"></nav>
     </div>
-  </div>
+  </section>
 
-  <section class="card" id="diary-summary-card" style="margin-top:20px;">
-    <div style="margin-bottom:16px;">
-      <h2 style="font-size:17px;font-family:var(--font-serif);color:var(--vinho);">Diário Lapidar</h2>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Registros diários das pacientes entre uma consulta e a outra</p>
-    </div>
-    <div class="grid-responsive-4" style="gap:10px;margin-bottom:18px;">
-      <div class="card-stat"><span class="card-stat-label">Check-ins hoje</span><span class="card-stat-value" id="diary-checkins-today">0</span></div>
-      <div class="card-stat"><span class="card-stat-label">Registraram na semana</span><span class="card-stat-value" id="diary-checkins-week">0</span></div>
-      <div class="card-stat"><span class="card-stat-label">Constância média</span><span class="card-stat-value" id="diary-average-consistency">0 / 7</span></div>
-      <div class="card-stat"><span class="card-stat-label">Sem check-in há 7 dias</span><span class="card-stat-value" id="diary-no-recent-checkin" style="color:var(--red-text);">0</span></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px;">
-      <div>
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Pacientes sem registro recente</h3>
-        <div id="diary-no-recent-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-      </div>
-      <div>
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:8px;">Pontos de atenção</h3>
-        <p id="diary-attention-summary" style="font-size:12px;color:var(--text-secondary);"></p>
-      </div>
+  <section id="contacts-section" class="dashboard-section contacts-section">
+    <div class="card contacts-card">
+      <header class="contacts-header">
+        <span class="contacts-header-icon" aria-hidden="true">◉</span>
+        <div><h2>Próximos contatos — Terça-feira</h2><p id="contact-date"></p></div>
+      </header>
+      <div id="contacts-list" class="contacts-list"></div>
+      <section class="contacts-followup" aria-labelledby="contacts-followup-title">
+        <h3 id="contacts-followup-title">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 5.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 3v-16Z"/><path d="M19 3v4"/>
+            <circle cx="20" cy="3" r="2" fill="currentColor" stroke="none"/>
+          </svg>
+          Sem resposta há mais de 7 dias
+        </h3>
+        <div id="contacts-followup-list" class="contacts-followup-list"></div>
+      </section>
     </div>
   </section>
 </main>
@@ -147,28 +192,30 @@
 
   // Date
   document.getElementById('today-date').textContent =
-    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' · Visão geral da clínica · Dados demonstrativos';
+    new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' }) + ' · visão geral da clínica';
   document.getElementById('total-patients-count').textContent = PACIENTES.length;
   const activePatients = PACIENTES.filter(patient => patient.ativo !== false && patient.status !== 'Inativa').length;
   document.getElementById('active-patients-count').textContent = activePatients;
   document.getElementById('active-patients-percent').textContent = `${PACIENTES.length ? Math.round(activePatients / PACIENTES.length * 100) : 0}% da carteira em acompanhamento`;
   document.getElementById('weekly-consultations-count').textContent = CONSULTAS_SEMANA.reduce((total, weekday) => total + weekday.n, 0);
-  document.getElementById('dashboard-alert-count').textContent = ALERTAS.length;
-  document.getElementById('dashboard-alert-sub').textContent = `em ${new Set(ALERTAS.map(alert => alert.paciente)).size} paciente(s) - abaixo, por tipo`;
+  document.getElementById('clinical-alerts-count').textContent = String(ALERTAS.length);
+  document.getElementById('clinical-alerts-sub').textContent = `em ${activePatients} paciente(s) · abaixo, por tipo`;
   if (Router.getRole() === 'secretary') {
-    document.getElementById('clinical-alerts-card').hidden = true;
+    document.getElementById('clinical-alerts-count').textContent =
+      String(ALERTAS.filter(alert => alert.tipo === 'Exames pendentes').length);
+    document.getElementById('clinical-alerts-sub').textContent = 'exames pendentes para acompanhamento';
+  }
+  if (Router.getRole() === 'secretary') {
     document.getElementById('protocol-distribution-card').hidden = true;
     document.getElementById('protocol-accordion').hidden = true;
     document.getElementById('diary-summary-card').hidden = true;
-    document.querySelector('[data-dashboard-action="alerts"]').hidden = true;
-    document.querySelector('.grid-responsive-4').classList.replace('grid-responsive-4', 'grid-responsive-3');
   }
   document.querySelectorAll('[data-dashboard-action]').forEach(card => {
     const navigate = () => {
       const action = card.dataset.dashboardAction;
       if (action === 'consultations') Router.navigate('consultations');
-      else if (action === 'alerts') document.getElementById('clinical-alerts-card').scrollIntoView({ behavior:'smooth', block:'start' });
       else if (action === 'active-patients') Router.navigate('patients', { filterStatus:'Ativa' });
+      else if (action === 'alerts') document.getElementById('attention-section').scrollIntoView({ behavior:'smooth' });
       else Router.navigate('patients');
     };
     card.addEventListener('click', navigate);
@@ -231,23 +278,15 @@
       a.patient.nome.localeCompare(b.patient.nome)
     );
   document.getElementById('diary-checkins-today').textContent = diaryCheckinsToday;
+  document.getElementById('diary-checkins-today-sub').textContent = `de ${diaryPatients.length} pacientes no diário`;
   document.getElementById('diary-checkins-week').textContent = diaryCheckinsWeek;
   document.getElementById('diary-average-consistency').textContent = `${diaryAverage.toFixed(1).replace('.', ',')} / 7`;
   document.getElementById('diary-no-recent-checkin').textContent = diaryNoRecent.length;
-  document.getElementById('diary-no-recent-list').innerHTML = diaryNoRecent.slice(0, 5).map(({ patient, dates }) => `
-    <button type="button" class="btn btn-subtle btn-sm" data-open-patient-diary="${patient.id}" style="display:flex;justify-content:space-between;gap:12px;text-align:left;">
-      <span>${patient.nome}</span><span style="color:var(--text-muted);">${dates.length ? `Último: ${new Date(`${dates[dates.length-1]}T12:00:00`).toLocaleDateString('pt-BR')}` : 'Sem registro'}</span>
-    </button>`).join('') || '<p style="font-size:12px;color:var(--text-muted);">Todas as pacientes registraram o diário nos últimos sete dias.</p>';
-  document.getElementById('diary-attention-summary').textContent = diaryNoRecent.length
-    ? `${diaryNoRecent.length} paciente(s) ativa(s) estão há pelo menos sete dias sem check-in. A lista mostra até cinco casos prioritários.`
-    : 'Nenhum ponto de atenção: todas as pacientes ativas registraram o diário nos últimos sete dias.';
-  document.querySelectorAll('[data-open-patient-diary]').forEach(button => button.addEventListener('click', () =>
-    Router.navigate('habits', { patientId:Number(button.dataset.openPatientDiary) })
-  ));
+  document.querySelector('.diary-metric-risk').classList.toggle('diary-metric-followup', diaryNoRecent.length === 0);
 
   // Próximos contatos date
   const nextTue = new Date();
-  const diff = (2 - nextTue.getDay() + 7) % 7 || 7;
+  const diff = (2 - nextTue.getDay() + 7) % 7;
   nextTue.setDate(nextTue.getDate() + diff);
   document.getElementById('contact-date').textContent =
     nextTue.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
@@ -277,14 +316,22 @@
     const donutItems = items.map(p => ({ label:p.nome, value:p.valor, color:p.cor }));
     drawDonutChart(document.getElementById('donut-chart'), donutItems);
     const legend = document.getElementById('donut-legend');
-    legend.innerHTML = items.map(p => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-          <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};flex-shrink:0;"></div>
-          <span style="color:var(--text-secondary);">${p.nome}</span>
-        </div>
-        <span style="color:var(--text-muted);font-weight:600;">${p.valor}</span>
-      </div>`).join('');
+    const total = items.reduce((sum, protocol) => sum + protocol.valor, 0);
+    legend.innerHTML = items.map(p => {
+      const percentage = total ? Math.round(p.valor / total * 100) : 0;
+      return `
+        <div class="donut-legend-item">
+          <div class="donut-legend-row">
+            <span class="donut-legend-name">
+              <span class="donut-legend-swatch" style="--protocol-color:${p.cor};"></span>
+              <span>${p.nome}</span>
+            </span>
+            <span class="donut-legend-value">${p.valor}</span>
+            <span class="donut-legend-percent">${percentage}%</span>
+          </div>
+          <span class="donut-legend-track"><span style="--protocol-color:${p.cor};--protocol-share:${percentage}%;"></span></span>
+        </div>`;
+    }).join('');
   }
   protocolFilter.addEventListener('change', () => {
     selectedProtocol = protocolFilter.value;
@@ -295,6 +342,12 @@
   // Navegação real por semanas com base nas consultas de demonstração.
   let weekOffset = 0;
   const weekdaysFull = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'];
+  const weekdaysShort = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const formatShortDate = date => `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`;
+  const barChart = document.getElementById('bar-chart');
+  let visibleWeekDays = [];
+  let visibleWeekAverage = 0;
+  let hoveredDayIndex = -1;
   function mondayForOffset(offset) {
     const now = new Date();
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -308,85 +361,191 @@
   }
   function renderWeek() {
     const monday = mondayForOffset(weekOffset);
+    const todayKey = dateKey(new Date());
     const days = weekdaysFull.map((label, index) => {
       const date = new Date(monday); date.setDate(monday.getDate()+index);
       const dateStr = dateKey(date);
-      const count = CONSULTAS.filter(c => c.data === dateStr && c.status === 'agendada').length;
-      return { label, value: count };
+      const count = CONSULTAS.filter(c => c.data === dateStr).length;
+      return { label, shortLabel:weekdaysShort[index], dateLabel:formatShortDate(date), dateStr, value:count, isToday:dateStr === todayKey };
     });
     const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
-    document.getElementById('week-range').textContent =
-      `${monday.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${sunday.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
+    const total = days.reduce((sum, day) => sum + day.value, 0);
+    const average = total / days.length;
+    const peak = Math.max(...days.map(day => day.value), 0);
+    const peakDay = days.find(day => day.value === peak);
+    visibleWeekDays = days;
+    visibleWeekAverage = average;
+    hoveredDayIndex = -1;
+    document.getElementById('week-title').textContent = weekOffset === 0 ? 'Semana atual' : `Semana de ${formatShortDate(monday)}`;
+    document.getElementById('week-range').textContent = `${formatShortDate(monday)} a ${formatShortDate(sunday)}`;
+    document.getElementById('week-total').textContent = String(total);
+    document.getElementById('week-average').textContent = average.toFixed(1).replace('.', ',');
+    document.getElementById('week-peak').textContent = String(peak);
+    document.getElementById('week-peak-day').textContent = peak > 0 ? peakDay.label.toLowerCase() : 'sem consultas';
+    document.getElementById('week-average-legend').textContent = `Média da semana: ${average.toFixed(1).replace('.', ',')} por dia`;
     document.getElementById('week-prev').disabled = weekOffset <= -52;
     document.getElementById('week-next').disabled = weekOffset >= 0;
     document.getElementById('week-next').style.opacity = weekOffset >= 0 ? '.45' : '1';
     document.getElementById('week-prev').style.opacity = weekOffset <= -52 ? '.45' : '1';
-    drawBarChart(document.getElementById('bar-chart'), days);
+    barChart.title = days.map(day => `${day.label}, ${day.dateLabel}: ${day.value} consultas`).join(' · ');
+    drawBarChart(barChart, days, { average, hoveredIndex:hoveredDayIndex });
   }
   document.getElementById('week-prev').addEventListener('click', () => { weekOffset = Math.max(-52, weekOffset-1); renderWeek(); });
   document.getElementById('week-next').addEventListener('click', () => { weekOffset = Math.min(0, weekOffset+1); renderWeek(); });
+  barChart.addEventListener('pointermove', event => {
+    const rect = barChart.getBoundingClientRect();
+    const layout = barChart.__barChartLayout;
+    if (!layout || !layout.slotW || event.pointerType === 'touch') return;
+    const localX = event.clientX - rect.left;
+    const index = Math.floor((localX - layout.left) / layout.slotW);
+    const nextIndex = index >= 0 && index < layout.count ? index : -1;
+    if (nextIndex === hoveredDayIndex) return;
+    hoveredDayIndex = nextIndex;
+    barChart.style.cursor = nextIndex >= 0 ? 'crosshair' : 'default';
+    drawBarChart(barChart, visibleWeekDays, { average:visibleWeekAverage, hoveredIndex:hoveredDayIndex });
+  });
+  barChart.addEventListener('pointerleave', () => {
+    if (hoveredDayIndex < 0) return;
+    hoveredDayIndex = -1;
+    barChart.style.cursor = 'default';
+    drawBarChart(barChart, visibleWeekDays, { average:visibleWeekAverage });
+  });
   requestAnimationFrame(renderWeek);
 
   // Alertas
   let activeFilter = 'Todos';
+  let alertPage = 0;
+  const alertsPerPage = 6;
   // Flutter (AuthSession.canSeeAlert): a secretaria só vê o recorte operacional de exames pendentes.
   const visibleAlerts = Router.getRole() === 'secretary' ? ALERTAS.filter(a => a.tipo === 'Exames pendentes') : ALERTAS;
-  if (Router.getRole() === 'secretary') document.getElementById('alerts-subtitle').textContent = 'Recorte operacional: pendências de entrega de exames';
+  if (Router.getRole() === 'secretary') document.getElementById('alerts-subtitle').textContent = 'Pendências de entrega de exames e contatos da terça-feira';
   const tipos = ['Todos', ...new Set(visibleAlerts.map(a => a.tipo))];
-  const filtersEl = document.getElementById('alert-filters');
+  const alertFilter = document.getElementById('alert-filter');
   const alertList = document.getElementById('alert-list');
   const alertCount = document.getElementById('alert-count');
+  const alertPagination = document.getElementById('alerts-pagination');
+  const escapeDashboardText = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[char]));
 
   function renderAlerts() {
     const visible = activeFilter === 'Todos' ? visibleAlerts : visibleAlerts.filter(a => a.tipo === activeFilter);
-    alertCount.textContent = visible.length;
-    alertList.innerHTML = visible.map(a => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div>
-          <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${a.paciente}</p>
-          <p style="font-size:11px;color:var(--text-muted);">${a.protocolo}</p>
-        </div>
-        ${getAlertBadge(a.tipo)}
-      </div>
-    `).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:12px 0;">Nenhum alerta nesta categoria.</p>';
+    alertCount.textContent = String(visible.length);
+    const pageCount = Math.ceil(visible.length / alertsPerPage);
+    alertPage = Math.min(alertPage, Math.max(0, pageCount - 1));
+    const start = alertPage * alertsPerPage;
+    const pageAlerts = visible.slice(start, start + alertsPerPage);
+    alertList.innerHTML = pageAlerts.map(a => {
+      const patient = PACIENTES.find(item => item.nome === a.paciente);
+      const initials = a.paciente.split(/\s+/).map(name => name[0]).slice(0, 2).join('').toUpperCase();
+      const protocolClass = a.protocolo === 'Lapidar SOP' ? 'protocol-sop'
+        : a.protocolo === 'Lapidar Fertilidade' ? 'protocol-fertility'
+          : a.protocolo === 'Pocket' ? 'protocol-pocket' : 'protocol-40';
+      return `
+        <button type="button" class="attention-alert" data-alert-patient="${patient?.id || ''}" aria-label="Abrir alerta de ${escapeDashboardText(a.paciente)}: ${escapeDashboardText(a.tipo)}">
+          <span class="attention-alert-icon" aria-hidden="true">${initials}</span>
+          <span class="attention-alert-copy">
+            <strong>${escapeDashboardText(a.paciente)}</strong>
+            <span>${escapeDashboardText(a.tipo)}</span>
+            <span class="attention-protocol ${protocolClass}">${escapeDashboardText(a.protocolo)}</span>
+          </span>
+          <span class="attention-alert-arrow" aria-hidden="true">›</span>
+        </button>`;
+    }).join('') || '<p class="attention-empty">Nenhum alerta nesta categoria.</p>';
+    alertList.querySelectorAll('[data-alert-patient]').forEach(button => button.addEventListener('click', () => {
+      const patientId = Number(button.dataset.alertPatient);
+      if (patientId) Router.navigate('patient-detail', { patientId });
+    }));
+
+    if (visible.length <= alertsPerPage) {
+      alertPagination.replaceChildren();
+      alertPagination.hidden = true;
+      return;
+    }
+
+    const pageNumbers = pageCount <= 6
+      ? Array.from({ length:pageCount }, (_, index) => index)
+      : alertPage < 3
+        ? [0, 1, 2, 3, 'ellipsis', pageCount - 1]
+        : alertPage >= pageCount - 3
+          ? [0, 'ellipsis', pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1]
+          : [0, 'ellipsis', alertPage - 1, alertPage, alertPage + 1, 'ellipsis', pageCount - 1];
+    const end = Math.min(start + alertsPerPage, visible.length);
+    alertPagination.hidden = false;
+    alertPagination.innerHTML = `<span>Mostrando ${start + 1}–${end} de ${visible.length} alertas</span>
+      <div class="financial-transactions-pagination-controls">
+        <button type="button" data-page="${alertPage - 1}" aria-label="Página anterior" ${alertPage === 0 ? 'disabled' : ''}>‹</button>
+        ${pageNumbers.map(index => index === 'ellipsis'
+          ? '<span aria-hidden="true">…</span>'
+          : `<button type="button" data-page="${index}" aria-label="Página ${Number(index) + 1}" ${index === alertPage ? 'aria-current="page"' : ''}>${Number(index) + 1}</button>`).join('')}
+        <button type="button" data-page="${alertPage + 1}" aria-label="Próxima página" ${alertPage >= pageCount - 1 ? 'disabled' : ''}>›</button>
+      </div>`;
+    alertPagination.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
+      const requestedPage = Number(button.dataset.page);
+      if (!Number.isInteger(requestedPage) || requestedPage < 0 || requestedPage >= pageCount) return;
+      alertPage = requestedPage;
+      renderAlerts();
+    }));
   }
 
   tipos.forEach(tipo => {
-    const btn = document.createElement('button');
-    btn.className = 'filter-chip' + (tipo === 'Todos' ? ' active' : '');
-    btn.textContent = tipo;
-    btn.addEventListener('click', () => {
-      activeFilter = tipo;
-      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderAlerts();
-    });
-    filtersEl.appendChild(btn);
+    if (tipo === 'Todos') return;
+    const option = document.createElement('option');
+    option.value = tipo;
+    option.textContent = tipo;
+    alertFilter.appendChild(option);
+  });
+  alertFilter.addEventListener('change', () => {
+    activeFilter = alertFilter.value;
+    alertPage = 0;
+    renderAlerts();
   });
   renderAlerts();
 
   // Próximos contatos
   const contactsList = document.getElementById('contacts-list');
-  const escapeDashboardText = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
-    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
-  }[char]));
   contactsList.innerHTML = PROXIMOS_CONTATOS.map((contact, index) => {
     const patient = PACIENTES.find(item => item.nome === contact.paciente);
-    const phone = String(patient?.telefone || '').replace(/\D/g, '');
-    const phoneLink = phone.length >= 10 ? `+${phone.startsWith('55') ? phone : `55${phone}`}` : '';
-    const isLast = index === PROXIMOS_CONTATOS.length - 1;
+    const initials = contact.paciente.split(/\s+/).map(name => name[0]).slice(0, 2).join('').toUpperCase();
+    const avatarClass = patient?.protocolo === 'Lapidar SOP' ? 'contact-avatar-green'
+      : patient?.protocolo === 'Lapidar Fertilidade' ? 'contact-avatar-gold'
+        : patient?.protocolo === 'Pocket' ? 'contact-avatar-blue' : 'contact-avatar-wine';
     return `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;${!isLast ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);' : ''}">
-        <div style="display:flex;align-items:flex-start;gap:12px;min-width:0;">
-          <div style="font-size:12px;font-weight:600;color:var(--dourado);width:40px;text-align:right;flex-shrink:0;padding-top:2px;">${escapeDashboardText(contact.horario)}</div>
-          <div style="min-width:0;">
-            <p style="font-size:13px;font-weight:500;color:var(--text-primary);">${escapeDashboardText(contact.paciente)}</p>
-            ${Router.getRole() === 'secretary' ? '' : `<p style="font-size:11px;color:var(--text-muted);">${escapeDashboardText(contact.motivo)}</p>`}
-          </div>
-        </div>
-        ${phoneLink ? `<a class="btn btn-subtle btn-sm" href="tel:${phoneLink}" aria-label="Entrar em contato com ${escapeDashboardText(contact.paciente)}">Entrar em contato</a>` : '<span class="text-muted" style="font-size:11px;">Telefone não informado</span>'}
-      </div>`;
+      <article class="contact-row">
+        <time class="contact-time">${escapeDashboardText(contact.horario)}</time>
+        <span class="contact-avatar ${avatarClass}" aria-hidden="true">${initials}</span>
+        <div class="contact-copy"><strong>${escapeDashboardText(contact.paciente)}</strong><span>${Router.getRole() === 'secretary' ? 'Contato da clínica' : escapeDashboardText(contact.motivo)}</span></div>
+        <button type="button" class="contact-open" data-contact-patient="${patient?.id || ''}" aria-label="Abrir ficha de ${escapeDashboardText(contact.paciente)}">›</button>
+      </article>`;
   }).join('') || '<p style="font-size:12px;color:var(--text-muted);">Sem contatos agendados.</p>';
+  contactsList.querySelectorAll('[data-contact-patient]').forEach(button => button.addEventListener('click', () => {
+    const patientId = Number(button.dataset.contactPatient);
+    if (patientId) Router.navigate('patient-detail', { patientId });
+  }));
+
+  const followupPatients = [1, 2, 3, 8]
+    .map(patientId => PACIENTES.find(patient => Number(patient.id) === patientId))
+    .filter(Boolean);
+  const followupList = document.getElementById('contacts-followup-list');
+  followupList.innerHTML = followupPatients.map((patient, index) => {
+    const initials = patient.nome.split(/\s+/).map(name => name[0]).slice(0, 2).join('').toUpperCase();
+    const avatarClass = ['contact-avatar-wine', 'contact-avatar-gold', 'contact-avatar-green', 'contact-avatar-wine'][index % 4];
+    const phoneDigits = String(patient.telefone || '').replace(/\D/g, '');
+    const whatsappHref = phoneDigits ? `https://wa.me/55${phoneDigits}` : '';
+    return `
+      <article class="followup-row">
+        <span class="contact-avatar ${avatarClass}" aria-hidden="true">${escapeDashboardText(initials)}</span>
+        <strong class="followup-patient-name">${escapeDashboardText(patient.nome)}</strong>
+        <div class="followup-actions">
+          ${whatsappHref ? `<a class="followup-recontact" href="${whatsappHref}" target="_blank" rel="noopener noreferrer">Recontatar</a>` : '<span class="followup-recontact followup-recontact-disabled">Sem telefone</span>'}
+          <button type="button" class="followup-details" data-followup-patient="${Number(patient.id)}">Ver detalhes <span aria-hidden="true">→</span></button>
+        </div>
+      </article>`;
+  }).join('');
+  followupList.querySelectorAll('[data-followup-patient]').forEach(button => button.addEventListener('click', () => {
+    const patientId = Number(button.dataset.followupPatient);
+    if (patientId) Router.navigate('patient-detail', { patientId });
+  }));
 
   window.addEventListener('resize', () => {
     requestAnimationFrame(() => { renderProtocols(); renderWeek(); });

@@ -257,6 +257,53 @@
     .contents-gallery-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
     .contents-gallery .content-section { border:0; padding:0; background:transparent; }
     .contents-empty { margin:12px 0; }
+    .contents-page-header { margin:0 0 28px; }
+    .contents-page-header h1 { margin:0; color:var(--text-primary); font:700 40px/1.15 var(--font-serif); }
+    .contents-page-header p { margin-top:6px; color:var(--text-secondary); font-size:16px; }
+    #contents-context { display:block; }
+    .contents-toolbar { justify-content:flex-start; margin-bottom:24px; }
+    .content-section,
+    .content-section:nth-child(5n + 2),
+    .content-section:nth-child(5n + 3),
+    .content-section:nth-child(5n + 4),
+    .content-section:nth-child(5n + 5) {
+      padding:24px 24px 16px;
+      border:1px solid var(--border);
+      background:var(--white);
+    }
+    .content-section-heading h2,
+    .content-section:nth-child(5n + 2) .content-section-heading h2,
+    .content-section:nth-child(5n + 3) .content-section-heading h2,
+    .content-section:nth-child(5n + 4) .content-section-heading h2,
+    .content-section:nth-child(5n + 5) .content-section-heading h2 { color:var(--text-primary); font-size:22px; }
+    .content-section--ebooks,
+    .content-section--videos,
+    .content-section--sites { --section-accent:var(--vinho); --section-tint:var(--white); --section-border:var(--border); }
+    .content-section--ebooks .content-card,
+    .content-section--videos .content-card,
+    .content-section--sites .content-card { border-color:var(--border); background:var(--white); }
+    .content-section--ebooks .content-art,
+    .content-section--ebooks .content-art[data-tone],
+    .content-card--ebooks .content-art { background:var(--vinho) !important; }
+    .content-section--videos .content-art,
+    .content-section--videos .content-art[data-tone],
+    .content-card--videos .content-art { background:#356f9b !important; }
+    .content-section--sites .content-art,
+    .content-section--sites .content-art[data-tone],
+    .content-card--sites .content-art { background:#39765d !important; }
+    .content-art { flex-basis:64px; align-items:center; padding:12px 16px; }
+    .content-art-type { font-size:12px; }
+    .content-art-type::before { content:"▤"; margin-right:10px; font-size:22px; vertical-align:-2px; }
+    .content-art-duration { position:absolute; z-index:1; top:50%; right:16px; transform:translateY(-50%); color:#fff; font-size:12px; font-weight:700; }
+    .content-card-body { padding:16px; }
+    .content-card-meta { display:none; }
+    .content-card-title { font-size:16px; line-height:1.35; }
+    .content-card-description { font-size:14px; line-height:1.45; }
+    .content-section--ebooks .content-card-tags span,
+    .content-card--ebooks .content-card-tags span { background:#f4e7eb; color:var(--vinho); }
+    .content-section--ebooks .content-card-meta span:first-child,
+    .content-section--ebooks .content-card-action,
+    .content-card--ebooks .content-card-action { color:var(--vinho); }
     @media(max-width:700px) { .content-section { padding:12px; } .content-rail { grid-auto-columns:minmax(240px,80%); } .contents-toolbar .contents-controls { align-items:stretch; } .contents-view-toggle { width:100%; } .contents-view-toggle button { flex:1; } }
 
   </style>
@@ -267,8 +314,12 @@
 
 <main class="main-content page-enter">
   <div class="contents-page">
-    <div class="contents-toolbar">
-      <div class="contents-controls">
+  <header class="contents-page-header">
+    <h1>Conteúdos</h1>
+    <p id="contents-context">Biblioteca de ebooks, vídeos e sites para pacientes e equipe.</p>
+  </header>
+  <div class="contents-toolbar">
+    <div class="contents-controls">
         <div class="contents-view-toggle" role="group" aria-label="Visualização dos conteúdos">
           <button type="button" id="contents-carousel-btn" class="active" aria-pressed="true">▤ Carrossel</button>
           <button type="button" id="contents-all-btn" aria-pressed="false">▦ Tudo</button>
@@ -276,7 +327,6 @@
         <button class="btn btn-subtle btn-sm" id="contents-filter-btn" type="button">⌕ Tags <span aria-hidden="true">▾</span></button>
         <button class="btn btn-primary btn-sm" id="add-content-btn" type="button" hidden>＋ Adicionar material</button>
       </div>
-      <p id="contents-context">Biblioteca de ebooks, vídeos e sites para pacientes e equipe.</p>
     </div>
     <div class="contents-tags" id="contents-tags" aria-label="Tags selecionadas"></div>
 
@@ -359,14 +409,15 @@
       <button class="content-card content-card--${toneClass}" type="button" data-content-id="${escapeHTML(item.id)}">
         <span class="content-art" data-tone="${escapeHTML(item.tone || 'gold')}">
           <span class="content-art-type">${escapeHTML(item.type)}</span>
+          <span class="content-art-duration">${escapeHTML(item.minutes ? item.minutes + ' min' : 'Conteúdo')}</span>
           <span class="content-art-label">${escapeHTML(item.title)}</span>
         </span>
         <span class="content-card-body">
-          <span class="content-card-meta"><span>${escapeHTML(item.type)}</span><span>${escapeHTML(item.duration || 'Conteúdo')}</span></span>
+          <span class="content-card-meta"><span>${escapeHTML(item.type)}</span><span>${escapeHTML(item.minutes ? item.minutes + ' min' : 'Conteúdo')}</span></span>
           <span class="content-card-title">${escapeHTML(item.title)}</span>
           <span class="content-card-description">${escapeHTML(item.summary || '')}</span>
           <span class="content-card-tags">${(item.tags || []).slice(0,3).map(tag => `<span>${escapeHTML(tag)}</span>`).join('')}</span>
-          <span class="content-card-action">${item.type === 'Vídeo' ? 'Assistir →' : item.type === 'Site' ? 'Abrir site →' : 'Ler material →'}</span>
+          <span class="content-card-action">${item.type === 'Vídeo' ? 'Assistir →' : item.type === 'Site' ? 'Abrir site →' : 'Ler ebook →'}</span>
         </span>
       </button>`;
   }

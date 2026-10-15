@@ -11,117 +11,218 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
-<body>
+<body class="financial-page">
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
 <main class="main-content page-enter">
-  <div class="page-header">
-    <h1 class="page-title">Financeiro</h1>
-    <p class="page-subtitle" id="financial-subtitle">Sua movimentação financeira e pendências</p>
+  <div class="page-header financial-page-header">
+    <div>
+      <h1 class="page-title">Financeiro</h1>
+      <p class="page-subtitle" id="financial-subtitle">24 lançamento(s) no filtro atual · receita mensal R$ 4.566,67</p>
+    </div>
+    <button class="btn btn-primary" id="btn-add-transaction" type="button" hidden>＋ Novo lançamento</button>
   </div>
 
-  <!-- Cards de resumo -->
-  <div class="grid-responsive-4" id="finance-summary" style="gap:12px;margin-bottom:24px;">
+  <section class="financial-summary" aria-labelledby="financial-summary-title">
+    <header class="financial-section-heading">
+      <span class="financial-section-icon" aria-hidden="true">▥</span>
+      <div>
+        <h2 id="financial-summary-title">Resumo do mês</h2>
+        <p>Entradas, saídas e ticket médio do mês corrente</p>
+      </div>
+    </header>
+    <div class="grid-responsive-4" id="finance-summary">
     <div class="card-stat stagger-1" style="border-left:3px solid var(--oliva);">
-      <span class="card-stat-label">Receita do Mês</span>
-      <span class="card-stat-value" id="month-revenue" style="color:var(--oliva);">R$ 7.900</span>
-      <span class="card-stat-sub">Setembro 2026</span>
+      <span class="financial-stat-icon financial-stat-icon-green" aria-hidden="true">↗</span>
+      <span class="card-stat-label">Receita mensal</span>
+      <span class="card-stat-value" id="month-revenue" style="color:var(--oliva);">R$ 4.566,67</span>
+      <span class="card-stat-sub">recebido no mês corrente</span>
     </div>
     <div class="card-stat stagger-2" style="border-left:3px solid var(--vinho);">
-      <span class="card-stat-label">Total Recebido</span>
-      <span class="card-stat-value" id="received-total">R$ 6.300</span>
-      <span class="card-stat-sub">8 pagamentos</span>
+      <span class="financial-stat-icon financial-stat-icon-blue" aria-hidden="true">▣</span>
+      <span class="card-stat-label">Despesas pagas no mês</span>
+      <span class="card-stat-value" id="month-expenses" style="color:#304b70;">R$ 16.860,00</span>
+      <span class="card-stat-sub">ainda há contas a pagar</span>
     </div>
     <div class="card-stat stagger-3" style="border-left:3px solid var(--yellow-text);">
-      <span class="card-stat-label">Pendente</span>
-      <span class="card-stat-value" id="pending-total" style="color:var(--yellow-text);">R$ 1.600</span>
-      <span class="card-stat-sub">2 pagamentos</span>
+      <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">⚖</span>
+      <span class="card-stat-label">Resultado do mês</span>
+      <span class="card-stat-value" id="month-result" style="color:#922d3e;">- R$ 12.293,33</span>
+      <span class="card-stat-sub">receitas − despesas pagas</span>
     </div>
     <div class="card-stat stagger-4" style="border-left:3px solid var(--dourado);">
-      <span class="card-stat-label">Receita Anual</span>
-      <span class="card-stat-value" id="annual-revenue" style="color:var(--dourado);">R$ 59.500</span>
-      <span class="card-stat-sub">Jan–Set 2026</span>
+      <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">▤</span>
+      <span class="card-stat-label">Ticket médio</span>
+      <span class="card-stat-value" id="average-ticket">R$ 1.740,00</span>
+      <span class="card-stat-sub">valor médio por plano</span>
     </div>
-  </div>
+    </div>
+  </section>
 
-  <!-- Gráfico de receita mensal -->
-  <div class="card" id="finance-chart" style="margin-bottom:24px;">
-    <h3 style="font-size:13px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Receita Mensal — 2026</h3>
-    <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Valores acumulados por mês</p>
-    <canvas id="receita-chart" style="width:100%;height:160px;display:block;"></canvas>
-  </div>
+  <section class="financial-summary financial-pending" aria-labelledby="financial-pending-title">
+    <header class="financial-section-heading">
+      <span class="financial-section-icon" aria-hidden="true">⌛</span>
+      <div>
+        <h2 id="financial-pending-title">Pendências e planos</h2>
+        <p>O que ainda falta receber ou pagar</p>
+      </div>
+    </header>
+    <div class="financial-metric-grid">
+      <article class="card-stat financial-metric-card">
+        <span class="financial-stat-icon financial-stat-icon-gold" aria-hidden="true">⌛</span>
+        <span class="card-stat-label">Pendências a receber</span>
+        <span class="card-stat-value financial-metric-gold" id="receivable-total">R$ 0,00</span>
+        <span class="card-stat-sub">parcelas em aberto</span>
+      </article>
+      <article class="card-stat financial-metric-card">
+        <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">!</span>
+        <span class="card-stat-label">Inadimplência</span>
+        <span class="card-stat-value financial-metric-rose" id="overdue-total">R$ 0,00</span>
+        <span class="card-stat-sub">parcelas vencidas</span>
+      </article>
+      <article class="card-stat financial-metric-card">
+        <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">▤</span>
+        <span class="card-stat-label">Contas a pagar</span>
+        <span class="card-stat-value" id="payables-total">R$ 0,00</span>
+        <span class="card-stat-sub">despesas em aberto</span>
+      </article>
+      <article class="card-stat financial-metric-card">
+        <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">▣</span>
+        <span class="card-stat-label">Planos ativos</span>
+        <span class="card-stat-value" id="active-plans-count">0</span>
+        <span class="card-stat-sub" id="settled-plans-count">0 quitado(s)</span>
+      </article>
+    </div>
+  </section>
 
-  <!-- Filtros e tabela -->
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <h3 style="font-size:13px;font-weight:600;color:var(--vinho);">Transações</h3>
-        <button class="btn btn-primary btn-sm" id="btn-add-transaction" type="button" hidden>＋ Nova transação</button>
+  <section class="financial-analysis" aria-labelledby="financial-analysis-title">
+    <header class="financial-section-heading">
+      <span class="financial-section-icon" aria-hidden="true">◷</span>
+      <div>
+        <h2 id="financial-analysis-title">Análise visual</h2>
+        <p>Para onde o dinheiro entra e sai</p>
+      </div>
+    </header>
+    <article class="card financial-chart-card" aria-labelledby="revenue-plan-title">
+      <header class="financial-chart-heading">
+        <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true">◉</span>
+        <div>
+          <h3 id="revenue-plan-title">Receita por plano</h3>
+          <p>Distribuição dos planos vendidos</p>
+        </div>
+      </header>
+      <div class="financial-chart-content">
+        <div class="financial-donut" id="revenue-plan-donut" role="img" aria-label="Receita por plano">
+          <div><strong id="revenue-plan-count">0</strong><span>PLANOS</span></div>
+        </div>
+        <div class="financial-chart-legend" id="revenue-plan-legend"></div>
+      </div>
+    </article>
+    <article class="card financial-chart-card" aria-labelledby="expense-category-title">
+      <header class="financial-chart-heading">
+        <span class="financial-stat-icon financial-stat-icon-blue" aria-hidden="true">◷</span>
+        <div>
+          <h3 id="expense-category-title">Despesas por categoria</h3>
+          <p>Para onde o dinheiro está indo</p>
+        </div>
+      </header>
+      <div class="financial-chart-content">
+        <div class="financial-donut financial-donut-expenses" id="expense-category-donut" role="img" aria-label="Despesas por categoria">
+          <div><strong id="expense-category-count">0</strong><span>LANÇAMENTOS</span></div>
+        </div>
+        <div class="financial-chart-legend" id="expense-category-legend"></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="card financial-filter-panel" aria-labelledby="financial-filters-title">
+    <header class="financial-panel-heading">
+      <span class="financial-stat-icon financial-stat-icon-rose" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h5m4 0h7M4 12h9m4 0h3M4 18h2m4 0h10"></path><path d="M11 4v4m0 2v4m-3 2v4"></path></svg></span>
+      <div>
+        <h2 id="financial-filters-title">Busca e filtros</h2>
+        <p>Categoria é o tipo do lançamento; origem é de quem o dinheiro sai e destino é para quem vai</p>
+      </div>
+      <div class="financial-filter-tools">
+        <button class="btn btn-subtle btn-sm financial-more-filters" id="toggle-financial-extra" type="button" aria-expanded="false">Mais filtros</button>
         <button class="btn btn-subtle btn-sm" id="manage-financial-categories" type="button" hidden>Gerenciar categorias</button>
       </div>
-      <div class="filter-chips">
-        <button class="filter-chip active" data-status="Todos">Todos</button>
-        <button class="filter-chip" data-status="pago">Pagos</button>
-        <button class="filter-chip" data-status="pendente">Pendentes</button>
+    </header>
+    <label class="financial-search">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+      <input type="search" id="filter-search" aria-label="Buscar lançamentos" placeholder="Buscar por descrição, paciente, origem ou destino...">
+    </label>
+    <div class="financial-filter-grid">
+      <label><span>Tipo</span><select class="form-select" id="filter-type" aria-label="Filtrar por tipo"><option value="">Receitas e despesas</option></select></label>
+      <label><span>Status</span><select class="form-select" id="filter-status" aria-label="Filtrar por status"><option value="">Todos</option><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select></label>
+      <label><span>Categoria</span><select class="form-select" id="filter-category" aria-label="Filtrar por categoria"><option value="">Todas</option></select></label>
+      <label><span>Origem (de quem sai)</span><select class="form-select" id="filter-origin" aria-label="Filtrar por origem"><option value="">Todas</option></select></label>
+      <label><span>Destino (para quem vai)</span><select class="form-select" id="filter-destination" aria-label="Filtrar por destino"><option value="">Todos</option></select></label>
+    </div>
+    <div class="financial-filter-extra" id="financial-filter-extra" hidden>
+      <label><span>De</span><input class="form-input" type="date" id="filter-date-from"></label>
+      <label><span>Até</span><input class="form-input" type="date" id="filter-date-to"></label>
+      <label><span>Responsável</span><select class="form-select" id="filter-user" aria-label="Filtrar por responsável"><option value="">Todos</option></select></label>
+    </div>
+  </section>
+
+  <section class="financial-transactions-section" aria-labelledby="financial-transactions-title">
+    <header class="financial-transactions-heading">
+      <div class="financial-section-heading">
+        <span class="financial-section-icon" aria-hidden="true">▤</span>
+        <div>
+          <h2 id="financial-transactions-title">Lançamentos</h2>
+          <p id="transaction-count">0 registro(s) no filtro atual</p>
+        </div>
       </div>
+      <span class="financial-balance-badge" id="projected-balance">Saldo previsto: R$ 0,00</span>
+    </header>
+    <div class="financial-transactions-table">
+      <div class="financial-transactions-table-head" aria-hidden="true">
+        <span>Descrição</span><span>Valor</span><span>Pagamentos</span><span>Status</span>
+      </div>
+      <div class="financial-transactions-list" id="transactions-list" aria-live="polite"></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
-      <select class="form-select" id="filter-type" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option></select>
-      <select class="form-select" id="filter-origin" aria-label="Filtrar por origem"><option value="">Todas as origens</option></select>
-      <select class="form-select" id="filter-destination" aria-label="Filtrar por destino"><option value="">Todos os destinos</option></select>
-      <select class="form-select" id="filter-user" aria-label="Filtrar por usuário"><option value="">Todos os responsáveis</option></select>
-      <label class="form-group" style="margin:0;"><span class="form-label">De</span><input class="form-input" type="date" id="filter-date-from"></label>
-      <label class="form-group" style="margin:0;"><span class="form-label">Até</span><input class="form-input" type="date" id="filter-date-to"></label>
-    </div>
-    <div class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Referência</th>
-            <th>Origem</th>
-            <th>Destino</th>
-            <th>Tipo</th>
-            <th>Plano</th>
-            <th>Valor</th>
-            <th>Parcela</th>
-            <th>Progresso</th>
-            <th>Responsável</th>
-            <th>Status</th>
-            <th id="transaction-actions-header" hidden>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="transactions-body"></tbody>
-      </table>
-    </div>
-  </div>
+    <nav class="financial-transactions-pagination" id="transactions-pagination" aria-label="Paginação de lançamentos"></nav>
+  </section>
 </main>
 
 <div class="modal-overlay" id="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
-  <div class="modal" style="max-width:680px;">
+  <div class="modal financial-transaction-modal" style="max-width:680px;">
     <div class="modal-header">
-      <h2 class="modal-title" id="transaction-modal-title">Nova transação</h2>
+      <h2 class="modal-title" id="transaction-modal-title">Novo lançamento</h2>
       <button class="modal-close" id="close-transaction-modal" type="button" aria-label="Fechar">×</button>
     </div>
     <form id="transaction-form">
-      <div class="modal-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
-        <label class="form-group"><span class="form-label">Data</span><input class="form-input" type="date" id="tx-date" required></label>
-        <label class="form-group"><span class="form-label">Referência (opcional)</span><input class="form-input" id="tx-patient" maxlength="100"></label>
-        <label class="form-group"><span class="form-label">Natureza</span><select class="form-select" id="tx-type"><option>Receita</option><option>Despesa</option></select></label>
-        <label class="form-group"><span class="form-label">Tipo de lançamento</span><select class="form-select" id="tx-launch-type" required></select></label>
-        <label class="form-group"><span class="form-label">Valor (R$)</span><input class="form-input" id="tx-value" type="number" min="0.01" step="0.01" required></label>
-        <label class="form-group"><span class="form-label">Origem (ID do usuário)</span><input class="form-input" id="tx-origin" required maxlength="80"></label>
-        <label class="form-group"><span class="form-label">Destino</span><input class="form-input" id="tx-destination" required maxlength="80"></label>
-        <label class="form-group"><span class="form-label">Categoria</span><select class="form-select" id="tx-plan" required></select></label>
-        <label class="form-group"><span class="form-label">Número de parcelas</span><input class="form-input" id="tx-installment-count" type="number" min="1" max="60" step="1" value="1" required></label>
-        <label class="form-group"><span class="form-label">Data do primeiro pagamento</span><input class="form-input" id="tx-payment-date" type="date" required></label>
-        <label class="form-group"><span class="form-label">Forma de pagamento</span><select class="form-select" id="tx-payment-method"><option value="Pix">Pix</option><option value="Cartão de crédito">Cartão de crédito</option><option value="Cartão de débito">Cartão de débito</option><option value="Transferência">Transferência</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Não informado">Não informado</option></select></label>
-        <label class="form-group"><span class="form-label">Responsável</span><input class="form-input" id="tx-user" required maxlength="80"></label>
-        <label class="form-group"><span class="form-label">Status</span><select class="form-select" id="tx-status"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select></label>
+      <div class="modal-body transaction-modal-body" id="transaction-modal-body">
+        <div class="transaction-create-fields">
+          <label class="form-group"><span class="form-label">Data</span><input class="form-input" type="date" id="tx-date" required></label>
+          <label class="form-group"><span class="form-label">Referência (opcional)</span><input class="form-input" id="tx-patient" maxlength="100"></label>
+          <label class="form-group"><span class="form-label">Natureza</span><select class="form-select" id="tx-type"><option>Receita</option><option>Despesa</option></select></label>
+          <label class="form-group"><span class="form-label">Tipo de lançamento</span><select class="form-select" id="tx-launch-type" required></select></label>
+          <label class="form-group"><span class="form-label">Forma de pagamento</span><select class="form-select" id="tx-payment-method"><option value="Pix">Pix</option><option value="Cartão de crédito">Cartão de crédito</option><option value="Cartão de débito">Cartão de débito</option><option value="Transferência">Transferência</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Não informado">Não informado</option></select></label>
+          <label class="form-group"><span class="form-label">Responsável</span><input class="form-input" id="tx-user" required maxlength="80"></label>
+          <label class="form-group"><span class="form-label">Status</span><select class="form-select" id="tx-status"><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select></label>
+        </div>
+        <div class="financial-edit-fields">
+          <div class="financial-type-switch" role="radiogroup" aria-label="Natureza do lançamento">
+            <button class="financial-type-option active" type="button" role="radio" aria-checked="true" data-transaction-type="Receita">Receita</button>
+            <button class="financial-type-option" type="button" role="radio" aria-checked="false" data-transaction-type="Despesa">Despesa</button>
+          </div>
+          <label class="form-group financial-floating-field"><span class="form-label">Descrição</span><input class="form-input" id="tx-description" maxlength="160" required></label>
+        </div>
+        <div class="transaction-shared-fields">
+          <label class="form-group financial-floating-field"><span class="form-label">Valor total (R$)</span><input class="form-input" id="tx-value" type="number" min="0.01" step="0.01" required></label>
+          <label class="form-group financial-floating-field"><span class="form-label">Categoria</span><select class="form-select" id="tx-plan" data-round2-search="1" required></select></label>
+          <label class="form-group financial-floating-field"><span class="form-label">Parcelas</span><input class="form-input" id="tx-installment-count" type="number" min="1" max="60" step="1" value="1" required aria-describedby="tx-installment-help"><span class="financial-installment-help" id="tx-installment-help" hidden></span></label>
+          <label class="form-group financial-floating-field"><span class="form-label" id="tx-payment-date-label">Data do primeiro pagamento</span><input class="form-input" id="tx-payment-date" type="date" required></label>
+          <label class="form-group financial-floating-field"><span class="form-label">Origem</span><input class="form-input" id="tx-origin" required maxlength="80"></label>
+          <label class="form-group financial-floating-field"><span class="form-label">Destino</span><input class="form-input" id="tx-destination" required maxlength="80"></label>
+          <label class="form-group financial-floating-field financial-observation-field"><span class="form-label">Observação</span><textarea class="form-textarea" id="tx-observation" maxlength="500"></textarea></label>
+        </div>
       </div>
 
-      <div class="modal-footer"><button class="btn btn-subtle" id="cancel-transaction" type="button">Cancelar</button><button class="btn btn-primary" type="submit">Salvar transação</button></div>
+      <div class="modal-footer"><button class="btn btn-subtle" id="cancel-transaction" type="button">Cancelar</button><button class="btn btn-primary" id="save-transaction-button" type="submit">Salvar</button></div>
     </form>
   </div>
 </div>
@@ -155,6 +256,8 @@
   const isAdminView = Router.can('seeClinicFinance');
   const currentEmployee = currentRole === 'doctor' ? 'Dra. Andressa Gomide' : 'Secretaria';
   let editingTransactionId = null;
+  let transactionPage = 0;
+  const transactionPageSize = 6;
   let transactions = TRANSACOES.map((transaction, index) => ({ ...transaction, id:transaction.id || 'demo-' + index }));
   try {
     const savedTransactions = JSON.parse(localStorage.getItem('lapidar-transacoes') || 'null');
@@ -284,71 +387,115 @@
   }
   document.getElementById('btn-add-transaction').hidden = !isAdminView;
   document.getElementById('manage-financial-categories').hidden = !isAdminView;
-  document.getElementById('transaction-actions-header').hidden = false;
   if (isSecretaryView) {
     document.getElementById('financial-subtitle').textContent = 'Financeiro operacional · pagamentos e pendências';
-    document.getElementById('finance-summary').hidden = true;
-    document.getElementById('finance-chart').hidden = true;
+    document.querySelector('.financial-summary').hidden = true;
+    document.querySelector('.financial-analysis').hidden = true;
   }
 
-  // Receita mensal data
-  const receitaMensal = [
-    { label:'Jan', value:5800 },
-    { label:'Fev', value:6200 },
-    { label:'Mar', value:5900 },
-    { label:'Abr', value:6500 },
-    { label:'Mai', value:6800 },
-    { label:'Jun', value:7100 },
-    { label:'Jul', value:6400 },
-    { label:'Ago', value:6900 },
-    { label:'Set', value:7900 },
-  ];
+  const financialColors = ['#5b2333', '#c6a15b', '#35654a', '#304b70', '#922d3e', '#887093'];
 
   function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
+    return value.toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function renderFinancialBreakdowns() {
+    const renderBreakdown = (type, donutId, countId, legendId) => {
+      const entries = transactions.filter(transaction => transaction.tipo === type);
+      const groups = new Map();
+      entries.forEach(transaction => {
+        const name = transaction.plano || transaction.tipoLancamento || type;
+        const current = groups.get(name) || { name, value:0, count:0 };
+        current.value += Number(transaction.valor) || 0;
+        current.count += 1;
+        groups.set(name, current);
+      });
+      const items = [...groups.values()].sort((a, b) => b.value - a.value);
+      const total = items.reduce((sum, item) => sum + item.value, 0);
+      let offset = 0;
+      const segments = items.map((item, index) => {
+        const start = offset;
+        offset += total ? item.value / total * 100 : 0;
+        return `${financialColors[index % financialColors.length]} ${start}% ${offset}%`;
+      });
+      const donut = document.getElementById(donutId);
+      donut.style.background = segments.length
+        ? `conic-gradient(${segments.join(', ')})`
+        : 'conic-gradient(var(--bege-darker) 0 100%)';
+      document.getElementById(countId).textContent = String(entries.length);
+      const legend = items.map((item, index) => {
+        const share = total ? Math.round(item.value / total * 100) : 0;
+        const color = financialColors[index % financialColors.length];
+        return `<div class="financial-legend-row">
+          <span class="financial-legend-dot" style="background:${color}"></span>
+          <span class="financial-legend-name">${escapeHTML(item.name)} — ${item.count}x</span>
+          <span class="financial-legend-value">${formatCurrency(item.value)}</span>
+          <span class="financial-legend-share">${share}%</span>
+          <span class="financial-legend-bar"><span style="width:${share}%;background:${color}"></span></span>
+        </div>`;
+      });
+      legend.push(`<div class="financial-chart-total"><span>Total · ${items.length} ${type === 'Receita' ? 'planos' : 'categorias'} · ${entries.length} lançamentos</span><strong>${formatCurrency(total)}</strong></div>`);
+      document.getElementById(legendId).innerHTML = legend.join('');
+    };
+    renderBreakdown('Receita', 'revenue-plan-donut', 'revenue-plan-count', 'revenue-plan-legend');
+    renderBreakdown('Despesa', 'expense-category-donut', 'expense-category-count', 'expense-category-legend');
   }
 
   function refreshPaymentTotals() {
-    const totalPaid = transactions.filter(transaction => transaction.tipo === 'Receita')
+    const monthlyTransactions = transactions.filter(transaction => transaction.data.endsWith('/09/2026'));
+    const monthlyRevenue = monthlyTransactions
+      .filter(transaction => transaction.tipo === 'Receita')
       .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
-        .filter(payment => payment.status === 'pago').reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
-    const totalPending = transactions.filter(transaction => transaction.tipo === 'Receita')
-      .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
-        .filter(payment => payment.status === 'pendente').reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
-    document.getElementById('received-total').textContent = formatCurrency(totalPaid);
-    document.getElementById('pending-total').textContent = formatCurrency(totalPending);
+        .filter(payment => payment.status === 'pago' && payment.paidAt && payment.paidAt.startsWith('2026-09'))
+        .reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
+    const monthlyExpenses = monthlyTransactions
+      .filter(transaction => transaction.tipo === 'Despesa' && transaction.status === 'pago')
+      .reduce((sum, transaction) => sum + transaction.valor, 0);
+    const planTransactions = monthlyTransactions.filter(transaction => transaction.tipo === 'Receita');
+    const monthResult = monthlyRevenue - monthlyExpenses;
+    document.getElementById('month-revenue').textContent = formatCurrency(monthlyRevenue);
+    document.getElementById('month-expenses').textContent = formatCurrency(monthlyExpenses);
+    document.getElementById('month-result').textContent = monthResult < 0
+      ? `- ${formatCurrency(Math.abs(monthResult))}`
+      : formatCurrency(monthResult);
+    document.getElementById('average-ticket').textContent = formatCurrency(
+      planTransactions.length
+        ? planTransactions.reduce((sum, transaction) => sum + (Number(transaction.valor) || 0), 0) / planTransactions.length
+        : 0
+    );
+    const receivables = transactions.filter(transaction => transaction.tipo === 'Receita');
+    const unpaidPayments = receivables.flatMap(transaction => ensurePaymentSchedule(transaction)
+      .filter(payment => payment.status !== 'pago')
+      .map(payment => ({ transaction, payment })));
+    const today = new Date().toISOString().slice(0, 10);
+    const overduePayments = unpaidPayments.filter(({ payment }) => payment.dueDate && payment.dueDate < today);
+    const unpaidExpenses = transactions.filter(transaction => transaction.tipo === 'Despesa' && transaction.status !== 'pago');
+    const activePlans = receivables.filter(transaction => paymentProgress(transaction).paid < paymentProgress(transaction).total);
+    const settledPlans = receivables.filter(transaction => paymentProgress(transaction).paid === paymentProgress(transaction).total);
+    document.getElementById('receivable-total').textContent = formatCurrency(
+      unpaidPayments.reduce((sum, item) => sum + item.payment.amount, 0)
+    );
+    document.getElementById('overdue-total').textContent = formatCurrency(
+      overduePayments.reduce((sum, item) => sum + item.payment.amount, 0)
+    );
+    document.getElementById('payables-total').textContent = formatCurrency(
+      unpaidExpenses.reduce((sum, transaction) => sum + transaction.valor, 0)
+    );
+    document.getElementById('active-plans-count').textContent = String(activePlans.length);
+    document.getElementById('settled-plans-count').textContent = `${settledPlans.length} quitado(s)`;
+    if (isAdminView) {
+      document.getElementById('financial-subtitle').textContent =
+        `${transactions.length} lançamento(s) no filtro atual · receita mensal ${formatCurrency(monthlyRevenue)}`;
+    }
+    renderFinancialBreakdowns();
   }
 
-  const monthlyRevenue = transactions
-    .filter(transaction => transaction.tipo === 'Receita' && transaction.data.endsWith('/09/2026'))
-    .reduce((sum, transaction) => sum + transaction.valor, 0);
-  const receivedRevenue = transactions
-    .filter(transaction => transaction.tipo === 'Receita')
-    .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
-      .filter(payment => payment.status === 'pago').reduce((total, payment) => total + payment.amount, 0), 0);
-  const pendingRevenue = transactions
-    .filter(transaction => transaction.tipo === 'Receita')
-    .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
-      .filter(payment => payment.status === 'pendente').reduce((total, payment) => total + payment.amount, 0), 0);
-  const annualRevenue = isAdminView
-    ? receitaMensal.reduce((sum, month) => sum + month.value, 0)
-    : monthlyRevenue;
-  document.getElementById('month-revenue').textContent = formatCurrency(monthlyRevenue);
-  document.getElementById('received-total').textContent = formatCurrency(receivedRevenue);
-  document.getElementById('pending-total').textContent = formatCurrency(pendingRevenue);
-  document.getElementById('annual-revenue').textContent = formatCurrency(annualRevenue);
-
-  requestAnimationFrame(() => {
-    drawBarChart(document.getElementById('receita-chart'), receitaMensal, { color:'#66724A' });
-  });
-  window.addEventListener('resize', () => {
-    requestAnimationFrame(() => drawBarChart(document.getElementById('receita-chart'), receitaMensal, { color:'#66724A' }));
-  });
+  refreshPaymentTotals();
 
   // Transactions
-  let activeStatus = 'Todos';
   const filterFields = [
-    ['filter-type', 'tipoLancamento'],
+    ['filter-type', 'tipo'],
+    ['filter-category', 'plano'],
     ['filter-origin', 'origem'],
     ['filter-destination', 'destino'],
     ['filter-user', 'usuario'],
@@ -377,42 +524,91 @@
     ]));
     const dateFrom = document.getElementById('filter-date-from').value;
     const dateTo = document.getElementById('filter-date-to').value;
+    const status = document.getElementById('filter-status').value;
+    const search = document.getElementById('filter-search').value.trim().toLocaleLowerCase('pt-BR');
     const filtered = transactions.filter(transaction => {
       const date = getIsoDate(transaction.data);
-      return (activeStatus === 'Todos' || transaction.status === activeStatus) &&
+      const searchable = [transaction.paciente, transaction.plano, transaction.tipoLancamento, transaction.origem, transaction.destino]
+        .join(' ').toLocaleLowerCase('pt-BR');
+      return (!status || transaction.status === status) &&
         Object.entries(filters).every(([field, value]) => !value || transaction[field] === value) &&
+        (!search || searchable.includes(search)) &&
         (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
     });
 
-    document.getElementById('transactions-body').innerHTML = filtered.map(t => {
+    const projectedBalance = filtered.filter(transaction => transaction.tipo === 'Receita')
+      .reduce((sum, transaction) => sum + transaction.valor, 0) -
+      filtered.filter(transaction => transaction.tipo === 'Despesa')
+        .reduce((sum, transaction) => sum + transaction.valor, 0);
+    document.getElementById('transaction-count').textContent = `${filtered.length} registro(s) no filtro atual`;
+    document.getElementById('projected-balance').textContent = `Saldo previsto: ${formatCurrency(projectedBalance)}`;
+    const pageCount = Math.max(1, Math.ceil(filtered.length / transactionPageSize));
+    transactionPage = Math.min(transactionPage, pageCount - 1);
+    const pageItems = filtered.slice(transactionPage * transactionPageSize, (transactionPage + 1) * transactionPageSize);
+    const container = document.getElementById('transactions-list');
+    container.innerHTML = pageItems.map(t => {
+      const payments = ensurePaymentSchedule(t);
       const progress = paymentProgress(t);
-      const overdue = ensurePaymentSchedule(t).filter(payment =>
+      const paid = payments.filter(payment => payment.status === 'pago').reduce((sum, payment) => sum + payment.amount, 0);
+      const pending = payments.filter(payment => payment.status !== 'pago').reduce((sum, payment) => sum + payment.amount, 0);
+      const overdue = payments.filter(payment =>
         payment.status !== 'pago' && payment.dueDate && payment.dueDate < new Date().toISOString().slice(0,10)
-      ).length;
-      return `<tr>
-        <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(t.data)}</td>
-        <td>${escapeHTML(t.paciente || '—')}</td>
-        <td>${escapeHTML(t.origem)}</td>
-        <td>${escapeHTML(t.destino)}</td>
-        <td><span class="badge ${t.tipo==='Receita'?'badge-green':'badge-yellow'}">${escapeHTML(t.tipoLancamento || t.tipo)}</span><br><small>${escapeHTML(t.tipo)}</small></td>
-        <td>${getProtocolBadge(escapeHTML(t.plano))}</td>
-        <td style="font-weight:600;color:var(--vinho);">R$ ${Number(t.valor || 0).toLocaleString('pt-BR')}</td>
-        <td style="color:var(--text-muted);font-size:12px;">${progress.total} parcela(s)</td>
-        <td style="color:var(--text-muted);font-size:12px;">${progress.paid}/${progress.total} paga(s)${overdue ? `<br><span class="badge badge-yellow">${overdue} em atraso</span>` : ''}</td>
-        <td>${escapeHTML(t.usuario)}</td>
-        <td>${getStatusBadge(t.status)}</td>
-        <td class="transaction-row-actions">
-          ${isAdminView ? `<button class="btn btn-subtle btn-sm" type="button" data-edit-transaction="${escapeHTML(t.id)}">Editar</button>` : ''}
-          <button class="btn btn-subtle btn-sm" type="button" data-view-installments="${escapeHTML(t.id)}">Parcelas</button>
-        </td>
-      </tr>`;
-    }).join('') || `<tr><td colspan="12" style="padding:20px;text-align:center;color:var(--text-muted);">Nenhuma transação encontrada para esses filtros.</td></tr>`;
-    document.querySelectorAll('[data-edit-transaction]').forEach(button => {
+        );
+      const nextPayment = payments.find(payment => payment.status !== 'pago');
+      const stateLabel = overdue.length ? 'Em atraso' : t.status === 'pago' ? 'Pago' : 'Pendente';
+      const planName = t.plano || t.tipoLancamento || t.tipo;
+      const transactionTitle = t.descricao || `${planName} — ${progress.total}x`;
+      return `<article class="financial-transaction-row">
+        <div class="financial-row-description">
+          <span class="financial-transaction-kind${t.tipo === 'Despesa' ? ' expense' : ''}" aria-hidden="true">${t.tipo === 'Despesa' ? '↗' : '↓'}</span>
+          <div class="financial-row-description-copy">
+            <h3 class="financial-transaction-title">${escapeHTML(transactionTitle)}</h3>
+            <p class="financial-transaction-meta">${escapeHTML(t.tipoLancamento || t.tipo)} · vence em ${escapeHTML(nextPayment && nextPayment.dueDate ? dateToDisplay(nextPayment.dueDate) : t.data)}</p>
+            <p class="financial-row-parties"><span><strong>Origem:</strong> ${escapeHTML(t.origem || '—')}</span><span aria-hidden="true">→</span><span><strong>Destino:</strong> ${escapeHTML(t.destino || '—')}</span></p>
+          </div>
+        </div>
+        <div class="financial-row-value">
+          <strong>${formatCurrency(Number(t.valor) || 0)}</strong>
+          <span>${progress.total}x de ${formatCurrency(progress.total ? (Number(t.valor) || 0) / progress.total : 0)}</span>
+        </div>
+        <div class="financial-row-payments">
+          <strong class="${paid > 0 ? 'is-paid' : ''}">${progress.paid} pagamento(s) · ${formatCurrency(paid)}</strong>
+          <span class="${pending > 0 ? 'is-pending' : ''}">Pendente: ${formatCurrency(pending)}</span>
+        </div>
+        <div class="financial-row-status">
+          <div class="financial-row-status-badges">
+            <span class="financial-transaction-status${overdue.length ? ' overdue' : t.status !== 'pago' ? ' pending' : ''}">${stateLabel}</span>
+            <span class="financial-payment-progress" aria-label="${progress.paid} de ${progress.total} parcelas pagas">▣ ${progress.paid}/${progress.total} pagas</span>
+          </div>
+          ${isAdminView && pending > 0 ? `<button class="btn btn-subtle btn-sm financial-register-payment" type="button" data-register-payment="${escapeHTML(t.id)}">▤ Registrar pagamento</button>` : ''}
+          <div class="financial-transaction-actions">
+            <button class="btn btn-subtle btn-sm" type="button" data-view-installments="${escapeHTML(t.id)}">☷ Parcelas</button>
+            ${isAdminView ? `<button class="btn btn-subtle btn-sm" type="button" data-edit-transaction="${escapeHTML(t.id)}">✎ Editar</button>` : ''}
+          </div>
+        </div>
+      </article>`;
+    }).join('') || '<p class="financial-empty">Nenhum lançamento encontrado com esses filtros.</p>';
+    container.querySelectorAll('[data-edit-transaction]').forEach(button => {
       button.addEventListener('click', () => openTransactionEditor(button.dataset.editTransaction));
     });
-    document.querySelectorAll('[data-view-installments]').forEach(button => {
-      button.addEventListener('click', () => openInstallments(button.dataset.viewInstallments));
+    container.querySelectorAll('[data-view-installments], [data-register-payment]').forEach(button => {
+      button.addEventListener('click', () => openInstallments(button.dataset.viewInstallments || button.dataset.registerPayment));
     });
+    const start = filtered.length ? transactionPage * transactionPageSize + 1 : 0;
+    const end = Math.min(filtered.length, (transactionPage + 1) * transactionPageSize);
+    const pagination = document.getElementById('transactions-pagination');
+    pagination.innerHTML = `<span>Mostrando ${start}–${end} de ${filtered.length} lançamentos</span>
+      <div class="financial-transactions-pagination-controls">
+        <button type="button" data-page="${transactionPage - 1}" aria-label="Página anterior" ${transactionPage === 0 ? 'disabled' : ''}>‹</button>
+        ${Array.from({ length:pageCount }, (_, index) => `<button type="button" data-page="${index}" aria-label="Página ${index + 1}" ${index === transactionPage ? 'aria-current="page"' : ''}>${index + 1}</button>`).join('')}
+        <button type="button" data-page="${transactionPage + 1}" aria-label="Próxima página" ${transactionPage >= pageCount - 1 ? 'disabled' : ''}>›</button>
+      </div>`;
+    pagination.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
+      const requestedPage = Number(button.dataset.page);
+      if (!Number.isInteger(requestedPage) || requestedPage < 0 || requestedPage >= pageCount) return;
+      transactionPage = requestedPage;
+      renderTransactions();
+    }));
   }
 
   function escapeHTML(value) {
@@ -427,11 +623,24 @@
     const payments = transaction ? ensurePaymentSchedule(transaction) : [];
     const hasPaidPayments = payments.some(payment => payment.status === 'pago');
     editingTransactionId = transaction ? transaction.id : null;
-    document.getElementById('transaction-modal-title').textContent = transaction ? 'Editar transação' : 'Nova transação';
+    const transactionModal = document.getElementById('transaction-modal');
+    transactionModal.classList.toggle('is-editing', Boolean(transaction));
+    document.getElementById('transaction-modal-title').textContent = transaction ? 'Editar lançamento' : 'Nova transação';
+    document.getElementById('save-transaction-button').textContent = transaction ? 'Salvar' : 'Salvar transação';
+    document.getElementById('tx-payment-date-label').textContent = transaction ? 'Vencimento' : 'Data do primeiro pagamento';
+    document.getElementById('tx-description').value = transaction
+      ? transaction.descricao || [transaction.plano, transaction.paciente].filter(Boolean).join(' — ')
+      : '';
+    document.getElementById('tx-observation').value = transaction ? transaction.observacao || '' : '';
     const [day, month, year] = (transaction ? transaction.data : new Date().toLocaleDateString('pt-BR')).split('/');
     document.getElementById('tx-date').value = year + '-' + month + '-' + day;
     document.getElementById('tx-patient').value = transaction ? transaction.paciente || '' : '';
     document.getElementById('tx-type').value = transaction ? transaction.tipo : 'Receita';
+    document.querySelectorAll('[data-transaction-type]').forEach(button => {
+      const selected = button.dataset.transactionType === document.getElementById('tx-type').value;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-checked', String(selected));
+    });
     populateTransactionTypeSelect(transaction ? transaction.tipoLancamento : '');
     document.getElementById('tx-value').value = transaction ? transaction.valor : '';
     document.getElementById('tx-value').disabled = hasPaidPayments;
@@ -442,21 +651,47 @@
     if (!transaction) document.getElementById('tx-origin').value = Router.getProfileId();
     document.getElementById('tx-destination').value = transaction ? transaction.destino : '';
     populateCategorySelect(transaction ? transaction.plano : '');
-    document.getElementById('tx-installment-count').value = transaction ? payments.length : 1;
-    document.getElementById('tx-installment-count').disabled = hasPaidPayments;
-    document.getElementById('tx-installment-count').title = hasPaidPayments ? 'Não é possível alterar a quantidade após registrar pagamentos.' : '';
+    const installmentInput = document.getElementById('tx-installment-count');
+    const paidInstallments = payments.filter(payment => payment.status === 'pago').length;
+    installmentInput.type = transaction ? 'text' : 'number';
+    installmentInput.inputMode = transaction ? 'numeric' : 'decimal';
+    installmentInput.value = transaction ? `${paidInstallments}/${payments.length}` : 1;
+    installmentInput.disabled = hasPaidPayments;
+    installmentInput.title = hasPaidPayments ? 'Não é possível alterar a quantidade após registrar pagamentos.' : '';
+    const installmentHelp = document.getElementById('tx-installment-help');
+    installmentHelp.hidden = !transaction;
+    installmentHelp.textContent = transaction && !hasPaidPayments
+      ? 'Formato: pagas/total. Altere o total após a barra.'
+      : '';
     document.getElementById('tx-payment-date').value = transaction && payments[0] && payments[0].dueDate
       ? payments[0].dueDate : new Date().toISOString().slice(0,10);
     document.getElementById('tx-payment-method').value = transaction && payments[0]
       ? payments[0].paymentMethod || 'Não informado' : 'Pix';
     document.getElementById('tx-user').value = transaction ? transaction.usuario : '';
     document.getElementById('tx-status').value = transaction ? transaction.status : 'pago';
-    document.getElementById('transaction-modal').classList.add('open');
+    ['tx-date', 'tx-launch-type', 'tx-user'].forEach(id => {
+      document.getElementById(id).required = !transaction;
+    });
+    document.getElementById('tx-description').required = Boolean(transaction);
+    transactionModal.classList.add('open');
+    const transactionEditor = transactionModal.querySelector('.modal');
+    transactionEditor.scrollTop = 0;
+    requestAnimationFrame(() => { transactionEditor.scrollTop = 0; });
   }
   function closeTransactionEditor() {
     document.getElementById('transaction-modal').classList.remove('open');
   }
   document.getElementById('btn-add-transaction').addEventListener('click', () => openTransactionEditor(null));
+  document.querySelectorAll('[data-transaction-type]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.getElementById('tx-type').value = button.dataset.transactionType;
+      document.querySelectorAll('[data-transaction-type]').forEach(option => {
+        const selected = option === button;
+        option.classList.toggle('active', selected);
+        option.setAttribute('aria-checked', String(selected));
+      });
+    });
+  });
   document.getElementById('manage-financial-categories').addEventListener('click', () => Router.navigate('settings', { settingsSection:'catalogs', catalogName:'Categorias financeiras' }));
   document.getElementById('close-transaction-modal').addEventListener('click', closeTransactionEditor);
   document.getElementById('cancel-transaction').addEventListener('click', closeTransactionEditor);
@@ -547,9 +782,17 @@
     const existing = transactions.find(item => String(item.id) === String(editingTransactionId));
     const existingPayments = existing ? ensurePaymentSchedule(existing) : [];
     const hasPaidPayments = existingPayments.some(payment => payment.status === 'pago');
+    const installmentValue = document.getElementById('tx-installment-count').value.trim();
+    const installmentMatch = installmentValue.match(/^(?:\d+\/)?(\d+)$/);
+    if (!hasPaidPayments && !installmentMatch) {
+      document.getElementById('tx-installment-count').setCustomValidity('Informe o total de parcelas como pagas/total ou apenas o total.');
+      document.getElementById('tx-installment-count').reportValidity();
+      return;
+    }
+    document.getElementById('tx-installment-count').setCustomValidity('');
     const installmentCount = hasPaidPayments
       ? existingPayments.length
-      : Math.max(1, Math.min(60, Number(document.getElementById('tx-installment-count').value) || 1));
+      : Math.max(1, Math.min(60, Number(installmentMatch[1]) || 1));
     const totalCents = Math.round(Number(document.getElementById('tx-value').value) * 100);
     const firstPaymentDate = document.getElementById('tx-payment-date').value;
     const paymentMethod = document.getElementById('tx-payment-method').value;
@@ -573,6 +816,8 @@
       id:editingTransactionId || 'tx-' + Date.now(),
       data:day + '/' + month + '/' + year,
       paciente:document.getElementById('tx-patient').value.trim(),
+      descricao:editingTransactionId ? document.getElementById('tx-description').value.trim() : '',
+      observacao:document.getElementById('tx-observation').value.trim(),
       tipo:document.getElementById('tx-type').value,
       tipoLancamento:document.getElementById('tx-launch-type').value,
       valor:totalCents / 100,
@@ -595,20 +840,20 @@
     }
   });
 
-  document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeStatus = btn.dataset.status;
-      document.querySelectorAll('.filter-chip[data-status]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderTransactions();
-    });
-  });
-
+  const resetTransactionPage = () => { transactionPage = 0; renderTransactions(); };
   filterFields.forEach(([elementId]) => {
-    document.getElementById(elementId).addEventListener('change', renderTransactions);
+    document.getElementById(elementId).addEventListener('change', resetTransactionPage);
   });
-  document.getElementById('filter-date-from').addEventListener('change', renderTransactions);
-  document.getElementById('filter-date-to').addEventListener('change', renderTransactions);
+  document.getElementById('filter-status').addEventListener('change', resetTransactionPage);
+  document.getElementById('filter-search').addEventListener('input', resetTransactionPage);
+  document.getElementById('filter-date-from').addEventListener('change', resetTransactionPage);
+  document.getElementById('filter-date-to').addEventListener('change', resetTransactionPage);
+  document.getElementById('toggle-financial-extra').addEventListener('click', event => {
+    const expanded = event.currentTarget.getAttribute('aria-expanded') === 'true';
+    event.currentTarget.setAttribute('aria-expanded', String(!expanded));
+    document.getElementById('financial-filter-extra').hidden = expanded;
+    event.currentTarget.textContent = expanded ? 'Mais filtros' : 'Menos filtros';
+  });
 
   renderTransactions();
   }

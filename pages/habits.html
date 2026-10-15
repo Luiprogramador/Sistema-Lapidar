@@ -12,10 +12,50 @@
   <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
     .habits-container {
-      max-width: 760px;
+      max-width: none;
       margin: 0 auto;
     }
+    .diary-page-heading { margin: 0 0 20px; }
+    .diary-page-heading h1 { margin: 0; color: var(--text-primary); font: 700 2.375rem/1.15 var(--font-serif); }
+    .diary-page-heading p { margin: .35rem 0 0; color: var(--text-secondary); font-size: 1rem; }
+    .diary-top-tabs { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 4px; margin-bottom: 18px; padding: 4px; border-radius: 14px; background: #f1e4d1; }
+    .diary-top-tabs .tab-item { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; border: 0; border-radius: 10px; background: transparent; color: var(--text-primary); font-size: .82rem; font-weight: 700; }
+    .diary-top-tabs svg { width: 16px; height: 16px; flex: 0 0 auto; }
+    .diary-top-tabs .tab-item.active { background: var(--vinho); color: var(--white); }
+    .diary-calendar-card { max-width: 600px; margin: 0 auto 16px; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--white); box-shadow: var(--shadow-sm); }
+    .diary-calendar-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+    .diary-calendar-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border: 1px solid #dfd0ce; border-radius: 12px; background: #f0e8e6; color: var(--vinho); font-size: 22px; }
+    .diary-calendar-card-head h2 { margin: 0; color: var(--text-primary); font: 700 1.2rem/1.3 var(--font-sans); }
+    .diary-calendar-card-head p { margin: .2rem 0 0; color: var(--text-secondary); font-size: .9rem; }
+    .diary-calendar-card .diary-calendar { width: 100%; max-width: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--text-primary); }
+    .diary-calendar-card .diary-calendar-head button { border: 0; color: var(--vinho); background: transparent; }
+    .diary-calendar-card .diary-calendar-head strong { font-size: 14px; }
+    .diary-calendar-card .diary-calendar-day { height: 46px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
+    .diary-calendar-card .diary-calendar-day.weekday { height: 28px; border: 0; color: var(--text-secondary); }
+    .diary-calendar-card .diary-calendar-day.complete { border-color: #8c9b8d; background: #dfe8df; color: #243e2f; }
+    .diary-calendar-card .diary-calendar-day.partial { border-color: #c6a15b; background: #f5e7c5; color: #513f21; }
+    .diary-calendar-card .diary-calendar-day.empty:not(.outside) { border-color: #d7b8be; background: #f4e0e3; color: #6d2333; }
+    .diary-calendar-card .diary-calendar-day.selected { outline: 2px solid var(--vinho); outline-offset: 1px; }
+    .diary-calendar-card .diary-calendar-legend { justify-content: center; margin-top: 12px; color: var(--text-secondary); font-size: .75rem; }
+    .diary-calendar-card .diary-status.complete { color: #32644b; }
+    .diary-calendar-card .diary-status.partial { color: #9a712b; }
+    .diary-calendar-card .diary-status.empty { color: #923246; }
+    #view-checkin, #view-evolucao { max-width: 720px; margin: 0 auto; }
+    #view-evolucao { max-width: none; }
+    #personalized-goals-section, #diary-history-section { scroll-margin-top: calc(var(--topbar-height) + 16px); }
+    #clinical-diary-back[hidden] { display: none !important; }
+    .section-card-title { align-items: center; color: var(--text-primary); font: 800 14px/1.3 var(--font-sans); letter-spacing: .04em; text-transform: uppercase; }
+    .section-card-title > span { display: grid; flex: 0 0 40px; width: 40px; height: 40px; place-items: center; border-radius: 12px; background: #f0e8e6; font-size: 19px; }
+    .diary-progress-label { color: var(--dourado-pale); font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+    .diary-progress-date { margin: 4px 0 10px; color: #fffaf1; font: 600 1.35rem/1.25 var(--font-serif); }
+    @media (max-width: 640px) {
+      .diary-top-tabs { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .diary-calendar-card { padding: 16px; }
+      .diary-calendar-card .diary-calendar-day { height: 38px; }
+    }
     .hero-diario {
+      max-width: 720px;
+      margin: 0 auto 18px;
       background: linear-gradient(135deg, var(--vinho-dark) 0%, var(--vinho) 65%, var(--vinho-light) 100%);
       color: var(--bege);
       border-radius: var(--radius-lg);
@@ -107,7 +147,7 @@
       background: var(--vinho);
       color: var(--white);
       border-color: var(--vinho);
-      box-shadow: 0 2px 8px rgba(89,27,28,0.25);
+      box-shadow: 0 2px 8px rgba(91,35,51,0.25);
     }
 
     /* 0-10 Visual Scale */
@@ -143,7 +183,7 @@
       color: var(--white);
       border-color: var(--vinho);
       transform: scale(1.08);
-      box-shadow: 0 2px 8px rgba(89,27,28,0.3);
+      box-shadow: 0 2px 8px rgba(91,35,51,0.3);
     }
     .scale-labels {
       display: flex;
@@ -254,35 +294,24 @@
 
 <main class="main-content page-enter">
   <div class="habits-container">
-    
-    <!-- Top switcher: Check-in Diário vs Minha Evolução -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
-      <button class="btn btn-subtle btn-sm" id="btn-back-patient">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        <span id="back-label">Voltar para Ficha</span>
-      </button>
+    <header class="diary-page-heading">
+      <h1>Diário Lapidar</h1>
+      <p>A consulta direciona. O acompanhamento continua. A constância constrói o resultado.</p>
+    </header>
 
-      <div class="tabs" style="margin-bottom:0;" id="view-mode-tabs">
-        <button class="tab-item active" data-view="checkin">Check-in de Hoje</button>
-        <button class="tab-item" data-view="evolucao">Minha Evolução</button>
-      </div>
-    </div>
+    <nav class="diary-top-tabs" id="view-mode-tabs" aria-label="Seções do Diário Lapidar">
+      <button class="tab-item active" type="button" data-view="checkin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4m8-4v4M8 12h8m-8 4h5"/></svg>Check-in de hoje</button>
+      <button class="tab-item" type="button" data-view="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 21V4m0 1h13l-3 4 3 4H5"/></svg>Minhas metas</button>
+      <button class="tab-item" type="button" data-view="evolucao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m3 17 6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>Minha evolução</button>
+      <button class="tab-item" type="button" data-view="historico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5m4-1v5l3 2"/></svg>Histórico</button>
+    </nav>
 
-    <!-- Hero Card -->
-    <div class="hero-diario">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-        <div>
-          <h1>Diário Lapidar</h1>
-          <p class="motto">"A consulta direciona. O acompanhamento continua. A constância constrói o resultado."</p>
-        </div>
-        <div class="constancy-badge">
-          ✦ Constância > perfeição
-        </div>
-      </div>
-      <div style="font-size:12px;color:rgba(244,239,231,0.7);margin-top:8px;" id="checkin-date-indicator">
-        Preenchimento rápido · Associado à data e hora de registro
-      </div>
-      <label id="diary-date-field" style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--bege);">
+    <section class="diary-calendar-card" aria-label="Calendário de check-ins">
+      <header class="diary-calendar-card-head">
+        <span class="diary-calendar-icon" aria-hidden="true">▦</span>
+        <div><h2>Meu calendário de check-ins</h2><p>Toque em um dia para registrar ou completar</p></div>
+      </header>
+      <label id="diary-date-field" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
         Data deste diário
         <input type="date" class="form-input" id="diary-entry-date" style="width:auto;padding:6px 9px;">
       </label>
@@ -299,8 +328,21 @@
           <span><i class="diary-status empty">×</i> Sem registro</span>
         </div>
       </section>
-      <div id="checkin-progress-panel" style="margin-top:14px;max-width:520px;">
-        <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--bege);margin-bottom:5px;"><span>Progresso do check-in</span><span id="checkin-progress-label">0%</span></div>
+    </section>
+
+    <!-- Top switcher retained for clinical-team navigation. -->
+    <div id="clinical-diary-back" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;">
+      <button class="btn btn-subtle btn-sm" id="btn-back-patient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span id="back-label">Voltar para Ficha</span>
+      </button>
+    </div>
+
+    <div class="hero-diario">
+      <div class="diary-progress-label">CHECK-IN DE HOJE</div>
+      <div class="diary-progress-date" id="checkin-date-indicator">Seu acompanhamento diário</div>
+      <div id="checkin-progress-panel" style="margin-top:14px;max-width:none;">
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--bege);margin-bottom:5px;"><span id="checkin-progress-label">0 itens preenchidos</span><span id="checkin-streak-label"></span></div>
         <div class="progress-bar" style="height:7px;background:rgba(244,239,231,.25);"><div class="progress-fill" id="checkin-progress-bar" style="width:0%;background:var(--dourado);"></div></div>
       </div>
     </div>
@@ -322,9 +364,9 @@
       <!-- 1. MOVIMENTO -->
       <div class="section-card" id="movement-section">
         <div class="section-card-title">
-          <span>🏃‍♀️</span> Movimento
+          <span>⚝</span> 1 · Movimento
         </div>
-        <div class="section-card-sub">Musculação e cardio fazem parte do Método Lapidar. Não estava programado não é falta de adesão.</div>
+        <div class="section-card-sub">Seus hábitos de movimento</div>
 
         <div style="display:flex;flex-direction:column;gap:18px;">
           <div data-movement-goal="musculacao">
@@ -350,7 +392,7 @@
       <!-- 2. NUTRIÇÃO E HIDRATAÇÃO -->
       <div class="section-card" id="nutrition-section">
         <div class="section-card-title">
-          <span>🥗</span> Nutrição e Hidratação
+          <span>♧</span> 2 · Nutrição e hidratação
         </div>
         <div class="section-card-sub">Suas metas individuais prescritas para nutrição ótima e saciedade.</div>
 
@@ -396,7 +438,7 @@
       <!-- 3. SONO -->
       <div class="section-card">
         <div class="section-card-title">
-          <span>🌙</span> Sono & Descanso
+          <span>☾</span> 3 · Sono
         </div>
         <div class="section-card-sub">Horários, interrupções e qualidade percebida da noite de sono.</div>
 
@@ -438,7 +480,7 @@
       <!-- 4. BEM-ESTAR -->
       <div class="section-card">
         <div class="section-card-title">
-          <span>✨</span> Bem-Estar & Disposição
+          <span>✦</span> 4 · Bem-estar e disposição
         </div>
         <div class="section-card-sub">Avaliação diária dos seus níveis de energia física e estresse.</div>
 
@@ -464,7 +506,7 @@
       <!-- 5. METAS PERSONALIZADAS -->
       <div class="section-card" id="personalized-goals-section">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <div class="section-card-title"><span>🎯</span> Minhas Metas</div>
+          <div class="section-card-title"><span>⚑</span> 5 · Minhas metas</div>
           <button class="btn btn-primary btn-sm" type="button" id="new-goal-btn">Nova meta</button>
         </div>
         <div class="section-card-sub">Hábitos prescritos em consulta para sua fase atual da jornada.</div>
@@ -484,7 +526,7 @@
       </div>
 
       <div class="section-card" id="diary-score-section">
-        <div class="section-card-title"><span>✦</span> Como você se sentiu hoje?</div>
+        <div class="section-card-title"><span>✦</span> 6 · Como você se sentiu hoje?</div>
         <div class="section-card-sub">Suas respostas diárias também atualizam o Score Lapidar, sem precisar preenchê-lo em outra tela.</div>
         <div id="diary-score-fields" class="diary-score-fields"></div>
       </div>
@@ -495,7 +537,7 @@
       <!-- 7. OBSERVAÇÕES -->
       <div class="section-card">
         <div class="section-card-title">
-          <span>📝</span> Observações do Dia
+          <span>▤</span> 7 · Observações do dia
         </div>
         <div class="section-card-sub">Quer registrar alguma coisa sobre o seu dia?</div>
         <textarea class="form-textarea" id="observacoes-input" rows="3" placeholder="Observações, sintomas, acontecimentos ou algo que queira lembrar..."></textarea>
@@ -556,7 +598,7 @@
       </div>
 
       <!-- Recent Log table -->
-      <div class="section-card">
+      <div class="section-card" id="diary-history-section">
         <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Últimos Registros Diários</h3>
         <div style="display:flex;flex-direction:column;gap:10px;" id="recent-logs-list"></div>
       </div>
@@ -583,7 +625,11 @@
   const scoreLabels = p.scoreLabels || [];
   const isFortyPlus = p.protocolo === 'Lapidar 40+' || (Array.isArray(p.protocolos) && p.protocolos.includes('Lapidar 40+'));
   const patientGoals = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas : [];
-  let hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+  const goalText = goal => [goal.nome,goal.tipo,goal.desc].join(' ');
+  const hasMusculacaoGoal = () => patientGoals.some(goal => /muscul|treino/i.test(goalText(goal)));
+  const hasCardioGoal = () => patientGoals.some(goal => /cardio|corrida|caminhada|bike|bicicleta|natacao|natação/i.test(goalText(goal)));
+  const isGeneralMovementGoal = () => hasMovementGoals && !hasMusculacaoGoal() && !hasCardioGoal();
+  let hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento|bike|bicicleta|natacao|natação/i.test(goalText(goal)));
   let nutritionGoalKeys = ['proteina','fibras','agua'].filter(key => p.nutricaoMetas && p.nutricaoMetas[key]);
   let hasNutritionGoals = nutritionGoalKeys.length > 0;
   let hasAdherenceGoals = patientGoals.length > 0 || hasNutritionGoals;
@@ -591,8 +637,6 @@
     { index:0, name:'Saciedade', hint:'Quanto você se sentiu satisfeita após as refeições?' },
     { index:1, name:'Fome', hint:'Como foi sua percepção de fome ao longo do dia?' },
     { index:4, name:'Humor', hint:'Como você avalia seu bem-estar emocional hoje?' },
-    { index:7, name:'Perda urinária', hint:'Qual foi a intensidade do sintoma hoje?', fortyPlus:true },
-    { index:8, name:'Constipação', hint:'Como avalia seu funcionamento intestinal hoje?', fortyPlus:true },
   ];
   const protocolSymptoms = {
     'Lapidar 40+': [
@@ -633,22 +677,23 @@
   diaryDateInput.value = todayIso;
   diaryDateInput.max = todayIso;
   if (role !== 'patient') {
-    document.getElementById('diary-date-field').hidden = true;
     diaryDateInput.disabled = true;
   }
+  document.getElementById('diary-date-field').hidden = true;
+  document.getElementById('clinical-diary-back').hidden = role === 'patient';
 
   // Header and back button
   document.getElementById('btn-back-patient').addEventListener('click', function() {
     Router.goBack('patient-detail', { patientId: p.id });
   });
   document.getElementById('back-label').textContent = role === 'patient' ? 'Voltar para Minha Ficha' : 'Voltar para ' + p.nome;
-  document.getElementById('checkin-date-indicator').textContent = 
-    'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('checkin-date-indicator').textContent = role === 'patient'
+    ? new Date(diaryDateInput.value + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })
+    : 'Paciente: ' + p.nome + ' · ' + p.protocolo + ' · ' + new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
 
   const movementSection = document.getElementById('movement-section');
   movementSection.hidden = !hasMovementGoals;
-  movementSection.querySelector('[data-movement-goal="musculacao"]').hidden = !patientGoals.some(goal => /muscul|treino/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
-  movementSection.querySelector('[data-movement-goal="cardio"]').hidden = !patientGoals.some(goal => /cardio|corrida|caminhada/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+  syncMovementGoalFields(movementSection);
   const nutritionSection = document.getElementById('nutrition-section');
   nutritionSection.hidden = !hasNutritionGoals;
   nutritionSection.querySelectorAll('[data-nutrition-goal]').forEach(block => {
@@ -754,14 +799,16 @@
   function renderDiaryCalendar() {
     const grid = document.getElementById('diary-calendar-grid');
     const monthLabel = document.getElementById('diary-calendar-month');
-    monthLabel.textContent = diaryCalendarMonth.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+    monthLabel.textContent = diaryCalendarMonth.toLocaleDateString('pt-BR', { month:'long', year:'numeric' }).replace(/\s+de\s+/i, ' ');
     const weekdayNames = ['D','S','T','Q','Q','S','S'];
     const firstDay = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth(), 1);
     const start = new Date(firstDay);
     start.setDate(start.getDate() - firstDay.getDay());
+    const dayCount = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth() + 1, 0).getDate();
+    const cellCount = Math.ceil((firstDay.getDay() + dayCount) / 7) * 7;
     const todayDate = new Date(todayIso + 'T12:00:00');
     const cells = weekdayNames.map(day => `<span class="diary-calendar-day weekday" aria-hidden="true">${day}</span>`);
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < cellCount; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
       const iso = localIsoDate(date);
@@ -788,8 +835,9 @@
       diaryCalendarMonth.getFullYear() === todayDate.getFullYear() && diaryCalendarMonth.getMonth() >= todayDate.getMonth();
   }
   function updateDiaryDateLabel() {
-    document.getElementById('checkin-date-indicator').textContent =
-      'Paciente: ' + p.nome + (p.protocolo ? ' · ' + p.protocolo : '') + ' · ' + formatDiaryDate(diaryDateInput.value);
+    document.getElementById('checkin-date-indicator').textContent = role === 'patient'
+      ? new Date(diaryDateInput.value + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })
+      : 'Paciente: ' + p.nome + (p.protocolo ? ' · ' + p.protocolo : '') + ' · ' + formatDiaryDate(diaryDateInput.value);
   }
   updateDiaryDateLabel();
   document.getElementById('diary-calendar-prev').addEventListener('click', () => {
@@ -852,7 +900,7 @@
       scales.filter(scale => scale.querySelector('.scale-btn.active')).length +
       (currentData.sono && currentData.sono.dormiu && currentData.sono.acordou ? 1 : 0);
     const percent = total ? Math.round(completed / total * 100) : 0;
-    document.getElementById('checkin-progress-label').textContent = percent + '%';
+    document.getElementById('checkin-progress-label').textContent = completed + ' itens preenchidos';
     document.getElementById('checkin-progress-bar').style.width = percent + '%';
   }
 
@@ -876,6 +924,15 @@
     currentData.score[10] = adherenceValues.length
       ? Math.round(adherenceValues.reduce((total,value) => total + value,0) / adherenceValues.length)
       : null;
+  }
+
+  function syncMovementGoalFields(section) {
+    section.querySelector('[data-movement-goal="musculacao"]').hidden = !hasMusculacaoGoal();
+    const cardioControl = section.querySelector('[data-movement-goal="cardio"]');
+    cardioControl.hidden = !hasCardioGoal() && !isGeneralMovementGoal();
+    cardioControl.querySelector('label').textContent = isGeneralMovementGoal()
+      ? 'Fez a atividade física planejada hoje?'
+      : 'Fez cardio hoje?';
   }
 
   // Render choice groups
@@ -974,7 +1031,7 @@
     document.getElementById('diary-goal-name').focus();
   }
   function refreshGoalSections() {
-    hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+    hasMovementGoals = patientGoals.some(goal => /muscul|treino|corrida|caminhada|cardio|atividade f[ií]sica|movimento|bike|bicicleta|natacao|natação/i.test(goalText(goal)));
     hasAdherenceGoals = patientGoals.length > 0 || hasNutritionGoals;
     visibleScoreIndices = scoreLabels.map((_, index) => index).filter(index =>
       (isFortyPlus || ![6,7,8].includes(index)) &&
@@ -983,8 +1040,7 @@
     );
     const movement = document.getElementById('movement-section');
     movement.hidden = !hasMovementGoals;
-    movement.querySelector('[data-movement-goal="musculacao"]').hidden = !patientGoals.some(goal => /muscul|treino/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
-    movement.querySelector('[data-movement-goal="cardio"]').hidden = !patientGoals.some(goal => /cardio|corrida|caminhada/i.test([goal.nome,goal.tipo,goal.desc].join(' ')));
+    syncMovementGoalFields(movement);
     renderDiaryScoreFields();
     syncUIWithData();
   }
@@ -1246,13 +1302,25 @@
       document.querySelectorAll('#view-mode-tabs .tab-item').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const v = btn.dataset.view;
-      if (v === 'checkin') {
-        document.getElementById('view-checkin').style.display = 'block';
-        document.getElementById('view-evolucao').style.display = 'none';
+      const checkinView = document.getElementById('view-checkin');
+      const evolutionView = document.getElementById('view-evolucao');
+      if (v === 'checkin' || v === 'metas') {
+        checkinView.style.display = 'block';
+        evolutionView.style.display = 'none';
+        if (v === 'metas') {
+          document.getElementById('personalized-goals-section').scrollIntoView({ behavior:'smooth', block:'start' });
+        } else {
+          window.scrollTo({ top:0, behavior:'smooth' });
+        }
       } else {
-        document.getElementById('view-checkin').style.display = 'none';
-        document.getElementById('view-evolucao').style.display = 'block';
+        checkinView.style.display = 'none';
+        evolutionView.style.display = 'block';
         renderEvolucaoView();
+        if (v === 'historico') {
+          requestAnimationFrame(() => document.getElementById('diary-history-section').scrollIntoView({ behavior:'smooth', block:'start' }));
+        } else {
+          window.scrollTo({ top:0, behavior:'smooth' });
+        }
       }
     });
   });

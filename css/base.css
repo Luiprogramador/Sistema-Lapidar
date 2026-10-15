@@ -30,8 +30,8 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(89,27,28,0.24); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(89,27,28,0.46); }
+::-webkit-scrollbar-thumb { background: rgba(91,35,51,0.24); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(91,35,51,0.46); }
 
 /* Links */
 a {

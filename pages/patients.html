@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
 </head>
-<body>
+<body class="patients-page">
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
@@ -23,36 +23,50 @@
     </div>
     <button class="btn btn-primary" id="btn-nova-paciente">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Nova Paciente
+      Nova paciente
     </button>
   </div>
 
-  <!-- Filtros -->
-  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
-    <div class="search-bar" style="flex:1;min-width:200px;max-width:360px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" class="search-input" id="search-input" placeholder="Buscar paciente pelo nome...">
+  <section class="patient-filter-panel" aria-label="Buscar e filtrar pacientes">
+    <div class="patient-filter-search">
+      <div class="search-bar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" class="search-input" id="search-input" placeholder="Buscar paciente pelo nome...">
+      </div>
+      <button class="btn btn-subtle patient-filter-toggle" id="patient-filter-toggle" type="button" aria-expanded="false" aria-controls="patient-filter-options">
+        <span aria-hidden="true">☷</span> Filtros
+      </button>
     </div>
-    <div class="filter-chips" id="proto-filters">
-      <button class="filter-chip active" data-proto="Todos">Todos</button>
-      <button class="filter-chip" data-proto="Lapidar 40+">Lapidar 40+</button>
-      <button class="filter-chip" data-proto="Lapidar SOP">Lapidar SOP</button>
-      <button class="filter-chip" data-proto="Lapidar Fertilidade">Lapidar Fertilidade</button>
-      <button class="filter-chip" data-proto="Pocket">Pocket</button>
+    <div id="patient-filter-options" class="patient-filter-options" hidden>
+      <div class="filter-chips" id="proto-filters">
+        <button class="filter-chip active" data-proto="Todos">Todos</button>
+        <button class="filter-chip" data-proto="Lapidar 40+">Lapidar 40+</button>
+        <button class="filter-chip" data-proto="Lapidar SOP">Lapidar SOP</button>
+        <button class="filter-chip" data-proto="Lapidar Fertilidade">Lapidar Fertilidade</button>
+        <button class="filter-chip" data-proto="Pocket">Pocket</button>
+      </div>
+      <label for="patient-status-filter" class="patient-status-filter">
+        Status
+        <select id="patient-status-filter" class="form-input">
+          <option value="Todas">Todas</option>
+          <option value="Ativa">Ativas</option>
+          <option value="Inativa">Inativas</option>
+        </select>
+      </label>
     </div>
-    <label for="patient-status-filter" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
-      Status
-      <select id="patient-status-filter" class="form-input" style="width:auto;min-width:150px;">
-        <option value="Todas">Todas</option>
-        <option value="Ativa">Ativas</option>
-        <option value="Inativa">Inativas</option>
-      </select>
-    </label>
-  </div>
-  <p id="patients-count" class="page-subtitle" aria-live="polite" style="margin:-12px 0 16px;"></p>
+  </section>
+
+  <header class="patient-list-heading">
+    <span class="patient-list-icon" aria-hidden="true">♟</span>
+    <div>
+      <h2>Lista de pacientes</h2>
+      <p id="patients-count" aria-live="polite"></p>
+    </div>
+  </header>
 
   <!-- Grid de cards -->
-  <div class="grid-responsive-3" id="patients-grid" style="gap:16px;"></div>
+  <div class="grid-responsive-3" id="patients-grid" style="gap:18px;"></div>
+  <div id="patients-pagination" class="patients-pagination" aria-label="Paginação de pacientes"></div>
   <div id="empty-state" class="hidden">
     <div class="empty-state">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -185,6 +199,8 @@
   }
 
   let searchTerm = '';
+  let currentPage = 1;
+  const patientsPerPage = 6;
   let activeProto = Router.getState().filterProtocol || 'Todos';
   let activeStatus = Router.getState().filterStatus || 'Todas';
   const statusFilter = document.getElementById('patient-status-filter');
@@ -204,48 +220,78 @@
       const inactive = p.ativo === false || p.status === 'Inativa';
       const matchStatus = activeStatus === 'Todas' || (activeStatus === 'Inativa' ? inactive : !inactive);
       return matchName && matchProto && matchStatus;
-    });
+    }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
     const grid = document.getElementById('patients-grid');
     const empty = document.getElementById('empty-state');
+    const pageCount = Math.max(1, Math.ceil(filtered.length / patientsPerPage));
+    currentPage = Math.min(currentPage, pageCount);
+    const pageStart = (currentPage - 1) * patientsPerPage;
+    const visiblePatients = filtered.slice(pageStart, pageStart + patientsPerPage);
     document.getElementById('patients-count').textContent =
-      `Lista de pacientes · ${filtered.length} ${filtered.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`;
+      `${filtered.length} resultado(s) encontrado(s)`;
 
     if (filtered.length === 0) {
       grid.innerHTML = '';
       empty.classList.remove('hidden');
     } else {
       empty.classList.add('hidden');
-      grid.innerHTML = filtered.map((p, i) => renderPatientCard(p, i)).join('');
+      grid.innerHTML = visiblePatients.map((p, i) => renderPatientCard(p, i)).join('');
       grid.querySelectorAll('[data-patient-profile]').forEach(button => {
         button.addEventListener('click', event => {
           event.stopPropagation();
           const patientId = Number(button.dataset.patientProfile);
           if (Router.getRole() === 'secretary') showPatientQuickModal(patientId);
-          else Router.navigate('patient-detail', { patientId });
+          else Router.navigate('patient-profile', { patientId });
         });
       });
     }
+    const pagination = document.getElementById('patients-pagination');
+    pagination.innerHTML = filtered.length > patientsPerPage ? `
+      <span class="patients-pagination-summary">Mostrando ${pageStart + 1}–${Math.min(pageStart + patientsPerPage, filtered.length)} de ${filtered.length} pacientes</span>
+      <div class="patients-pagination-controls">
+        <button type="button" data-page="${currentPage - 1}" aria-label="Página anterior" ${currentPage === 1 ? 'disabled' : ''}>‹</button>
+        ${Array.from({ length:pageCount }, (_, index) => index + 1).map(page =>
+          `<button type="button" data-page="${page}" aria-current="${page === currentPage ? 'page' : 'false'}">${page}</button>`
+        ).join('')}
+        <button type="button" data-page="${currentPage + 1}" aria-label="Próxima página" ${currentPage === pageCount ? 'disabled' : ''}>›</button>
+      </div>` : '';
+    pagination.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => {
+      const requestedPage = Number(button.dataset.page);
+      if (Number.isInteger(requestedPage) && requestedPage >= 1 && requestedPage <= pageCount) {
+        currentPage = requestedPage;
+        filterAndRender();
+      }
+    }));
   }
 
   // Search
   document.getElementById('search-input').addEventListener('input', e => {
     searchTerm = e.target.value;
+    currentPage = 1;
     filterAndRender();
+  });
+  document.getElementById('patient-filter-toggle').addEventListener('click', event => {
+    const options = document.getElementById('patient-filter-options');
+    const expanded = event.currentTarget.getAttribute('aria-expanded') === 'true';
+    event.currentTarget.setAttribute('aria-expanded', String(!expanded));
+    options.hidden = expanded;
   });
 
   // Proto filters
   document.querySelectorAll('#proto-filters .filter-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       activeProto = btn.dataset.proto;
+      currentPage = 1;
       document.querySelectorAll('#proto-filters .filter-chip').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       filterAndRender();
     });
-    statusFilter.addEventListener('change', () => {
-      activeStatus = statusFilter.value;
-      filterAndRender();
-    });
+  });
+  statusFilter.addEventListener('change', () => {
+    activeStatus = statusFilter.value;
+    currentPage = 1;
+    filterAndRender();
   });
 
   // Modal

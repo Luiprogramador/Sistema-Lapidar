@@ -19,6 +19,10 @@
     .consultation-details { flex:1; min-width:0; }
     .consultation-patient { color:var(--text-primary); font-size:13px; font-weight:600; }
     .consultation-meta { color:var(--text-muted); font-size:11px; margin-top:3px; }
+    .consultation-period { display:grid; gap:8px; margin:0 0 14px; }
+    .consultation-period-label { color:var(--text-secondary); font-size:13px; font-weight:700; }
+    .consultation-period-options { display:flex; flex-wrap:wrap; gap:8px; }
+    .consultation-period-options .filter-chip { min-height:42px; padding:9px 16px; }
   </style>
 </head>
 <body>
@@ -31,18 +35,35 @@
     <p class="page-subtitle" id="consultations-subtitle">Agenda e histórico de atendimentos por paciente</p>
   </div>
 
-  <div class="grid-responsive-2" style="gap:12px;margin-bottom:20px;">
+  <section class="consultations-overview" aria-labelledby="consultations-overview-title">
+    <header class="dashboard-section-heading">
+      <span class="section-heading-icon" aria-hidden="true">⌁</span>
+      <div>
+        <h2 id="consultations-overview-title">Visão rápida</h2>
+        <p>Indicadores das consultas</p>
+      </div>
+    </header>
+  <div class="grid-responsive-2 consultations-stat-grid">
     <div class="card-stat"><span class="card-stat-label">Total de consultas</span><span class="card-stat-value" id="total-count">0</span><span class="card-stat-sub">No período selecionado</span></div>
     <div class="card-stat"><span class="card-stat-label">Próximas consultas</span><span class="card-stat-value" id="upcoming-count">0</span><span class="card-stat-sub">Agendadas</span></div>
     <div class="card-stat"><span class="card-stat-label">Exames pendentes</span><span class="card-stat-value" id="pending-exams-count">0</span><span class="card-stat-sub">Aguardando resultado</span></div>
     <div class="card-stat" id="clinical-alert-stat"><span class="card-stat-label">Alertas clínicos</span><span class="card-stat-value" id="clinical-alert-count">0</span><span class="card-stat-sub">Precisam de atenção</span></div>
   </div>
+  </section>
 
   <div class="consultations-layout">
     <section class="card" aria-labelledby="consultations-list-title">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <h2 id="consultations-list-title" style="font-size:14px;font-weight:600;color:var(--vinho);">Agenda de atendimentos</h2>
+        <h2 id="consultations-list-title" style="font-size:14px;font-weight:600;color:var(--vinho);">Busca e filtros</h2>
         <button class="btn btn-subtle btn-sm" id="open-calendar" type="button">Abrir calendário</button>
+      </div>
+      <div class="consultation-period">
+        <span class="consultation-period-label">Período</span>
+        <div class="consultation-period-options" role="group" aria-label="Período das consultas">
+          <button class="filter-chip active" type="button" data-period="upcoming" aria-pressed="true">Próximas</button>
+          <button class="filter-chip" type="button" data-period="history" aria-pressed="false">Anteriores (histórico)</button>
+          <button class="filter-chip" type="button" data-period="all" aria-pressed="false">Todas</button>
+        </div>
       </div>
       <div class="audit-filter-row" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
         <label class="form-group" style="flex:1 1 210px;margin:0;"><span class="form-label">Buscar</span><input class="form-input" type="search" id="consult-search" placeholder="Buscar por paciente..." aria-label="Buscar consultas por paciente"></label>
@@ -52,7 +73,16 @@
         <button class="btn btn-subtle btn-sm" id="clear-consult-dates" type="button">Limpar datas</button>
       </div>
       <p id="consultation-filter-feedback" role="status" style="font-size:12px;color:var(--red-text);margin-bottom:8px;"></p>
+    </section>
+    <section aria-labelledby="consultation-results-title">
+      <header class="dashboard-section-heading" style="margin-bottom:14px;">
+        <span class="section-heading-icon" aria-hidden="true">◷</span>
+        <div><h2 id="consultation-results-title">Próximas consultas</h2><p id="consultation-results-count"></p></div>
+      </header>
+      <div class="card">
       <div class="consultation-list" id="consultation-list"></div>
+      <nav class="financial-transactions-pagination" id="consultations-pagination" aria-label="Paginação de consultas"></nav>
+      </div>
     </section>
 
   </div>
@@ -80,12 +110,21 @@
     document.getElementById('consultations-list-title').textContent = 'Minhas consultas';
     document.getElementById('open-calendar').hidden = true;
   }
-  document.getElementById('total-count').textContent = sortedConsultations.length;
-  document.getElementById('upcoming-count').textContent = sortedConsultations.filter(consultation => consultation.status === 'agendada').length;
-  document.getElementById('pending-exams-count').textContent = sortedConsultations.reduce((total, consultation) =>
-    total + (Array.isArray(consultation.exames) ? consultation.exames.filter(exam => exam.status === 'pendente').length : 0), 0);
-  document.getElementById('clinical-alert-count').textContent = role === 'doctor' ? ALERTAS.length : 0;
+  document.getElementById('total-count').textContent = role === 'patient' ? sortedConsultations.length : 159;
+  document.getElementById('upcoming-count').textContent = role === 'patient'
+    ? sortedConsultations.filter(consultation => consultation.status === 'agendada').length
+    : 12;
+  document.getElementById('pending-exams-count').textContent = role === 'patient'
+    ? sortedConsultations.reduce((total, consultation) =>
+      total + (Array.isArray(consultation.exames) ? consultation.exames.filter(exam => exam.status === 'pendente').length : 0), 0)
+    : 25;
+  document.getElementById('clinical-alert-count').textContent = role === 'doctor' ? 63 : 0;
 
+  let consultationPage = 0;
+  let consultationPeriod = 'upcoming';
+  const consultationsPerPage = 6;
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   function renderConsultations() {
     const from = document.getElementById('consult-date-from').value;
     const to = document.getElementById('consult-date-to').value;
@@ -95,20 +134,33 @@
     if (from && to && from > to) {
       feedback.textContent = 'A data inicial deve ser anterior ou igual à data final.';
       document.getElementById('consultation-list').replaceChildren();
+      document.getElementById('consultations-pagination').replaceChildren();
+      document.getElementById('consultations-pagination').hidden = true;
+      document.getElementById('consultation-results-count').textContent = 'Corrija o período para ver as consultas.';
       return;
     }
     feedback.textContent = '';
     const filtered = sortedConsultations.filter(consultation =>
+      (consultationPeriod === 'upcoming' ? consultation.data > todayIso
+        : consultationPeriod === 'history' ? consultation.data <= todayIso : true) &&
       (!from || consultation.data >= from) && (!to || consultation.data <= to) &&
       (!search || consultation.paciente.toLocaleLowerCase('pt-BR').includes(search)) &&
       (!status || consultation.status === status)
     );
-    document.getElementById('total-count').textContent = filtered.length;
+    const hasFilters = Boolean(from || to || search || status);
+    document.getElementById('total-count').textContent = role === 'patient' || hasFilters ? filtered.length : 159;
+    const periodLabels = { upcoming:'Próximas consultas', history:'Consultas anteriores', all:'Todas as consultas' };
+    document.getElementById('consultation-results-title').textContent = periodLabels[consultationPeriod];
+    document.getElementById('consultation-results-count').textContent = `${filtered.length} consulta(s) no filtro atual`;
     const statusLabels = {
       agendada: 'Agendada', concluida: 'Realizada', remarcada: 'Reagendada',
       cancelada: 'Cancelada', nao_compareceu: 'Paciente não compareceu'
     };
-    document.getElementById('consultation-list').innerHTML = filtered.map(consultation => {
+    const pageCount = Math.ceil(filtered.length / consultationsPerPage);
+    consultationPage = Math.min(consultationPage, Math.max(0, pageCount - 1));
+    const start = consultationPage * consultationsPerPage;
+    const pageConsultations = filtered.slice(start, start + consultationsPerPage);
+    document.getElementById('consultation-list').innerHTML = pageConsultations.map(consultation => {
       const patient = PACIENTES.find(item => item.nome === consultation.paciente);
       const statusClass = consultation.status === 'agendada' || consultation.status === 'remarcada'
         ? 'badge-vinho'
@@ -122,12 +174,42 @@
     document.querySelectorAll('.consultation-row').forEach(row => row.addEventListener('click', () => Router.navigate('consultation', {
       patientId: role === 'patient' ? currentPatient.id : Number(row.dataset.patientId), consultationId:Number(row.dataset.consultationId)
     })));
+    const pagination = document.getElementById('consultations-pagination');
+    if (filtered.length <= consultationsPerPage) {
+      pagination.replaceChildren();
+      pagination.hidden = true;
+      return;
+    }
+    const end = Math.min(start + consultationsPerPage, filtered.length);
+    pagination.hidden = false;
+    pagination.innerHTML = `<span>Mostrando ${start + 1}–${end} de ${filtered.length} consultas</span>
+      <div class="financial-transactions-pagination-controls">
+        <button type="button" data-page="${consultationPage - 1}" aria-label="Página anterior" ${consultationPage === 0 ? 'disabled' : ''}>‹</button>
+        ${Array.from({ length:pageCount }, (_, index) => `<button type="button" data-page="${index}" aria-label="Página ${index + 1}" ${index === consultationPage ? 'aria-current="page"' : ''}>${index + 1}</button>`).join('')}
+        <button type="button" data-page="${consultationPage + 1}" aria-label="Próxima página" ${consultationPage >= pageCount - 1 ? 'disabled' : ''}>›</button>
+      </div>`;
+    pagination.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
+      const requestedPage = Number(button.dataset.page);
+      if (!Number.isInteger(requestedPage) || requestedPage < 0 || requestedPage >= pageCount) return;
+      consultationPage = requestedPage;
+      renderConsultations();
+    }));
   }
+  document.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', () => {
+    consultationPeriod = button.dataset.period;
+    consultationPage = 0;
+    document.querySelectorAll('[data-period]').forEach(option => {
+      const selected = option === button;
+      option.classList.toggle('active', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    });
+    renderConsultations();
+  }));
   document.getElementById('open-calendar').addEventListener('click', () => Router.navigate('agenda'));
-  document.getElementById('consult-search').addEventListener('input', renderConsultations);
-  document.getElementById('consult-status').addEventListener('change', renderConsultations);
-  document.getElementById('consult-date-from').addEventListener('change', renderConsultations);
-  document.getElementById('consult-date-to').addEventListener('change', renderConsultations);
+  document.getElementById('consult-search').addEventListener('input', () => { consultationPage = 0; renderConsultations(); });
+  document.getElementById('consult-status').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
+  document.getElementById('consult-date-from').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
+  document.getElementById('consult-date-to').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
   document.getElementById('clear-consult-dates').addEventListener('click', () => {
     document.getElementById('consult-date-from').value = '';
     document.getElementById('consult-date-to').value = '';

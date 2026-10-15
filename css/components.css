@@ -234,7 +234,7 @@
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--vinho);
-  box-shadow: 0 0 0 3px rgba(89,27,28,0.12);
+  box-shadow: 0 0 0 3px rgba(91,35,51,0.12);
 }
 .form-select {
   -webkit-appearance: none;
@@ -365,7 +365,7 @@
 }
 .search-input:focus {
   border-color: var(--vinho);
-  box-shadow: 0 0 0 3px rgba(89,27,28,0.12);
+  box-shadow: 0 0 0 3px rgba(91,35,51,0.12);
 }
 
 /* ── Tabela ── */
@@ -641,12 +641,12 @@ table.data-table {
   background: var(--vinho-xlight);
 }
 .consult-time {
+  flex: 0 0 54px;
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--dourado);
-  width: 36px;
-  flex-shrink: 0;
-  text-align: right;
+  white-space: nowrap;
+  text-align: center;
 }
 .consult-name {
   font-size: var(--text-sm);

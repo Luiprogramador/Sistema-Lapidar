@@ -28,6 +28,7 @@ prototipo/
     ├── dashboard.html          Dashboard com gráficos e alertas clínicos
     ├── patients.html           Lista de pacientes, popup rápido e cadastro
     ├── patient-detail.html     Ficha da paciente (11 abas, incluindo consultas, jornada operacional e relatório para impressão)
+    ├── patient-profile.html    Perfil pessoal da paciente e autorizações de compartilhamento
     ├── habits.html             Diário Lapidar (check-in diário, metas personalizadas, bloco 40+)
     ├── consultation.html       Workspace de consulta (checklist, 22 exames com 3 status, anotações)
     ├── journey.html            Jornada operacional (visão geral com timeline e checklist com fases pós-ciclo)
@@ -49,13 +50,16 @@ Router.navigate('patient-detail', { patientId: 1 }); // com parâmetros
 
 ## Perfis de demonstração
 
-O seletor no topbar alterna entre três perfis, cada um com menu e conteúdo adaptados:
+O botão “Ver como” no topbar abre o seletor de seis perfis de demonstração; cada perfil adapta o menu, as permissões e o conteúdo:
 
 | Perfil | Acesso |
 |---|---|
-| **Médica** | Dashboard, Pacientes, Agenda, Financeiro, Configurações |
-| **Secretaria** | Dashboard, Pacientes, Agenda, Financeiro, Configurações |
-| **Paciente** | Minha Ficha, Diário Lapidar, Consultas |
+| **Médica** | Acesso clínico, financeiro geral e sistema |
+| **Médica (sem admin)** | Consultas e agenda; ficha somente leitura; financeiro próprio |
+| **Secretária (Admin)** | Agenda, contatos, financeiro geral e sistema |
+| **Secretária** | Agenda, contatos e financeiro próprio |
+| **Paciente** | Diário, ficha, consultas e conteúdos |
+| **Desenvolvedor** | Logs do sistema e configurações |
 
 ## Paleta de cores
 

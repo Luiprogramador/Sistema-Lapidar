@@ -16,6 +16,81 @@
       grid-template-columns: 340px 1fr;
       gap: 24px;
     }
+    .agenda-header-actions {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .agenda-type-filter {
+      display: grid;
+      gap: 5px;
+      min-width: 218px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .agenda-type-filter select {
+      width: 218px;
+      min-height: 56px;
+      padding: 8px 32px 8px 14px;
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      background-color: var(--white);
+      color: var(--text-primary);
+      font: 500 16px var(--font-sans);
+    }
+    #btn-nova-consulta { width: 218px; min-width: 218px; min-height: 56px; font-size: 16px; }
+    .agenda-overview { margin: 0 0 20px; }
+    .agenda-overview-heading {
+      margin: 0 0 14px;
+      padding-left: 14px;
+      border-left: 5px solid var(--vinho);
+    }
+    .agenda-overview-heading h2 { color: var(--text-primary); font: 700 22px/1.2 var(--font-serif); }
+    .agenda-overview-heading p { margin-top: 3px; color: var(--text-secondary); font-size: 16px; }
+    .agenda-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .agenda-overview-card {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-areas: "icon label" "value value" "sub sub";
+      align-content: start;
+      gap: 10px 12px;
+      min-width: 0;
+      min-height: 196px;
+      padding: 22px;
+      border: 1px solid #DDCBBB;
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: 0 2px 5px rgba(74, 39, 37, .06), 0 8px 24px rgba(74, 39, 37, .045);
+    }
+    .agenda-overview-icon {
+      grid-area: icon;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid #DDCBBB;
+      border-radius: 12px;
+      background: #F1E8E8;
+      color: var(--vinho);
+      font-size: 20px;
+    }
+    .agenda-overview-label {
+      grid-area: label;
+      align-self: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
+    .agenda-overview-value { grid-area: value; color: var(--text-primary); font: 700 32px/1.1 var(--font-sans); }
+    .agenda-overview-sub { grid-area: sub; color: var(--text-secondary); font-size: 15px; line-height: 1.4; }
+    .agenda-overview-card-gold .agenda-overview-icon,
+    .agenda-overview-card-gold .agenda-overview-value { color: #806123; }
+    .agenda-overview-card-risk .agenda-overview-icon,
+    .agenda-overview-card-risk .agenda-overview-value { color: #8B2332; }
     .cal-nav {
       display: flex;
       align-items: center;
@@ -41,11 +116,55 @@
     @media (max-width: 900px) {
       .agenda-layout { grid-template-columns: 1fr; }
     }
+    @media (max-width: 600px) {
+      .agenda-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .agenda-overview-card { min-height: 132px; padding: 14px; gap: 8px 9px; border-radius: 14px; }
+      .agenda-overview-icon { width: 34px; height: 34px; border-radius: 10px; font-size: 17px; }
+      .agenda-overview-label { font-size: 11px; }
+      .agenda-overview-value { font-size: 27px; }
+      .agenda-overview-sub { font-size: 12px; }
+      .agenda-header-actions { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
+      .agenda-type-filter { min-width: 0; }
+      .agenda-type-filter select { width: 100%; }
+      #btn-nova-consulta { width: 100%; min-width: 0; }
+    }
+    @media (max-width: 360px) {
+      .agenda-overview-card { min-height: 122px; padding: 11px; }
+      .agenda-overview-label { font-size: 10px; }
+      .agenda-overview-sub { font-size: 11px; }
+    }
     #modal-consulta .modal { max-height: min(90vh, 42rem); display: flex; flex-direction: column; }
     #modal-consulta .modal-body { min-height: 0; overflow-y: auto; }
     .appointment-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .appointment-status { display: inline-flex; margin-top: 4px; font-size: 11px; color: var(--text-muted); }
     .patient-search { margin-bottom: 8px; }
+    .consult-item {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) auto auto;
+      grid-template-areas: "time details badge actions";
+      align-items: center;
+      gap: 8px 12px;
+      min-width: 0;
+    }
+    .consult-time { grid-area: time; }
+    .consult-details { grid-area: details; min-width: 0; }
+    .consult-name { line-height: 1.35; overflow-wrap: anywhere; }
+    .consult-tipo { margin-top: 2px; line-height: 1.35; overflow-wrap: anywhere; }
+    .appointment-status { line-height: 1.35; }
+    .consult-badge { grid-area: badge; justify-self: start; white-space: normal; text-align: center; }
+    .consult-actions { grid-area: actions; justify-content: flex-end; }
+    @media (max-width: 700px) {
+      .consult-item {
+        grid-template-columns: 54px minmax(0, 1fr);
+        grid-template-areas: "time details" "time badge" "actions actions";
+        align-items: start;
+        gap: 6px 10px;
+        padding: 12px;
+      }
+      .consult-time { align-self: start; padding-top: 2px; }
+      .consult-badge { justify-self: start; }
+      .consult-actions { justify-content: flex-start; }
+    }
   </style>
 </head>
 <body>
@@ -58,11 +177,56 @@
       <h1 class="page-title" id="agenda-title">Agenda</h1>
       <p class="page-subtitle" id="agenda-subtitle">Visualize e gerencie as consultas</p>
     </div>
-    <button class="btn btn-primary" id="btn-nova-consulta">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Nova Consulta
-    </button>
+    <div class="agenda-header-actions" data-staff-agenda>
+      <button class="btn btn-primary" id="btn-nova-consulta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Adicionar consulta
+      </button>
+      <label class="agenda-type-filter" for="agenda-type-filter">Tipo
+        <select id="agenda-type-filter" aria-label="Filtrar consultas por tipo">
+          <option value="Todos">Todos os tipos</option>
+          <option>Retorno</option>
+          <option>Primeira consulta</option>
+          <option>Bioimpedância</option>
+          <option>Exames</option>
+          <option>Resultados</option>
+        </select>
+      </label>
+    </div>
   </div>
+
+  <section class="agenda-overview" data-staff-agenda aria-labelledby="agenda-overview-title">
+    <header class="agenda-overview-heading">
+      <h2 id="agenda-overview-title">Visão rápida</h2>
+      <p>Resumo da semana e dos contatos pendentes</p>
+    </header>
+    <div class="agenda-overview-grid">
+      <article class="agenda-overview-card">
+        <span class="agenda-overview-icon" aria-hidden="true">▦</span>
+        <span class="agenda-overview-label">Consultas na semana</span>
+        <strong class="agenda-overview-value" id="agenda-weekly-count">21</strong>
+        <span class="agenda-overview-sub">seg–dom</span>
+      </article>
+      <article class="agenda-overview-card agenda-overview-card-gold">
+        <span class="agenda-overview-icon" aria-hidden="true">◉</span>
+        <span class="agenda-overview-label">Contatos de terça</span>
+        <strong class="agenda-overview-value">6</strong>
+        <span class="agenda-overview-sub">consulta semanal da médica</span>
+      </article>
+      <article class="agenda-overview-card agenda-overview-card-risk">
+        <span class="agenda-overview-icon" aria-hidden="true">↗</span>
+        <span class="agenda-overview-label">Sem resposta</span>
+        <strong class="agenda-overview-value">5</strong>
+        <span class="agenda-overview-sub">mais de 7 dias</span>
+      </article>
+      <article class="agenda-overview-card">
+        <span class="agenda-overview-icon" aria-hidden="true">▤</span>
+        <span class="agenda-overview-label">Total agendado</span>
+        <strong class="agenda-overview-value">159</strong>
+        <span class="agenda-overview-sub">no filtro atual</span>
+      </article>
+    </div>
+  </section>
 
   <div class="agenda-layout">
     <!-- Calendário -->
@@ -205,12 +369,13 @@
   const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   const today = new Date();
+  let selectedType = 'Todos';
   let viewYear  = today.getFullYear();
   let viewMonth = today.getMonth();
   let selectedDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   const tipoColors = {
-    'Retorno':          { bg:'#F7EEEE', text:'#591B1C' },
+    'Retorno':          { bg:'#F7EEEE', text:'#5B2333' },
     'Primeira consulta':{ bg:'#E8F0E0', text:'#3A4E25' },
     'Bioimpedância':    { bg:'#FEF3C7', text:'#92400E' },
     'Exames':           { bg:'#E0F2FE', text:'#075985' },
@@ -232,9 +397,12 @@
   }
 
   function getVisibleConsultations() {
-    return isPatientView
+    const consultations = isPatientView
       ? CONSULTAS.filter(c => c.paciente === selectedPatient.nome)
       : CONSULTAS;
+    return selectedType === 'Todos'
+      ? consultations
+      : consultations.filter(consultation => consultation.tipo === selectedType);
   }
 
   // Populate patient select in modal
@@ -329,13 +497,13 @@
       return `
         <div class="consult-item" data-appointment-id="${c.id}">
           <div class="consult-time">${c.horario}</div>
-          <div style="flex:1;min-width:0;">
+          <div class="consult-details">
             <div class="consult-name">${c.paciente}</div>
             <div class="consult-tipo">${c.protocolo}</div>
             <span class="appointment-status">${statusLabels[c.status] || 'Agendada'}</span>
           </div>
-          <span class="badge" style="background:${tc.bg};color:${tc.text};">${c.tipo}</span>
-          <div class="appointment-actions">
+          <span class="badge consult-badge" style="background:${tc.bg};color:${tc.text};">${c.tipo}</span>
+          <div class="appointment-actions consult-actions">
             ${canSeeConsultationDetails ? `<button class="btn btn-subtle btn-sm" type="button" data-open-consultation="${c.id}">Abrir</button>` : ''}
             ${canManageAppointments ? `<button class="btn btn-subtle btn-sm" type="button" data-edit-appointment="${c.id}">Editar</button>` : ''}
           </div>
@@ -450,6 +618,11 @@
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
     renderCalendar();
   });
+  document.getElementById('agenda-type-filter').addEventListener('change', event => {
+    selectedType = event.target.value;
+    renderCalendar();
+    renderConsults();
+  });
 
   // Modal
   const modal = document.getElementById('modal-consulta');
@@ -529,6 +702,16 @@
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 
   populatePatientSelect();
+  if (isPatientView) {
+    document.querySelectorAll('[data-staff-agenda]').forEach(element => { element.hidden = true; });
+    document.getElementById('btn-nova-consulta').hidden = true;
+  }
+  const weeklyConsultationCount = CONSULTAS_SEMANA.reduce((total, day) => total + day.n, 0);
+  document.getElementById('agenda-weekly-count').textContent = String(weeklyConsultationCount);
+  if (!isPatientView) {
+    document.getElementById('agenda-subtitle').textContent =
+      `${weeklyConsultationCount} consultas nesta semana · 6 contatos na terça-feira`;
+  }
   renderCalendar();
   renderConsults();
   if (!isPatientView) renderAttention();

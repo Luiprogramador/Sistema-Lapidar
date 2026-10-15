@@ -10,8 +10,8 @@
   --vinho-xlight:  #F6E7E9;
 
   /* Neutros */
-  --bege:          #FAF3E9;
-  --bege-dark:     #F1E4D3;
+  --bege:          #F4EFE7;
+  --bege-dark:     #E9DFD2;
   --bege-darker:   #CFBCAE;
   --white:         #FFFDF9;
 
@@ -19,7 +19,7 @@
   --dourado:       #C6A15B;
   --dourado-light: #E4CFA0;
   --dourado-pale:  #FBF5E8;
-  --oliva:         #2B5538;
+  --oliva:         #66724A;
   --oliva-light:   #6F7C4D;
   --oliva-pale:    #EEF1E8;
 
@@ -27,7 +27,7 @@
   --text-primary:  #1C1418;
   --text-secondary:#473A3F;
   --text-muted:    #473A3F;
-  --text-inverted: #F2EBDF;
+  --text-inverted: #F4EFE7;
 
   /* Bordas */
   --border:        #CFBCAE;
@@ -45,7 +45,7 @@
   --pink-bg:       #FCE7F3;
   --pink-text:     #9D174D;
   --green-bg:      #E4EFE3;
-  --green-text:    #2B5538;
+  --green-text:    #66724A;
 
   /* Tipografia */
   --font-serif:    'Playfair Display', Georgia, serif;
@@ -86,8 +86,8 @@
   --shadow-lg:     0 8px 40px rgba(53,16,19,0.18);
 
   /* Layout */
-  --sidebar-width: 250px;
-  --topbar-height: 56px;
+  --sidebar-width: 264px;
+  --topbar-height: 76px;
 
   /* Transições */
   --transition:    all 0.2s ease;

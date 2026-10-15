@@ -877,9 +877,9 @@ TRANSACOES.push(
 
 const PROTO_DIST = (() => {
   const protocolColors = {
-    "Lapidar 40+": "#591B1C",
+    "Lapidar 40+": "#5B2333",
     "Lapidar SOP": "#C6A15B",
-    "Lapidar Fertilidade": "#59633D",
+    "Lapidar Fertilidade": "#66724A",
     Pocket: "#722B2E",
   };
   const fallbackColors = ["#3F6B73", "#A84A35", "#786A9B"];
