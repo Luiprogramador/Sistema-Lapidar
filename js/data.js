@@ -766,17 +766,17 @@ PACIENTES.forEach(patient => {
 
 const CONSULTAS = [
   { id:1, data: dateOffset(0), horario:"09:00", paciente:"Ana Paula Ferreira", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:2, data: dateOffset(0), horario:"10:30", paciente:"Beatriz Lima", tipo:"Retorno", protocolo:"Lapidar SOP", status:"agendada" },
-  { id:3, data: dateOffset(0), horario:"14:00", paciente:"Carla Mendes", tipo:"Bioimpedância", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:4, data: dateOffset(1), horario:"08:30", paciente:"Daniela Rocha", tipo:"Retorno", protocolo:"Lapidar Fertilidade", status:"agendada" },
-  { id:5, data: dateOffset(1), horario:"10:00", paciente:"Fernanda Alves", tipo:"Retorno", protocolo:"Pocket", status:"agendada" },
-  { id:6, data: dateOffset(1), horario:"11:30", paciente:"Gabriela Torres", tipo:"Primeira consulta", protocolo:"Lapidar SOP", status:"agendada" },
-  { id:7, data: dateOffset(2), horario:"09:00", paciente:"Letícia Santos", tipo:"Exames", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:8, data: dateOffset(2), horario:"14:00", paciente:"Patricia Souza", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:9, data: dateOffset(5), horario:"10:00", paciente:"Ana Paula Ferreira", tipo:"Bioimpedância", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:10,data: dateOffset(7), horario:"09:00", paciente:"Beatriz Lima", tipo:"Retorno", protocolo:"Lapidar SOP", status:"agendada" },
-  { id:11,data: dateOffset(7), horario:"11:00", paciente:"Carla Mendes", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
-  { id:12,data: dateOffset(14),horario:"08:00", paciente:"Fernanda Alves", tipo:"Retorno", protocolo:"Pocket", status:"agendada" },
+  { id:2, data: dateOffset(0), horario:"10:30", paciente:"Sabrina Oliveira", tipo:"Retorno", protocolo:"Lapidar SOP", status:"agendada" },
+  { id:3, data: dateOffset(0), horario:"14:00", paciente:"Letícia Santos", tipo:"Bioimpedância", protocolo:"Lapidar 40+", status:"agendada" },
+  { id:4, data: dateOffset(7), horario:"08:30", paciente:"Daniela Rocha", tipo:"Retorno", protocolo:"Lapidar Fertilidade", status:"agendada" },
+  { id:5, data: dateOffset(7), horario:"10:00", paciente:"Fernanda Alves", tipo:"Retorno", protocolo:"Pocket", status:"agendada" },
+  { id:6, data: dateOffset(7), horario:"11:30", paciente:"Gabriela Nunes", tipo:"Primeira consulta", protocolo:"Lapidar SOP", status:"agendada" },
+  { id:7, data: dateOffset(8), horario:"09:00", paciente:"Sabrina Oliveira", tipo:"Exames", protocolo:"Lapidar 40+", status:"agendada" },
+  { id:8, data: dateOffset(8), horario:"14:00", paciente:"Patricia Souza", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
+  { id:9, data: dateOffset(12), horario:"10:00", paciente:"Ana Paula Ferreira", tipo:"Bioimpedância", protocolo:"Lapidar 40+", status:"agendada" },
+  { id:10,data: dateOffset(14), horario:"09:00", paciente:"Beatriz Lima", tipo:"Retorno", protocolo:"Lapidar SOP", status:"agendada" },
+  { id:11,data: dateOffset(14), horario:"11:00", paciente:"Carla Mendes", tipo:"Retorno", protocolo:"Lapidar 40+", status:"agendada" },
+  { id:12,data: dateOffset(21), horario:"08:00", paciente:"Fernanda Alves", tipo:"Retorno", protocolo:"Pocket", status:"agendada" },
 ];
 try {
   const savedConsultations = JSON.parse(localStorage.getItem('lapidar-consultas'));
@@ -794,36 +794,6 @@ try {
   console.error('Não foi possível carregar as consultas salvas.', error);
 }
 
-(() => {
-  const now = new Date();
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-  const currentWeek = CONSULTAS.filter(consultation => {
-    const date = new Date(`${consultation.data}T12:00:00`);
-    return date >= weekStart && date < weekEnd && consultation.status !== 'cancelada';
-  });
-  const missingCount = Math.max(0, 21 - currentWeek.length);
-  for (let index = 0; index < missingCount; index++) {
-    const dayOffset = index % 7;
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + dayOffset);
-    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const patient = PACIENTES[(index + 8) % PACIENTES.length];
-    const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    CONSULTAS.push({
-      id:100 + index,
-      data:isoDate,
-      horario:`${String(8 + (index % 8)).padStart(2, '0')}:${index % 2 ? '30' : '00'}`,
-      paciente:patient.nome,
-      tipo:['Retorno', 'Bioimpedância', 'Resultados', 'Primeira consulta'][index % 4],
-      protocolo:patient.protocolo,
-      status:isPast ? 'concluida' : 'agendada',
-      modo:index % 3 === 0 ? 'Online' : 'Presencial',
-    });
-  }
-})();
-
 const ALERTAS = [
   { paciente:"Carla Mendes",   protocolo:"Lapidar 40+",       tipo:"LDL acima da meta" },
   { paciente:"Fernanda Alves", protocolo:"Pocket",             tipo:"LDL acima da meta" },
@@ -834,7 +804,7 @@ const ALERTAS = [
   { paciente:"Fernanda Alves", protocolo:"Pocket",             tipo:"Sem atividade física" },
 ];
 const ALERT_TYPES = ['LDL acima da meta', 'Vitamina D baixa', 'Sem atividade física', 'Exames pendentes', 'Bioimpedância pendente'];
-for (let index = ALERTAS.length; index < 63; index++) {
+for (let index = ALERTAS.length; index < 62; index++) {
   const patient = PACIENTES[(index * 7) % PACIENTES.length];
   ALERTAS.push({
     paciente:patient.nome,
@@ -973,3 +943,468 @@ function loadMessages() {
 function saveStoredMessages(list) {
   localStorage.setItem(MESSAGES_KEY, JSON.stringify(list));
 }
+
+(() => {
+  const demo = window.LAPIDAR_DEMO_DATA;
+  if (!demo) return;
+
+  const requiredArrays = [
+    demo.fichas_pacientes?.pacientes,
+    demo.agenda_consultas?.consultas,
+    demo.financeiro?.lancamentos,
+  ];
+  if (requiredArrays.some(records => !Array.isArray(records))) {
+    throw new Error('O pacote de demonstração não contém as fichas, consultas e lançamentos esperados.');
+  }
+
+  const protocolNames = {
+    lapidar40: 'Lapidar 40+',
+    lapidarSop: 'Lapidar SOP',
+    lapidarFertilidade: 'Lapidar Fertilidade',
+    pocket: 'Pocket',
+  };
+  const toPatientId = value => {
+    const match = /^p(\d+)$/.exec(String(value || ''));
+    return match ? Number(match[1]) : null;
+  };
+  const toIsoDate = value => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ''));
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+  };
+  const toDisplayDate = value => {
+    const iso = toIsoDate(value);
+    return iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '';
+  };
+  const ageAtToday = value => {
+    const iso = toIsoDate(value);
+    if (!iso) return 0;
+    const birthDate = new Date(`${iso}T00:00:00`);
+    const today = new Date();
+    return today.getFullYear() - birthDate.getFullYear() -
+      (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0);
+  };
+  const formatPhone = value => {
+    const digits = String(value || '').replace(/\D/g, '');
+    if (digits.length !== 11) return String(value || '');
+    return `(${digits.slice(0, 2)}) ${digits[2]} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+  };
+  const formatConsultationType = value => ({
+    primeira: 'Primeira consulta',
+    retorno: 'Retorno',
+    resultados: 'Resultados',
+    bioimpedancia: 'Bioimpedância',
+  }[String(value || '').toLowerCase()] || String(value || 'Consulta'));
+  const parseSavedArray = key => {
+    const stored = localStorage.getItem(key);
+    if (!stored) return [];
+    try {
+      const records = JSON.parse(stored);
+      if (!Array.isArray(records)) {
+        console.error(`Os dados locais "${key}" não estão no formato esperado.`);
+        return [];
+      }
+      return records;
+    } catch (error) {
+      console.error(`Não foi possível ler os dados locais "${key}".`, error);
+      return [];
+    }
+  };
+
+  const savedPatients = new Map(parseSavedArray('lapidar-pacientes')
+    .filter(patient => patient && Number.isFinite(Number(patient.id)))
+    .map(patient => [Number(patient.id), patient]));
+  const oldPatients = new Map(PACIENTES.map(patient => [Number(patient.id), patient]));
+  const clinical = demo.dados_clinicos || {};
+  const diary = demo.diario_pacientes || {};
+  const recordsForPatient = (records, patientId) => Array.isArray(records)
+    ? records.filter(record => record.pacienteId === patientId)
+    : records?.[patientId] || [];
+  const mapRiskRecord = record => {
+    const factors = record.fatores || {};
+    const levelNames = {
+      baixo: 'Baixo',
+      intermediario: 'Intermediário',
+      alto: 'Alto',
+      muito_alto: 'Muito Alto',
+      extremo: 'Extremo',
+    };
+    return {
+      id: record.id,
+      data: toIsoDate(record.avaliadoEm),
+      nivel: levelNames[record.nivel] || record.nivel || '',
+      ldl: record.ldl,
+      metaLdl: record.ldlMeta,
+      naoHdl: record.naoHdl,
+      metaNaoHdl: record.naoHdlMeta,
+      reducaoLdl: Number.isFinite(Number(record.reducaoLdlPercentual))
+        ? Number(Number(record.reducaoLdlPercentual).toFixed(1))
+        : null,
+      dopplerCarotidas: factors.dopplerCarotideo ?? null,
+      lpa: factors.lipoproteinaA,
+      pcrUs: factors.pcrUs,
+      has: factors.hipertensao == null ? '' : factors.hipertensao ? 'Sim' : 'Não',
+      dm: factors.diabetes == null ? '' : factors.diabetes ? 'Sim' : 'Não',
+      tabagismo: factors.tabagismo == null ? '' : factors.tabagismo ? 'Sim' : 'Não fumante',
+      historiaFamiliar: factors.historicoFamiliar == null ? '' : factors.historicoFamiliar ? 'Sim' : 'Não',
+      fatores: [
+        factors.hipertensao && 'Hipertensão',
+        factors.diabetes && 'Diabetes',
+        factors.tabagismo && 'Tabagismo',
+        factors.historicoFamiliar && 'História familiar',
+      ].filter(Boolean),
+      sugestoes: record.estrategias || [],
+      metaAtingida: record.ldl != null && record.ldlMeta != null &&
+        record.naoHdl != null && record.naoHdlMeta != null &&
+        record.ldl <= record.ldlMeta && record.naoHdl <= record.naoHdlMeta,
+    };
+  };
+  const scoreKeys = {
+    Saciedade: 'saciedade',
+    Fome: 'fome',
+    Energia: 'energia',
+    Sono: 'sono',
+    Humor: 'humor',
+    Libido: 'libido',
+    Fogachos: 'fogachos',
+    'Perda urinária': 'perdaUrinaria',
+    Constipação: 'constipacao',
+    'Atividade física': 'atividadeFisica',
+    Adesão: 'adesao',
+  };
+  const timeFromMinutes = value => {
+    const minutes = Number(value);
+    if (!Number.isFinite(minutes)) return '';
+    const normalized = (minutes % 1440 + 1440) % 1440;
+    return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+  };
+  const importedPatients = demo.fichas_pacientes.pacientes.map(source => {
+    const id = toPatientId(source.id);
+    if (!id) throw new Error(`Identificador de paciente inválido no pacote: ${source.id}`);
+    const patient = JSON.parse(JSON.stringify(oldPatients.get(id) || oldPatients.get(1)));
+    const birthDate = toIsoDate(source.dataNascimento);
+    const patientScoreLabels = Array.isArray(patient.scoreLabels) ? patient.scoreLabels : [
+      'Saciedade', 'Fome', 'Energia', 'Sono', 'Humor', 'Libido', 'Fogachos',
+      'Perda urinária', 'Constipação', 'Atividade física', 'Adesão',
+    ];
+    const goals = Array.isArray(source.metas) ? source.metas : [];
+    const clinicalKey = source.id;
+    const scores = diary.pontuacoes?.[clinicalKey] || [];
+    const latestScore = [...scores].sort((left, right) => String(right.data).localeCompare(String(left.data)))[0];
+    const previousScore = [...scores].sort((left, right) => String(right.data).localeCompare(String(left.data)))[1];
+    const scoreValues = score => patientScoreLabels.map(label => {
+      const value = score?.valores?.[scoreKeys[label]];
+      return Number.isFinite(Number(value)) ? Number(value) : null;
+    });
+    const checkIns = diary.checkIns?.[clinicalKey] || [];
+    const latestCheckIn = [...checkIns].sort((left, right) => String(right.dia).localeCompare(String(left.dia)))[0];
+    const habitGoals = (diary.metasDeHabito?.[clinicalKey] || [])
+      .filter(goal => goal.ativa)
+      .map(goal => ({
+        id: goal.id,
+        nome: goal.nome,
+        frequencia: `${goal.frequencia} ${goal.unidadeDaFrequencia || ''}`.trim(),
+        orientacao: goal.orientacao || '',
+        ativa: goal.ativa,
+      }));
+    const nutritionGoals = diary.metasDeNutricao?.[clinicalKey] || [];
+    const nutritionGoalValue = key => {
+      const goal = [...nutritionGoals].reverse().find(item => item.indicador === key && !item.fim);
+      return goal ? `${goal.quantidade} ${key === 'agua' ? 'L/dia' : 'g/dia'}` : '';
+    };
+    const documents = clinical.documentos?.[clinicalKey] || [];
+    const medications = recordsForPatient(clinical.medicamentos, clinicalKey).map(medication => ({
+      ...medication,
+      tipo: medication.tipo === 'suplemento' ? 'Suplemento' : 'Medicamento',
+      freq: medication.frequencia || '',
+      inicio: toDisplayDate(medication.inicio),
+      fim: toDisplayDate(medication.fim),
+    }));
+    const riskRecords = recordsForPatient(clinical.riscoCardiovascular, clinicalKey)
+      .sort((left, right) => String(left.avaliadoEm).localeCompare(String(right.avaliadoEm)))
+      .map(mapRiskRecord);
+    const documentTypes = {
+      pedido: 'Pedidos',
+      receita: 'Receitas',
+      exames: 'Exames',
+      bioimpedancia: 'Bioimpedância',
+      foto: 'Fotos',
+    };
+    const documentIcons = {
+      pedido: '📋',
+      receita: '📄',
+      exames: '🔬',
+      bioimpedancia: '⚖',
+      foto: '🖼',
+    };
+    const files = documents.map((document, index) => ({
+      id: index + 1,
+      titulo: document.nome || 'Documento',
+      tipo: documentTypes[document.tipo] || 'Outros',
+      data: toDisplayDate(document.data),
+      origem: document.sentido === 'recebido' ? 'Recebido' : 'Enviado',
+      tamanho: document.tamanho || '',
+      icon: documentIcons[document.tipo] || '📎',
+      desc: document.observacao || '',
+    }));
+    const timeline = demo.agenda_consultas.consultas
+      .filter(appointment => toPatientId(appointment.pacienteId) === id)
+      .map(appointment => ({
+        tipo: 'Consulta',
+        data: toDisplayDate(toIsoDate(appointment.dataHora)),
+        horario: String(appointment.dataHora || '').slice(11, 16),
+        icone: '🩺',
+        titulo: [
+          formatConsultationType(appointment.tipoPersonalizado || appointment.tipo),
+          protocolNames[appointment.protocolo] || appointment.protocolo,
+        ].filter(Boolean).join(' · '),
+        desc: appointment.observacoes || appointment.plano ||
+          (appointment.situacao === 'concluida' ? 'Consulta realizada.' : 'Consulta agendada.'),
+      }));
+    const bioimpedancia = (clinical.bioimpedancias?.[clinicalKey] || []).map(entry => ({
+      data: toDisplayDate(entry.data),
+      peso: entry.pesoKg,
+      musculo: entry.massaMuscularEsqueleticaKg,
+      gordura: entry.gorduraCorporalKg,
+      imc: entry.imc,
+      txGordura: entry.gorduraCorporalPercentual,
+      aguaCorporal: entry.aguaCorporalPercentual,
+      gorduraVisceral: entry.gorduraVisceral,
+      tmb: entry.taxaMetabolicaBasal,
+      nota: entry.notaCorporal,
+      arquivo: entry.arquivo,
+    }));
+    const sourcePatient = {
+      id,
+      nome: source.nome,
+      iniciais: String(source.nome || '').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase(),
+      idade: ageAtToday(birthDate),
+      nascimento: toDisplayDate(birthDate),
+      telefone: formatPhone(source.telefone),
+      cpf: source.cpf || '',
+      email: source.email || '',
+      objetivo: source.objetivo || '',
+      protocolo: protocolNames[source.protocolo] || source.protocolo,
+      consultaAtual: `${Number(source.numeroDaConsultaAtual) || 1}ª Consulta`,
+      pesoInicial: Number(source.pesoInicialKg) || 0,
+      pesoAtual: Number(source.pesoAtualKg) || 0,
+      meta: Number(source.pesoMetaKg) || null,
+      trh: source.usaTrh ? 'Sim' : 'Não',
+      contraceptivo: source.metodoContraceptivo || 'Não informado',
+      medicamentos: medications,
+      riscoCV: riskRecords[riskRecords.length - 1] || patient.riscoCV,
+      riscoCVHistorico: riskRecords.slice(0, -1),
+      origemLead: source.origemDoContato || '',
+      observacoes: source.observacoes || '',
+      ultimaConsulta: toDisplayDate(source.ultimaConsulta),
+      proximaConsulta: toDisplayDate(source.proximaConsulta),
+      ativo: source.situacao === 'ativa',
+      status: source.situacao === 'ativa' ? 'Ativa' : 'Inativa',
+      medicasIds: Array.isArray(source.medicasIds) ? source.medicasIds : [],
+      condicoesDeSaude: Array.isArray(source.condicoesDeSaude) ? source.condicoesDeSaude : [],
+      alergias: Array.isArray(source.alergias) ? source.alergias : [],
+      metas: goals.map(goal => `${goal.indicador}: ${goal.meta}`),
+      metasConcluidas: goals.filter(goal => goal.atingida).length,
+      jornada: Array.isArray(source.jornada) ? source.jornada : [],
+      timeline,
+      arquivos: files,
+      metasPersonalizadas: habitGoals,
+      nutricaoMetas: {
+        proteina: nutritionGoalValue('proteina'),
+        fibras: nutritionGoalValue('fibras'),
+        agua: nutritionGoalValue('agua'),
+      },
+      scoreAtual: latestScore ? scoreValues(latestScore) : patient.scoreAtual,
+      scoreAnterior: previousScore ? scoreValues(previousScore) : patient.scoreAnterior,
+      diarioHoje: latestCheckIn ? {
+        data: toIsoDate(latestCheckIn.dia),
+        preenchido: true,
+        movimento: {
+          musculacao: latestCheckIn.musculacao || '',
+          cardio: latestCheckIn.cardio || '',
+        },
+        nutricao: {
+          proteina: latestCheckIn.proteina || '',
+          fibras: latestCheckIn.fibras || '',
+          agua: latestCheckIn.agua || '',
+        },
+        sono: {
+          dormiu: timeFromMinutes(latestCheckIn.horaDeDormirEmMinutos),
+          acordou: timeFromMinutes(latestCheckIn.horaDeAcordarEmMinutos),
+          despertares: latestCheckIn.despertaresNoturnos ?? '',
+          qualidade: latestCheckIn.qualidadeDoSono ?? null,
+        },
+        bemEstar: {
+          energia: latestCheckIn.energia ?? null,
+          estresse: latestCheckIn.estresse ?? null,
+          humor: latestCheckIn.humor ?? null,
+        },
+        score: latestScore ? scoreValues(latestScore) : patient.scoreAtual,
+        sintomas40: {
+          ondasDeCalor: latestCheckIn.ondasDeCalor ?? null,
+          ressecamento: latestCheckIn.ressecamentoVaginal ?? null,
+          irritabilidade: latestCheckIn.irritabilidade ?? null,
+          nevoa: latestCheckIn.nevoaMental ?? null,
+          libido: latestCheckIn.libido ?? null,
+        },
+        observacoes: latestCheckIn.observacoes || '',
+      } : patient.diarioHoje,
+      bioimpedancia,
+      dadosClinicos: {
+        medicamentos: medications,
+        documentos: documents,
+        riscoCardiovascular: riskRecords,
+        paineisDeExames: clinical.paineisDeExames?.[clinicalKey] || [],
+      },
+      fichaReferencia: source,
+    };
+    Object.assign(patient, sourcePatient, savedPatients.get(id) || {});
+    patient.referenciaData = demo.fichas_pacientes.referencia;
+    return patient;
+  });
+  PACIENTES.splice(0, PACIENTES.length, ...importedPatients);
+
+  const importedConsultations = demo.agenda_consultas.consultas.map((source, index) => {
+    const patientId = toPatientId(source.pacienteId);
+    return {
+      id: 1001 + index,
+      referenciaId: source.id,
+      pacienteId: patientId,
+      data: toIsoDate(source.dataHora),
+      horario: String(source.dataHora || '').slice(11, 16),
+      paciente: source.pacienteNome || PACIENTES.find(patient => patient.id === patientId)?.nome || 'Paciente',
+      tipo: formatConsultationType(source.tipoPersonalizado || source.tipo),
+      protocolo: protocolNames[source.protocolo] || source.protocolo,
+      status: source.situacao === 'concluida' ? 'concluida'
+        : source.situacao === 'cancelada' ? 'cancelada' : 'agendada',
+      modo: source.modalidade === 'online' ? 'Online' : 'Presencial',
+      medicaId: source.medicaId || '',
+      duracaoMinutos: source.duracaoMinutos,
+      checklist: source.checklist || [],
+      examesPedidos: source.examesPedidos || [],
+      analisesDeExames: source.analisesDeExames || [],
+      observacoes: source.observacoes || '',
+      analise: source.analise || '',
+      plano: source.plano || '',
+      pesoKg: source.pesoKg,
+      mensagens: source.mensagens || [],
+    };
+  });
+  const savedConsultations = parseSavedArray('lapidar-consultas');
+  const savedConsultationsById = new Map(savedConsultations
+    .filter(consultation => consultation && Number.isFinite(Number(consultation.id)))
+    .map(consultation => [Number(consultation.id), consultation]));
+  importedConsultations.forEach(consultation => {
+    Object.assign(consultation, savedConsultationsById.get(consultation.id) || {});
+  });
+  CONSULTAS.splice(0, CONSULTAS.length, ...importedConsultations);
+
+  const addMonthsIso = (iso, amount) => {
+    const [year, month, day] = iso.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    date.setMonth(date.getMonth() + amount);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    date.setDate(Math.min(day, lastDay));
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+  const importedTransactions = demo.financeiro.lancamentos.map(source => {
+    const total = Number(source.valorTotal) || 0;
+    const installmentCount = Math.max(1, Number(source.numeroDeParcelas) || 1);
+    const paidByNumber = new Map((source.pagamentos || []).map(payment => [Number(payment.parcela), payment]));
+    const firstDueDate = toIsoDate(source.vencimento) ||
+      toIsoDate(source.pagamentos?.[0]?.data) || toIsoDate(demo.financeiro.referencia);
+    const firstUnpaidNumber = Array.from({ length:installmentCount }, (_, index) => index + 1)
+      .find(number => !paidByNumber.has(number)) || installmentCount;
+    const installmentCents = Math.round(total * 100);
+    const baseCents = Math.floor(installmentCents / installmentCount);
+    const payments = Array.from({ length:installmentCount }, (_, index) => {
+      const number = index + 1;
+      const paid = paidByNumber.get(number);
+      const dueDate = paid
+        ? toIsoDate(paid.data)
+        : addMonthsIso(firstDueDate, Math.max(0, number - firstUnpaidNumber));
+      const amount = paid
+        ? Number(paid.valor) || 0
+        : (number === installmentCount
+          ? (installmentCents - baseCents * (installmentCount - 1)) / 100
+          : baseCents / 100);
+      return {
+        number,
+        total: installmentCount,
+        amount,
+        dueDate,
+        status: paid ? 'pago' : 'pendente',
+        paidAt: paid ? toIsoDate(paid.data) : '',
+        paymentMethod: paid ? paid.formaDePagamento || 'Não informado' : '',
+      };
+    });
+    const paidCount = payments.filter(payment => payment.status === 'pago').length;
+    const tipo = source.fluxo === 'despesa' ? 'Despesa' : 'Receita';
+    const transaction = {
+      id: source.id,
+      data: toDisplayDate(firstDueDate),
+      paciente: source.pacienteNome || source.beneficiario || 'Clínica Lapidar',
+      plano: source.plano || source.categoria || source.titulo,
+      descricao: source.titulo || '',
+      valor: total,
+      parcelas: `${paidCount}/${installmentCount}`,
+      status: source.situacao === 'pago' ? 'pago' : 'pendente',
+      tipo,
+      tipoLancamento: tipo,
+      origem: source.origem || '',
+      destino: source.destino || '',
+      usuario: source.responsavel || '',
+      categoria: source.categoria || '',
+      observacao: source.observacao || '',
+      payments,
+      referenceId: source.id,
+    };
+    return transaction;
+  });
+  const savedTransactions = parseSavedArray('lapidar-transacoes');
+  const savedTransactionsById = new Map(savedTransactions
+    .filter(transaction => transaction && transaction.id != null)
+    .map(transaction => [String(transaction.id), transaction]));
+  importedTransactions.forEach(transaction => {
+    Object.assign(transaction, savedTransactionsById.get(String(transaction.id)) || {});
+  });
+  TRANSACOES.splice(0, TRANSACOES.length, ...importedTransactions);
+
+  ALERTAS.forEach((alert, index) => {
+    const patient = PACIENTES[index % PACIENTES.length];
+    alert.paciente = patient.nome;
+    alert.protocolo = patient.protocolo;
+  });
+
+  const protocolColors = new Map(PROTO_DIST.map(protocol => [protocol.nome, protocol.cor]));
+  const importedProtocolCounts = new Map();
+  PACIENTES.forEach(patient => importedProtocolCounts.set(
+    patient.protocolo,
+    (importedProtocolCounts.get(patient.protocolo) || 0) + 1
+  ));
+  PROTO_DIST.splice(0, PROTO_DIST.length, ...[...importedProtocolCounts].map(([nome, valor]) => ({
+    nome,
+    valor,
+    cor: protocolColors.get(nome) || '#66724A',
+  })));
+
+  const weekdays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  const now = new Date();
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const currentWeekCounts = weekdays.map((dia, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return {
+      dia,
+      n: CONSULTAS.filter(consultation => consultation.data === key && consultation.status !== 'cancelada').length,
+    };
+  });
+  CONSULTAS_SEMANA.splice(0, CONSULTAS_SEMANA.length, ...currentWeekCounts);
+
+  if (Array.isArray(demo.diario_pacientes?.checkIns)) {
+    demo.diario_pacientes.checkIns.forEach(checkIn => {
+      const patient = PACIENTES.find(item => item.id === toPatientId(checkIn.pacienteId));
+      if (patient) patient.registrosDiarioReferencia = checkIn;
+    });
+  }
+})();

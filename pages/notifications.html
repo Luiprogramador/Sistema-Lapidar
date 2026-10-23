@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificações — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <link rel="stylesheet" href="../css/extra-pages.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter extra-page">
+  <div class="page-header"><h1 class="page-title">Notificações</h1><p class="page-subtitle">Avisos de consultas, formulários, exames e atualizações.</p></div>
+  <div id="notifications-summary" class="extra-summary"></div>
+  <section class="card">
+    <div class="page-header"><h2 class="card-title">Histórico</h2><button id="mark-all-notifications" class="btn btn-outline btn-sm" type="button">Marcar todas como lidas</button></div>
+    <div class="notification-toolbar">
+      <input id="notifications-search" class="form-input" type="search" placeholder="Buscar por assunto, origem ou destino" aria-label="Buscar notificações">
+      <div id="notifications-filters" class="notification-filters">
+        <button class="btn btn-primary btn-sm" type="button" data-notification-target="">Todas</button>
+        <button class="btn btn-outline btn-sm" type="button" data-notification-target="Diário">Diário</button>
+        <button class="btn btn-outline btn-sm" type="button" data-notification-target="Ficha">Ficha</button>
+        <button class="btn btn-outline btn-sm" type="button" data-notification-target="Consultas">Consultas</button>
+        <button class="btn btn-outline btn-sm" type="button" data-notification-target="Formulários">Formulários</button>
+        <button class="btn btn-outline btn-sm" type="button" data-notification-target="Sistema">Sistema</button>
+        <button id="notifications-unread" class="btn btn-outline btn-sm" type="button" aria-pressed="false">Só não lidas</button>
+      </div>
+    </div>
+    <div id="notifications-list" class="notifications-list"></div>
+    <nav id="notifications-pagination" class="extra-pagination" aria-label="Paginação de notificações"></nav>
+  </section>
+</main>
+<script src="../js/demo-data.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script src="../js/extra-pages.js"></script>
+<script>initShell('notifications'); initExtraPage('notifications');</script>
+</body>
+</html>

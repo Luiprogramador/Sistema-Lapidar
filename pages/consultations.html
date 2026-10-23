@@ -32,7 +32,7 @@
 <main class="main-content page-enter">
   <div class="page-header">
     <h1 class="page-title" id="consultations-title">Consultas</h1>
-    <p class="page-subtitle" id="consultations-subtitle">Agenda e histórico de atendimentos por paciente</p>
+    <p class="page-subtitle" id="consultations-subtitle" hidden>Agenda e histórico de atendimentos por paciente</p>
   </div>
 
   <section class="consultations-overview" aria-labelledby="consultations-overview-title">
@@ -40,10 +40,9 @@
       <span class="section-heading-icon" aria-hidden="true">⌁</span>
       <div>
         <h2 id="consultations-overview-title">Visão rápida</h2>
-        <p>Indicadores das consultas</p>
       </div>
     </header>
-  <div class="grid-responsive-2 consultations-stat-grid">
+  <div class="grid-responsive-4 consultations-stat-grid">
     <div class="card-stat"><span class="card-stat-label">Total de consultas</span><span class="card-stat-value" id="total-count">0</span><span class="card-stat-sub">No período selecionado</span></div>
     <div class="card-stat"><span class="card-stat-label">Próximas consultas</span><span class="card-stat-value" id="upcoming-count">0</span><span class="card-stat-sub">Agendadas</span></div>
     <div class="card-stat"><span class="card-stat-label">Exames pendentes</span><span class="card-stat-value" id="pending-exams-count">0</span><span class="card-stat-sub">Aguardando resultado</span></div>
@@ -88,6 +87,7 @@
   </div>
 </main>
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
@@ -103,28 +103,28 @@
     ? CONSULTAS.filter(consultation => consultation.paciente === currentPatient.nome)
     : CONSULTAS;
   const sortedConsultations = patientConsultations.slice().sort((a, b) => (a.data + a.horario).localeCompare(b.data + b.horario));
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   if (role === 'patient') {
     document.getElementById('consultations-title').textContent = 'Minhas consultas';
     document.getElementById('consultations-subtitle').textContent = 'Acompanhe suas consultas, exames e orientações da equipe';
+    document.getElementById('consultations-subtitle').hidden = false;
     document.getElementById('clinical-alert-stat').hidden = true;
     document.getElementById('consultations-list-title').textContent = 'Minhas consultas';
     document.getElementById('open-calendar').hidden = true;
   }
-  document.getElementById('total-count').textContent = role === 'patient' ? sortedConsultations.length : 159;
-  document.getElementById('upcoming-count').textContent = role === 'patient'
-    ? sortedConsultations.filter(consultation => consultation.status === 'agendada').length
-    : 12;
-  document.getElementById('pending-exams-count').textContent = role === 'patient'
-    ? sortedConsultations.reduce((total, consultation) =>
-      total + (Array.isArray(consultation.exames) ? consultation.exames.filter(exam => exam.status === 'pendente').length : 0), 0)
-    : 25;
-  document.getElementById('clinical-alert-count').textContent = role === 'doctor' ? 63 : 0;
+  document.getElementById('total-count').textContent = sortedConsultations.length;
+  document.getElementById('upcoming-count').textContent =
+    sortedConsultations.filter(consultation => consultation.data > todayIso && consultation.status === 'agendada').length;
+  document.getElementById('pending-exams-count').textContent = sortedConsultations.reduce((total, consultation) =>
+    total + (Array.isArray(consultation.examesPedidos)
+      ? consultation.examesPedidos.filter(exam => exam.situacao === 'pendente').length
+      : 0), 0);
+  document.getElementById('clinical-alert-count').textContent = role === 'doctor' ? ALERTAS.length : 0;
 
   let consultationPage = 0;
   let consultationPeriod = 'upcoming';
   const consultationsPerPage = 6;
-  const today = new Date();
-  const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   function renderConsultations() {
     const from = document.getElementById('consult-date-from').value;
     const to = document.getElementById('consult-date-to').value;
@@ -148,7 +148,7 @@
       (!status || consultation.status === status)
     );
     const hasFilters = Boolean(from || to || search || status);
-    document.getElementById('total-count').textContent = role === 'patient' || hasFilters ? filtered.length : 159;
+    document.getElementById('total-count').textContent = hasFilters ? filtered.length : sortedConsultations.length;
     const periodLabels = { upcoming:'Próximas consultas', history:'Consultas anteriores', all:'Todas as consultas' };
     document.getElementById('consultation-results-title').textContent = periodLabels[consultationPeriod];
     document.getElementById('consultation-results-count').textContent = `${filtered.length} consulta(s) no filtro atual`;

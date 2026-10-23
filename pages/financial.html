@@ -19,10 +19,33 @@
   <div class="page-header financial-page-header">
     <div>
       <h1 class="page-title">Financeiro</h1>
-      <p class="page-subtitle" id="financial-subtitle">24 lançamento(s) no filtro atual · receita mensal R$ 4.566,67</p>
+      <p class="page-subtitle" id="financial-subtitle">Carregando lançamentos financeiros…</p>
     </div>
     <button class="btn btn-primary" id="btn-add-transaction" type="button" hidden>＋ Novo lançamento</button>
   </div>
+
+  <section class="card financial-open-panel" aria-labelledby="open-installments-title">
+    <header class="financial-open-heading">
+      <span class="financial-open-heading-icon" aria-hidden="true">▣</span>
+      <div>
+        <h2 id="open-installments-title">Parcelas em aberto</h2>
+        <p id="open-installments-summary" aria-live="polite"></p>
+      </div>
+    </header>
+    <div class="financial-open-controls">
+      <label class="financial-open-search">
+        <span aria-hidden="true">⌕</span>
+        <input type="search" id="open-installments-search" placeholder="Buscar por paciente, lançamento ou categoria" aria-label="Buscar parcelas em aberto">
+      </label>
+      <div class="financial-open-filters" role="group" aria-label="Filtrar parcelas em aberto">
+        <button class="financial-open-filter" type="button" data-open-filter="overdue" aria-pressed="false">Atrasadas</button>
+        <button class="financial-open-filter" type="button" data-open-filter="next7" aria-pressed="false">Próximos 7 dias</button>
+        <button class="financial-open-filter is-active" type="button" data-open-filter="next30" aria-pressed="true">Próximos 30 dias</button>
+        <button class="financial-open-filter" type="button" data-open-filter="all" aria-pressed="false">Todas em aberto</button>
+      </div>
+      <div class="financial-open-list" id="open-installments-list" aria-live="polite"></div>
+    </div>
+  </section>
 
   <section class="financial-summary" aria-labelledby="financial-summary-title">
     <header class="financial-section-heading">
@@ -242,6 +265,7 @@
   </div>
 </div>
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/charts.js"></script>
 <script src="../js/router.js"></script>
@@ -257,6 +281,7 @@
   const currentEmployee = currentRole === 'doctor' ? 'Dra. Andressa Gomide' : 'Secretaria';
   let editingTransactionId = null;
   let transactionPage = 0;
+  let openInstallmentFilter = 'next30';
   const transactionPageSize = 6;
   let transactions = TRANSACOES.map((transaction, index) => ({ ...transaction, id:transaction.id || 'demo-' + index }));
   try {
@@ -272,6 +297,9 @@
   function dateToIso(date) {
     const parts = String(date || '').split('/');
     return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : '';
+  }
+  function localDateIso(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
   function dateToDisplay(date) {
     const parts = String(date || '').split('-');
@@ -442,15 +470,19 @@
   }
 
   function refreshPaymentTotals() {
-    const monthlyTransactions = transactions.filter(transaction => transaction.data.endsWith('/09/2026'));
-    const monthlyRevenue = monthlyTransactions
+    const currentMonth = new Date();
+    const currentMonthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyTransactions = transactions.filter(transaction => dateToIso(transaction.data).startsWith(currentMonthKey));
+    const monthlyRevenue = transactions
       .filter(transaction => transaction.tipo === 'Receita')
-      .reduce((sum, transaction) => sum + ensurePaymentSchedule(transaction)
-        .filter(payment => payment.status === 'pago' && payment.paidAt && payment.paidAt.startsWith('2026-09'))
-        .reduce((subtotal, payment) => subtotal + payment.amount, 0), 0);
-    const monthlyExpenses = monthlyTransactions
-      .filter(transaction => transaction.tipo === 'Despesa' && transaction.status === 'pago')
-      .reduce((sum, transaction) => sum + transaction.valor, 0);
+      .flatMap(transaction => ensurePaymentSchedule(transaction))
+      .filter(payment => payment.status === 'pago' && payment.paidAt && payment.paidAt.startsWith(currentMonthKey))
+      .reduce((sum, payment) => sum + payment.amount, 0);
+    const monthlyExpenses = transactions
+      .filter(transaction => transaction.tipo === 'Despesa')
+      .flatMap(transaction => ensurePaymentSchedule(transaction))
+      .filter(payment => payment.status === 'pago' && payment.paidAt && payment.paidAt.startsWith(currentMonthKey))
+      .reduce((sum, payment) => sum + payment.amount, 0);
     const planTransactions = monthlyTransactions.filter(transaction => transaction.tipo === 'Receita');
     const monthResult = monthlyRevenue - monthlyExpenses;
     document.getElementById('month-revenue').textContent = formatCurrency(monthlyRevenue);
@@ -467,7 +499,7 @@
     const unpaidPayments = receivables.flatMap(transaction => ensurePaymentSchedule(transaction)
       .filter(payment => payment.status !== 'pago')
       .map(payment => ({ transaction, payment })));
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateIso();
     const overduePayments = unpaidPayments.filter(({ payment }) => payment.dueDate && payment.dueDate < today);
     const unpaidExpenses = transactions.filter(transaction => transaction.tipo === 'Despesa' && transaction.status !== 'pago');
     const activePlans = receivables.filter(transaction => paymentProgress(transaction).paid < paymentProgress(transaction).total);
@@ -485,12 +517,11 @@
     document.getElementById('settled-plans-count').textContent = `${settledPlans.length} quitado(s)`;
     if (isAdminView) {
       document.getElementById('financial-subtitle').textContent =
-        `${transactions.length} lançamento(s) no filtro atual · receita mensal ${formatCurrency(monthlyRevenue)}`;
+        `${transactions.length} ${transactions.length === 1 ? 'lançamento' : 'lançamentos'} no filtro atual · faturamento do mês ${formatCurrency(monthlyRevenue)}`;
     }
     renderFinancialBreakdowns();
+    renderOpenInstallments();
   }
-
-  refreshPaymentTotals();
 
   // Transactions
   const filterFields = [
@@ -552,7 +583,7 @@
       const paid = payments.filter(payment => payment.status === 'pago').reduce((sum, payment) => sum + payment.amount, 0);
       const pending = payments.filter(payment => payment.status !== 'pago').reduce((sum, payment) => sum + payment.amount, 0);
       const overdue = payments.filter(payment =>
-        payment.status !== 'pago' && payment.dueDate && payment.dueDate < new Date().toISOString().slice(0,10)
+        payment.status !== 'pago' && payment.dueDate && payment.dueDate < localDateIso()
         );
       const nextPayment = payments.find(payment => payment.status !== 'pago');
       const stateLabel = overdue.length ? 'Em atraso' : t.status === 'pago' ? 'Pago' : 'Pendente';
@@ -617,6 +648,95 @@
     }[character]));
   }
 
+  function renderOpenInstallments() {
+    const today = localDateIso();
+    const next7 = addDays(today, 7);
+    const next30 = addDays(today, 30);
+    const search = document.getElementById('open-installments-search').value.trim().toLocaleLowerCase('pt-BR');
+    const openPayments = transactions.flatMap(transaction => ensurePaymentSchedule(transaction)
+      .filter(payment => payment.status !== 'pago')
+      .map(payment => ({ transaction, payment })));
+    const overduePayments = openPayments.filter(({ payment }) => payment.dueDate && payment.dueDate < today);
+    const overdueTotal = overduePayments.reduce((sum, item) => sum + item.payment.amount, 0);
+    document.getElementById('open-installments-summary').textContent =
+      `${overduePayments.length} atrasadas somando ${formatCurrency(overdueTotal)} · ${openPayments.length} em aberto`;
+
+    const visiblePayments = openPayments
+      .filter(({ payment }) => {
+        if (openInstallmentFilter === 'overdue') return payment.dueDate && payment.dueDate < today;
+        if (openInstallmentFilter === 'next7') return payment.dueDate && payment.dueDate <= next7;
+        if (openInstallmentFilter === 'next30') return payment.dueDate && payment.dueDate <= next30;
+        return true;
+      })
+      .filter(({ transaction, payment }) => {
+        if (!search) return true;
+        return [
+          transaction.paciente,
+          transaction.descricao,
+          transaction.plano,
+          transaction.categoria,
+          payment.number,
+        ].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(search));
+      })
+      .sort((left, right) => String(left.payment.dueDate || '9999').localeCompare(String(right.payment.dueDate || '9999')));
+    const container = document.getElementById('open-installments-list');
+    container.innerHTML = visiblePayments.map(({ transaction, payment }) => {
+      const overdueDays = payment.dueDate && payment.dueDate < today
+        ? differenceInDays(payment.dueDate, today)
+        : 0;
+      const plan = (transaction.plano || transaction.tipoLancamento || transaction.tipo)
+        .replace(/\s+[—–-]\s+\d+\s*x\s*$/i, '');
+      const status = overdueDays
+        ? `<span class="financial-open-badge is-overdue">Atrasada há ${overdueDays} ${overdueDays === 1 ? 'dia' : 'dias'}</span>`
+        : '';
+      const destination = transaction.tipo === 'Despesa' ? 'A pagar' : 'A receber';
+      return `<article class="financial-open-item">
+        <span class="financial-open-item-icon${transaction.tipo === 'Despesa' ? ' is-expense' : ''}" aria-hidden="true">${transaction.tipo === 'Despesa' ? '↗' : '↓'}</span>
+        <div class="financial-open-item-copy">
+          <strong class="financial-open-patient">${escapeHTML(transaction.paciente || 'Clínica Lapidar')}</strong>
+          <p>Parcela ${payment.number}/${payment.total} · ${formatCurrency(payment.amount)} · vence em ${escapeHTML(payment.dueDate ? dateToDisplay(payment.dueDate) : '—')}</p>
+          <p>${escapeHTML([plan, transaction.paciente].filter(Boolean).join(' — '))}</p>
+          <div class="financial-open-badges">${status}<span class="financial-open-badge is-destination">${destination}</span></div>
+        </div>
+        ${isAdminView ? `<div class="financial-open-actions">
+          <button class="financial-open-register" type="button" data-open-register="${escapeHTML(transaction.id)}">▣ Registrar</button>
+          <button class="financial-open-edit" type="button" data-open-edit="${escapeHTML(transaction.id)}" aria-label="Editar ${escapeHTML(transaction.paciente || 'lançamento')}">✎</button>
+        </div>` : ''}
+      </article>`;
+    }).join('') || '<p class="financial-open-empty">Nenhuma parcela em aberto encontrada com este filtro.</p>';
+    container.querySelectorAll('[data-open-register]').forEach(button => {
+      button.addEventListener('click', () => openInstallments(button.dataset.openRegister));
+    });
+    container.querySelectorAll('[data-open-edit]').forEach(button => {
+      button.addEventListener('click', () => openTransactionEditor(button.dataset.openEdit));
+    });
+  }
+
+  function addDays(iso, amount) {
+    const [year, month, day] = iso.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + amount);
+    return localDateIso(date);
+  }
+
+  function differenceInDays(start, end) {
+    const parse = value => value.split('-').map(Number);
+    const [startYear, startMonth, startDay] = parse(start);
+    const [endYear, endMonth, endDay] = parse(end);
+    return Math.floor((Date.UTC(endYear, endMonth - 1, endDay) - Date.UTC(startYear, startMonth - 1, startDay)) / 86400000);
+  }
+
+  document.getElementById('open-installments-search').addEventListener('input', renderOpenInstallments);
+  document.querySelectorAll('[data-open-filter]').forEach(button => button.addEventListener('click', () => {
+    openInstallmentFilter = button.dataset.openFilter;
+    document.querySelectorAll('[data-open-filter]').forEach(option => {
+      const selected = option === button;
+      option.classList.toggle('is-active', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    });
+    renderOpenInstallments();
+  }));
+
   function openTransactionEditor(id) {
     if (!isAdminView) return;
     const transaction = id ? transactions.find(item => String(item.id) === String(id)) : null;
@@ -664,7 +784,7 @@
       ? 'Formato: pagas/total. Altere o total após a barra.'
       : '';
     document.getElementById('tx-payment-date').value = transaction && payments[0] && payments[0].dueDate
-      ? payments[0].dueDate : new Date().toISOString().slice(0,10);
+      ? payments[0].dueDate : localDateIso();
     document.getElementById('tx-payment-method').value = transaction && payments[0]
       ? payments[0].paymentMethod || 'Não informado' : 'Pix';
     document.getElementById('tx-user').value = transaction ? transaction.usuario : '';
@@ -706,7 +826,7 @@
     document.getElementById('installments-feedback').textContent = '';
     const body = document.getElementById('installments-body');
     body.innerHTML = payments.map(payment => {
-      const overdue = payment.status !== 'pago' && payment.dueDate && payment.dueDate < new Date().toISOString().slice(0,10);
+      const overdue =       payment.status !== 'pago' && payment.dueDate && payment.dueDate < localDateIso();
       const paymentState = payment.status === 'pago'
         ? `Pago em ${escapeHTML(payment.paidAt ? dateToDisplay(payment.paidAt) : 'data não informada')} · ${escapeHTML(payment.paymentMethod || 'forma não informada')}`
         : overdue ? 'Em atraso' : 'Pendente';
@@ -855,6 +975,7 @@
     event.currentTarget.textContent = expanded ? 'Mais filtros' : 'Menos filtros';
   });
 
+  refreshPaymentTotals();
   renderTransactions();
   }
 </script>

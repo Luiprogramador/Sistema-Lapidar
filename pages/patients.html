@@ -57,7 +57,9 @@
   </section>
 
   <header class="patient-list-heading">
-    <span class="patient-list-icon" aria-hidden="true">♟</span>
+    <span class="patient-list-icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </span>
     <div>
       <h2>Lista de pacientes</h2>
       <p id="patients-count" aria-live="polite"></p>
@@ -178,6 +180,7 @@
   </div>
 </div>
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
@@ -243,6 +246,18 @@
           const patientId = Number(button.dataset.patientProfile);
           if (Router.getRole() === 'secretary') showPatientQuickModal(patientId);
           else Router.navigate('patient-profile', { patientId });
+        });
+      });
+      grid.querySelectorAll('[data-patient-message]').forEach(button => {
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          Router.navigate('messages', { patientId:Number(button.dataset.patientMessage) });
+        });
+      });
+      grid.querySelectorAll('[data-patient-details]').forEach(button => {
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          Router.navigate('patient-detail', { patientId:Number(button.dataset.patientDetails) });
         });
       });
     }

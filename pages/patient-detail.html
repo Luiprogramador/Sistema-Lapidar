@@ -390,6 +390,7 @@
   </div>
 </div>
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/charts.js"></script>
 <script src="../js/router.js"></script>
@@ -1322,12 +1323,12 @@
   document.getElementById('tab-risco').innerHTML = `
     <div class="grid-responsive-2" style="gap:20px;margin-bottom:20px;">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;">
           <div>
             <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Estratificação de Risco Cardiovascular</h4>
               <p style="font-size:11px;color:var(--text-muted);">${rv.data ? 'Avaliação informada pela médica · ' + riskDateLabel(rv.data) : 'Dados registrados pela médica; sem cálculo automático.'}</p>
           </div>
-            <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;">${rv.nivel || 'Não informado'}</span>
+            <span class="risco-badge ${riscoClass[rv.nivel]||'risco-inter'}" style="font-size:13px;padding:6px 14px;white-space:nowrap;flex-shrink:0;">${rv.nivel || 'Não informado'}</span>
             ${isDoctorView ? `<button class="btn btn-subtle btn-sm" id="toggle-risk-release">${riskReleased ? 'Revogar acesso da paciente' : 'Liberar para paciente'}</button>` : ''}
         </div>
 

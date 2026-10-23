@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eventos — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <link rel="stylesheet" href="../css/extra-pages.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter extra-page">
+  <div class="page-header event-page-header"><div><h1 class="page-title">Eventos</h1><p class="page-subtitle">Encontros, jantares e palestras do Lapidar Society</p></div>
+    <div id="events-manager-actions" class="extra-actions" hidden><button id="new-event-button" class="btn btn-primary" type="button">＋ Novo evento</button></div>
+  </div>
+  <div id="events-mobile-switch" class="events-mobile-switch" role="group" aria-label="Visualização dos eventos">
+    <button type="button" class="btn btn-outline btn-sm active" data-events-view="list">Próximos</button>
+    <button type="button" class="btn btn-outline btn-sm" data-events-view="calendar">Calendário</button>
+  </div>
+  <div id="events-content" data-view="list">
+    <section id="events-list-view">
+      <div id="events-featured"></div>
+      <div id="events-summary" class="extra-summary event-summary"></div>
+      <div class="event-section-heading"><h2 class="event-section-title">Próximos eventos</h2><span id="upcoming-events-count" class="event-count"></span></div>
+      <div id="upcoming-events" class="event-grid"></div>
+      <div id="past-events-section"><h2 class="event-section-title">Já realizados</h2><div id="past-events" class="event-grid"></div></div>
+    </section>
+    <section id="events-calendar-section">
+      <h2 class="event-section-title">Calendário</h2>
+      <div class="event-layout">
+        <section class="card event-calendar-card"><h3 class="card-title">Calendário</h3><div id="events-calendar"></div></section>
+        <section class="card event-day-card"><h3 id="selected-day-title" class="event-day-title"></h3><div id="selected-day-events" class="event-list"></div></section>
+      </div>
+    </section>
+  </div>
+</main>
+<dialog id="event-dialog" class="extra-modal">
+  <form id="event-form" class="extra-dialog-form">
+    <header><h2>Novo evento</h2><button type="button" class="btn btn-ghost" data-dialog-close aria-label="Fechar">×</button></header>
+    <div class="extra-dialog-body">
+      <label class="form-group"><span class="form-label">Nome do evento</span><input class="form-input" name="title" required maxlength="120"></label>
+      <label class="form-group"><span class="form-label">Descrição</span><textarea class="form-textarea" name="description" rows="3"></textarea></label>
+      <label class="form-group"><span class="form-label">Tipo</span><select class="form-select" name="type"><option value="encontro">Encontro</option><option value="jantar">Jantar</option><option value="palestra">Palestra</option><option value="workshop">Workshop</option></select></label>
+      <label class="form-group"><span class="form-label">Data e hora</span><input class="form-input" name="start" type="datetime-local" required></label>
+      <label class="form-group"><span class="form-label">Local</span><input class="form-input" name="location" maxlength="150"></label>
+      <label class="form-group"><span class="form-label">Vagas (0 = ilimitadas)</span><input class="form-input" name="capacity" type="number" min="0" value="0"></label>
+    </div>
+    <footer><button type="button" class="btn btn-outline" data-dialog-close>Cancelar</button><button type="submit" class="btn btn-primary">Salvar evento</button></footer>
+  </form>
+</dialog>
+<dialog id="event-detail-dialog" class="extra-modal"><div id="event-detail-content"></div></dialog>
+<script src="../js/demo-data.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script src="../js/extra-pages.js"></script>
+<script>initShell('events'); initExtraPage('events');</script>
+</body>
+</html>

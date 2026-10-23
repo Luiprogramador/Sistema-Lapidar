@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#351116">
+  <title>Lapidar Society — Assinatura</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <style>
+    body { min-width: 320px; background: var(--bege); }
+    .society-signup {
+      display: grid;
+      min-height: 100vh;
+      grid-template-columns: minmax(340px, 41.7%) minmax(0, 1fr);
+      color: var(--text-primary);
+    }
+    .society-intro {
+      position: sticky;
+      top: 0;
+      display: flex;
+      height: 100vh;
+      min-height: 620px;
+      flex-direction: column;
+      padding: 92px 56px 48px;
+      overflow: hidden;
+      background: #351116;
+      color: var(--bege);
+    }
+    .society-back {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      padding: 10px 0;
+      background: transparent;
+      color: var(--bege);
+      font: 700 14px var(--font-sans);
+      text-decoration: none;
+    }
+    .society-back svg { width: 16px; height: 16px; }
+    .society-intro-copy { margin-top: 62px; }
+    .society-wordmark {
+      color: var(--bege);
+      font: 400 36px/1 var(--font-serif);
+      letter-spacing: -.055em;
+    }
+    .society-kicker {
+      margin-top: 20px;
+      color: var(--dourado-light);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .34em;
+    }
+    .society-intro h1 {
+      max-width: 360px;
+      margin: 17px 0 12px;
+      color: var(--bege);
+      font: 400 clamp(38px, 4vw, 48px)/1.08 var(--font-serif);
+    }
+    .society-intro-rule { width: 40px; height: 2px; background: var(--dourado); }
+    .society-intro-description {
+      max-width: 340px;
+      margin-top: 17px;
+      color: rgba(244, 239, 231, .82);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .society-benefits {
+      display: grid;
+      gap: 13px;
+      margin: 24px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .society-benefits li { display: flex; align-items: center; gap: 12px; color: rgba(244,239,231,.9); font-size: 14px; }
+    .society-benefits svg { width: 20px; height: 20px; flex: 0 0 20px; color: var(--dourado-light); }
+    .society-main {
+      min-width: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 40px 48px 44px;
+      background: var(--bege);
+      scrollbar-color: #c8b8aa transparent;
+      scrollbar-width: thin;
+    }
+    .society-main-inner { width: min(100%, 462px); margin: 0 auto; }
+    .society-step-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px;
+      color: #2d2524;
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .society-step-number {
+      display: grid;
+      width: 27px;
+      height: 27px;
+      flex: 0 0 27px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--vinho);
+      color: white;
+      font-size: 13px;
+    }
+    .society-plans { display: grid; gap: 18px; }
+    .society-plan {
+      padding: 27px 24px 24px;
+      border: 1px solid #ddcdbd;
+      border-radius: 17px;
+      background: #fffdf8;
+      box-shadow: 0 2px 9px rgba(65, 42, 32, .07);
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .society-plan.is-selected { border-color: var(--vinho); box-shadow: 0 0 0 2px rgba(91,35,51,.12), 0 3px 12px rgba(65,42,32,.09); }
+    .society-plan-heading { display: flex; align-items: center; gap: 14px; }
+    .society-plan-icon {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      place-items: center;
+      border: 1px solid #d7c9c4;
+      border-radius: 12px;
+      background: #f1e9e7;
+      color: var(--vinho);
+    }
+    .society-plan-icon svg { width: 22px; height: 22px; }
+    .society-plan-heading h2 { margin: 0; color: #292323; font-size: 19px; font-weight: 800; line-height: 1.25; }
+    .society-plan-heading p { margin: 4px 0 0; color: #615958; font-size: 15px; }
+    .society-plan-divider { height: 1px; margin: 21px 0 17px; background: #d8cbbb; }
+    .society-price { display: flex; align-items: baseline; gap: 5px; }
+    .society-price strong { color: var(--vinho); font-size: 25px; font-weight: 850; letter-spacing: -.025em; }
+    .society-price span { color: #514a48; font-size: 13px; }
+    .society-plan-description { margin: 9px 0 11px; color: #5e5654; font-size: 13px; line-height: 1.45; }
+    .society-plan-features { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .society-plan-features li { display: flex; align-items: flex-start; gap: 10px; color: #564e4c; font-size: 13px; line-height: 1.4; }
+    .society-plan-features svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 1px; color: var(--vinho); }
+    .society-plan-select {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 16px;
+      border: 1px solid #d4c4b5;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--vinho);
+      font: 750 14px var(--font-sans);
+      cursor: pointer;
+    }
+    .society-plan-select:hover { border-color: var(--vinho); background: #fbf7f3; }
+    .society-plan.is-selected .society-plan-select { border-color: var(--vinho); background: var(--vinho); color: white; }
+    .society-details { margin-top: 20px; scroll-margin-top: 18px; }
+    .society-form { display: grid; gap: 12px; }
+    .society-field input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 56px;
+      padding: 0 20px;
+      border: 1px solid #d6c7b9;
+      border-radius: 13px;
+      outline: none;
+      background: #fffdfa;
+      color: var(--text-primary);
+      font: 14px var(--font-sans);
+      letter-spacing: .035em;
+    }
+    .society-field input::placeholder { color: #706967; opacity: 1; }
+    .society-field input:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(91,35,51,.1); }
+    .society-password { position: relative; }
+    .society-password input { padding-right: 56px; }
+    .society-toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 11px;
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      color: #615958;
+      cursor: pointer;
+    }
+    .society-toggle-password svg { width: 23px; height: 23px; }
+    .society-terms { display: flex; align-items: center; gap: 18px; margin: 9px 10px 0; color: #5a5250; font-size: 13px; line-height: 1.4; cursor: pointer; }
+    .society-terms input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: var(--vinho); }
+    .society-submit {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 1px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--vinho);
+      color: white;
+      font: 750 14px var(--font-sans);
+      cursor: pointer;
+    }
+    .society-submit:hover { background: var(--vinho-dark); }
+    .society-demo-note { margin: 0; color: #625b59; font-size: 12px; line-height: 1.5; }
+    .society-feedback { min-height: 18px; margin: 0; color: var(--red-text); font-size: 12px; }
+    .society-feedback.is-success { color: var(--oliva); }
+    @media (max-width: 760px) {
+      .society-signup { grid-template-columns: 1fr; }
+      .society-intro { position: relative; height: auto; min-height: 0; padding: 24px 26px 28px; }
+      .society-intro-copy { margin-top: 24px; }
+      .society-wordmark { font-size: 29px; }
+      .society-kicker { margin-top: 12px; }
+      .society-intro h1 { max-width: 560px; margin-top: 10px; font-size: 36px; }
+      .society-intro-description { margin-top: 10px; font-size: 13px; }
+      .society-benefits { grid-template-columns: 1fr; gap: 8px; margin-top: 14px; }
+      .society-benefits li { font-size: 12px; }
+      .society-main { height: auto; min-height: 0; overflow: visible; padding: 28px 22px 36px; }
+      .society-plan { padding: 22px 18px 18px; }
+      .society-plan-heading h2 { font-size: 17px; }
+      .society-plan-description, .society-plan-features li { font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="society-signup">
+    <aside class="society-intro">
+      <a class="society-back" href="login.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/><path d="M9 12h12"/></svg>
+        Voltar ao login
+      </a>
+      <div class="society-intro-copy">
+        <div class="society-wordmark">LAPIDAR</div>
+        <div class="society-kicker">SOCIETY</div>
+        <h1>Assine o<br>Lapidar Society</h1>
+        <div class="society-intro-rule"></div>
+        <p class="society-intro-description">Conteúdos, meditações e eventos da Lapidar, onde você estiver.</p>
+        <ul class="society-benefits">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"/><path d="M4 6h16M8 10h8M8 13h8"/></svg>Conteúdos, e-books e meditações</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15ZM5 16l1 2.5L8.5 19.5 6 20.5 5 23l-1-2.5-2.5-1L4 18.5 5 16Z"/></svg>Eventos e encontros da comunidade</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h6a4 4 0 0 1 4 4v12a4 4 0 0 0-4-4H3V5ZM21 5h-4a4 4 0 0 0-4 4v12a4 4 0 0 1 4-4h4V5Z"/><path d="m15 9 2 2 4-4"/></svg>Diário pessoal só seu</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="society-main">
+      <div class="society-main-inner">
+        <section aria-labelledby="society-plan-step">
+          <h2 class="society-step-heading" id="society-plan-step"><span class="society-step-number">1</span>Escolha seu plano</h2>
+          <div class="society-plans">
+            <article class="society-plan" data-plan="inicial">
+              <div class="society-plan-heading">
+                <span class="society-plan-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="m9 13-1 8 4-2 4 2-1-8"/><path d="m12 5 .8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2L12 5Z"/></svg></span>
+                <div><h2>Society Inicial</h2><p>Society Inicial</p></div>
+              </div>
+              <div class="society-plan-divider"></div>
+              <div class="society-price"><strong>R$ 49,90</strong><span>/mês</span></div>
+              <p class="society-plan-description">Conteúdos e eventos do Lapidar, onde você estiver.</p>
+              <ul class="society-plan-features">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Biblioteca de e-books, vídeos, meditações e sites</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Eventos abertos aos assinantes</li>
+              </ul>
+              <button class="society-plan-select" type="button" data-select-plan="inicial" aria-pressed="false">Escolher</button>
+            </article>
+
+            <article class="society-plan" data-plan="plus">
+              <div class="society-plan-heading">
+                <span class="society-plan-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="m9 13-1 8 4-2 4 2-1-8"/><path d="m12 5 .8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2L12 5Z"/></svg></span>
+                <div><h2>Society Plus</h2><p>Society Plus</p></div>
+              </div>
+              <div class="society-plan-divider"></div>
+              <div class="society-price"><strong>R$ 99,90</strong><span>/mês</span></div>
+              <p class="society-plan-description">O plano completo, o mesmo das pacientes do Lapidar.</p>
+              <ul class="society-plan-features">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Tudo do Society Inicial</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Conteúdos exclusivos</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Eventos exclusivos</li>
+              </ul>
+              <button class="society-plan-select" type="button" data-select-plan="plus" aria-pressed="false">Escolher</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="society-details" id="society-details" aria-labelledby="society-details-step">
+          <h2 class="society-step-heading" id="society-details-step"><span class="society-step-number">2</span>Seus dados</h2>
+          <form class="society-form" id="society-signup-form">
+            <input type="hidden" id="selected-society-plan" value="">
+            <label class="society-field">
+              <span class="sr-only">Nome completo</span>
+              <input name="name" type="text" autocomplete="name" placeholder="Nome completo" required>
+            </label>
+            <label class="society-field">
+              <span class="sr-only">E-mail</span>
+              <input name="email" type="email" autocomplete="email" placeholder="E-mail" required>
+            </label>
+            <label class="society-field society-password">
+              <span class="sr-only">Senha</span>
+              <input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="Senha" required>
+              <button class="society-toggle-password" type="button" aria-label="Mostrar senha" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </label>
+            <label class="society-field society-password">
+              <span class="sr-only">Repita a senha</span>
+              <input name="passwordConfirmation" type="password" autocomplete="new-password" minlength="8" placeholder="Repita a senha" required>
+              <button class="society-toggle-password" type="button" aria-label="Mostrar senha" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </label>
+            <label class="society-terms">
+              <input name="terms" type="checkbox" required>
+              <span>Li e aceito os termos de uso e a política de privacidade (LGPD).</span>
+            </label>
+            <button class="society-submit" type="submit">Assinar e entrar</button>
+            <p class="society-demo-note">Nesta fase de testes a cobrança ainda não está ligada: a assinatura é ativada na hora, sem pagamento.</p>
+            <p class="society-feedback" id="society-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const signupForm = document.getElementById('society-signup-form');
+    const selectedPlanInput = document.getElementById('selected-society-plan');
+    const signupFeedback = document.getElementById('society-feedback');
+
+    document.querySelectorAll('[data-select-plan]').forEach(button => {
+      button.addEventListener('click', () => {
+        const plan = button.dataset.selectPlan;
+        selectedPlanInput.value = plan;
+        document.querySelectorAll('.society-plan').forEach(card => {
+          const selected = card.dataset.plan === plan;
+          card.classList.toggle('is-selected', selected);
+          const selectButton = card.querySelector('[data-select-plan]');
+          selectButton.textContent = selected ? 'Selecionado' : 'Escolher';
+          selectButton.setAttribute('aria-pressed', String(selected));
+        });
+        signupFeedback.textContent = '';
+        document.getElementById('society-details').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    document.querySelectorAll('.society-toggle-password').forEach(button => {
+      button.addEventListener('click', () => {
+        const input = button.parentElement.querySelector('input');
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        button.setAttribute('aria-label', visible ? 'Mostrar senha' : 'Ocultar senha');
+        button.setAttribute('aria-pressed', String(!visible));
+      });
+    });
+
+    signupForm.addEventListener('submit', event => {
+      event.preventDefault();
+      signupFeedback.classList.remove('is-success');
+      if (!selectedPlanInput.value) {
+        signupFeedback.textContent = 'Escolha um plano para continuar.';
+        document.querySelector('[data-select-plan="inicial"]').focus();
+        return;
+      }
+      const password = signupForm.elements.password.value;
+      const confirmation = signupForm.elements.passwordConfirmation.value;
+      if (password !== confirmation) {
+        signupFeedback.textContent = 'As senhas informadas não coincidem.';
+        signupForm.elements.passwordConfirmation.focus();
+        return;
+      }
+      signupFeedback.classList.add('is-success');
+      signupFeedback.textContent = 'Cadastro demonstrativo validado. Nenhuma cobrança foi realizada e os dados não foram armazenados.';
+    });
+  </script>
+</body>
+</html>

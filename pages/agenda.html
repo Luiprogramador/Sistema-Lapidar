@@ -13,7 +13,7 @@
   <style>
     .agenda-layout {
       display: grid;
-      grid-template-columns: 340px 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
     }
     .agenda-header-actions {
@@ -47,7 +47,19 @@
       padding-left: 14px;
       border-left: 5px solid var(--vinho);
     }
-    .agenda-overview-heading h2 { color: var(--text-primary); font: 700 22px/1.2 var(--font-serif); }
+    .agenda-overview-heading h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-primary);
+      font: 700 22px/1.2 var(--font-serif);
+    }
+    .agenda-overview-heading h2::before {
+      width: 24px;
+      height: 24px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B2333' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19h16M6 16v-4h3v4M11 16V8h3v8M16 16V4h3v12'/%3E%3C/svg%3E") center / contain no-repeat;
+      content: "";
+    }
     .agenda-overview-heading p { margin-top: 3px; color: var(--text-secondary); font-size: 16px; }
     .agenda-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
     .agenda-overview-card {
@@ -113,6 +125,31 @@
       transition: var(--transition);
     }
     .cal-nav-btn:hover { background: var(--bege); color: var(--vinho); }
+    .agenda-day-section { margin-top: 24px; }
+    .agenda-day-section > .dashboard-section-heading { margin-bottom: 16px; }
+    .main-content > #round2-date-filter { display: none !important; }
+    .agenda-calendar-card { padding: 22px; }
+    .agenda-calendar-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .agenda-calendar-heading .section-heading-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f1e8e8;
+      font-size: 22px;
+    }
     @media (max-width: 900px) {
       .agenda-layout { grid-template-columns: 1fr; }
     }
@@ -145,8 +182,21 @@
       align-items: center;
       gap: 8px 12px;
       min-width: 0;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #f5e9da;
     }
-    .consult-time { grid-area: time; }
+    .consult-time {
+      grid-area: time;
+      padding: 12px 8px;
+      border-radius: 10px;
+      background: #e8d6c8;
+      color: var(--vinho);
+      font-size: 17px;
+      font-weight: 750;
+      text-align: center;
+    }
     .consult-details { grid-area: details; min-width: 0; }
     .consult-name { line-height: 1.35; overflow-wrap: anywhere; }
     .consult-tipo { margin-top: 2px; line-height: 1.35; overflow-wrap: anywhere; }
@@ -161,7 +211,7 @@
         gap: 6px 10px;
         padding: 12px;
       }
-      .consult-time { align-self: start; padding-top: 2px; }
+      .consult-time { align-self: start; padding: 10px 6px; font-size: 15px; }
       .consult-badge { justify-self: start; }
       .consult-actions { justify-content: flex-start; }
     }
@@ -228,9 +278,18 @@
     </div>
   </section>
 
+  <section class="agenda-day-section" aria-labelledby="agenda-day-heading">
+    <header class="dashboard-section-heading">
+      <span class="section-heading-icon" aria-hidden="true">▧</span>
+      <div><h2 id="agenda-day-heading">Agenda do dia</h2></div>
+    </header>
   <div class="agenda-layout">
     <!-- Calendário -->
-    <div class="card" style="align-self:start;">
+    <div class="card agenda-calendar-card" style="align-self:start;">
+      <div class="agenda-calendar-heading">
+        <span class="section-heading-icon" aria-hidden="true">▦</span>
+        <strong>Calendário</strong>
+      </div>
       <div class="cal-nav">
         <button class="cal-nav-btn" id="prev-month">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -274,6 +333,7 @@
       </div>
     </div>
   </div>
+  </section>
 </main>
 
 
@@ -333,6 +393,7 @@
   </div>
 </div>
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>

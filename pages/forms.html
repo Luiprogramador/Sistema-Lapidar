@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulários — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <link rel="stylesheet" href="../css/extra-pages.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter extra-page">
+  <div class="page-header forms-page-header"><h1 class="page-title">Formulários</h1><button id="new-template-button" class="btn btn-primary" type="button" hidden>＋ Novo formulário</button></div>
+  <section id="forms-received-content" class="forms-received-content">
+    <article class="card"><h2 class="form-subsection-title">Para responder</h2><div id="forms-to-answer" class="form-list"></div></article>
+    <article id="forms-completed-section" class="card" hidden><h2 class="form-subsection-title">Já respondidos</h2><div id="forms-completed" class="form-list"></div></article>
+  </section>
+  <section id="forms-staff-content" hidden>
+    <div id="forms-summary" class="extra-summary"></div>
+    <h2 class="form-subsection-title">Modelos</h2>
+    <div id="form-templates" class="form-list"></div>
+    <h2 class="form-subsection-title">Enviados e respostas</h2>
+    <div class="form-toolbar"><input id="forms-query" class="form-input" type="search" placeholder="Buscar por formulário ou paciente"><button id="forms-waiting-filter" class="btn btn-outline btn-sm" type="button" aria-pressed="false">Só aguardando</button></div>
+    <div id="staff-form-submissions" class="form-list"></div>
+    <nav id="forms-pagination" class="extra-pagination" aria-label="Paginação de formulários"></nav>
+  </section>
+  <p id="extra-feedback" class="extra-feedback" role="status"></p>
+</main>
+<dialog id="forms-dialog" class="extra-modal"></dialog>
+<script src="../js/demo-data.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script src="../js/extra-pages.js"></script>
+<script>initShell('forms'); initExtraPage('forms');</script>
+</body>
+</html>

@@ -21,11 +21,25 @@
     <p class="page-subtitle" id="today-date"></p>
   </div>
 
+  <div class="dashboard-doctor-filter">
+    <label for="dashboard-doctor-filter">Médico responsável</label>
+    <div class="dashboard-doctor-filter-control">
+      <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 4V2h6v2M4 8h16v13H4zM12 11v6M9 14h6"/>
+      </svg>
+      <select id="dashboard-doctor-filter" aria-label="Filtrar por médico responsável">
+        <option>Todos os médicos</option>
+        <option>Dra. Andressa Gomide</option>
+        <option>Dra. Helena Prado</option>
+      </select>
+      <span aria-hidden="true">⌃<br>⌄</span>
+    </div>
+  </div>
+
   <!-- Stat cards -->
   <section aria-labelledby="dashboard-summary-title" style="margin-bottom:20px;">
     <div style="margin-bottom:12px;">
       <h2 id="dashboard-summary-title" style="font-size:17px;font-family:var(--font-serif);color:var(--vinho);">Resumo geral</h2>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Fotografia da carteira: quantas pacientes a clínica acompanha, como está a semana e o que pede atenção</p>
     </div>
   <div class="grid-responsive-4 dashboard-summary-grid" style="gap:12px;margin-bottom:20px;">
     <button class="card-stat stagger-1 dashboard-stat" type="button" data-dashboard-action="patients">
@@ -180,6 +194,7 @@
 </main>
 
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/charts.js"></script>
 <script src="../js/router.js"></script>
@@ -193,18 +208,56 @@
   // Date
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' }) + ' · visão geral da clínica';
-  document.getElementById('total-patients-count').textContent = PACIENTES.length;
-  const activePatients = PACIENTES.filter(patient => patient.ativo !== false && patient.status !== 'Inativa').length;
-  document.getElementById('active-patients-count').textContent = activePatients;
-  document.getElementById('active-patients-percent').textContent = `${PACIENTES.length ? Math.round(activePatients / PACIENTES.length * 100) : 0}% da carteira em acompanhamento`;
-  document.getElementById('weekly-consultations-count').textContent = CONSULTAS_SEMANA.reduce((total, weekday) => total + weekday.n, 0);
-  document.getElementById('clinical-alerts-count').textContent = String(ALERTAS.length);
-  document.getElementById('clinical-alerts-sub').textContent = `em ${activePatients} paciente(s) · abaixo, por tipo`;
-  if (Router.getRole() === 'secretary') {
-    document.getElementById('clinical-alerts-count').textContent =
-      String(ALERTAS.filter(alert => alert.tipo === 'Exames pendentes').length);
-    document.getElementById('clinical-alerts-sub').textContent = 'exames pendentes para acompanhamento';
+  const doctorFilter = document.getElementById('dashboard-doctor-filter');
+  const activeDoctors = (LAPIDAR_DEMO_DATA.equipe_clinica.funcionarios || [])
+    .filter(member => member.cargo === 'medica' && member.situacao === 'ativo');
+  doctorFilter.replaceChildren(new Option('Todos os médicos', ''));
+  activeDoctors.forEach(member => doctorFilter.add(new Option(member.nome, member.id)));
+  let selectedDoctorId = doctorFilter.value;
+  const getVisiblePatients = () => selectedDoctorId
+    ? PACIENTES.filter(patient => (patient.medicasIds || []).includes(selectedDoctorId))
+    : PACIENTES;
+  const isPatientVisible = patient => !selectedDoctorId ||
+    Boolean(patient && (patient.medicasIds || []).includes(selectedDoctorId));
+  const isConsultationVisible = consultation => {
+    if (!selectedDoctorId) return true;
+    if (consultation.medicaId) return consultation.medicaId === selectedDoctorId;
+    return isPatientVisible(PACIENTES.find(patient =>
+      Number(patient.id) === Number(consultation.pacienteId) || patient.nome === consultation.paciente
+    ));
+  };
+  const getVisibleAlerts = () => {
+    const alerts = Router.getRole() === 'secretary'
+      ? ALERTAS.filter(alert => alert.tipo === 'Exames pendentes')
+      : ALERTAS;
+    return selectedDoctorId
+      ? alerts.filter(alert => isPatientVisible(PACIENTES.find(patient => patient.nome === alert.paciente)))
+      : alerts;
+  };
+  function renderDashboardSummary() {
+    const visiblePatients = getVisiblePatients();
+    const activePatients = visiblePatients.filter(patient => patient.ativo !== false && patient.status !== 'Inativa').length;
+    const today = new Date();
+    const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    const weeklyConsultations = CONSULTAS.filter(consultation => {
+      const date = new Date(`${consultation.data}T12:00:00`);
+      return date >= weekStart && date < weekEnd && consultation.status !== 'cancelada' &&
+        isConsultationVisible(consultation);
+    }).length;
+    const alerts = getVisibleAlerts();
+    document.getElementById('total-patients-count').textContent = visiblePatients.length;
+    document.getElementById('active-patients-count').textContent = activePatients;
+    document.getElementById('active-patients-percent').textContent =
+      `${visiblePatients.length ? Math.round(activePatients / visiblePatients.length * 100) : 0}% da carteira em acompanhamento`;
+    document.getElementById('weekly-consultations-count').textContent = weeklyConsultations;
+    document.getElementById('clinical-alerts-count').textContent = String(alerts.length);
+    document.getElementById('clinical-alerts-sub').textContent = Router.getRole() === 'secretary'
+      ? 'exames pendentes para acompanhamento'
+      : `em ${activePatients} paciente(s) · abaixo, por tipo`;
   }
+  renderDashboardSummary();
   if (Router.getRole() === 'secretary') {
     document.getElementById('protocol-distribution-card').hidden = true;
     document.getElementById('protocol-accordion').hidden = true;
@@ -266,23 +319,31 @@
     }
     return { patient, dates:[...dates].sort() };
   });
-  const diaryCheckinsToday = diaryRecordsByPatient.filter(record => record.dates.includes(diaryTodayIso)).length;
-  const diaryCheckinsWeek = diaryRecordsByPatient.filter(record => record.dates.some(date => date >= diaryWeekStartIso && date <= diaryTodayIso)).length;
-  const diaryAverage = diaryPatients.length
-    ? diaryRecordsByPatient.reduce((sum, record) => sum + record.dates.filter(date => date >= diaryWeekStartIso && date <= diaryTodayIso).length, 0) / diaryPatients.length
-    : 0;
-  const diaryNoRecent = diaryRecordsByPatient
-    .filter(record => !record.dates.some(date => date >= diaryRecentStartIso && date <= diaryTodayIso))
-    .sort((a, b) =>
-      (a.dates[a.dates.length - 1] || '').localeCompare(b.dates[b.dates.length - 1] || '') ||
-      a.patient.nome.localeCompare(b.patient.nome)
-    );
-  document.getElementById('diary-checkins-today').textContent = diaryCheckinsToday;
-  document.getElementById('diary-checkins-today-sub').textContent = `de ${diaryPatients.length} pacientes no diário`;
-  document.getElementById('diary-checkins-week').textContent = diaryCheckinsWeek;
-  document.getElementById('diary-average-consistency').textContent = `${diaryAverage.toFixed(1).replace('.', ',')} / 7`;
-  document.getElementById('diary-no-recent-checkin').textContent = diaryNoRecent.length;
-  document.querySelector('.diary-metric-risk').classList.toggle('diary-metric-followup', diaryNoRecent.length === 0);
+  function renderDiarySummary() {
+    const visibleRecords = diaryRecordsByPatient.filter(record => isPatientVisible(record.patient));
+    const diaryCheckinsToday = visibleRecords.filter(record => record.dates.includes(diaryTodayIso)).length;
+    const diaryCheckinsWeek = visibleRecords.filter(record =>
+      record.dates.some(date => date >= diaryWeekStartIso && date <= diaryTodayIso)
+    ).length;
+    const diaryAverage = visibleRecords.length
+      ? visibleRecords.reduce((sum, record) =>
+        sum + record.dates.filter(date => date >= diaryWeekStartIso && date <= diaryTodayIso).length, 0
+      ) / visibleRecords.length
+      : 0;
+    const diaryNoRecent = visibleRecords
+      .filter(record => !record.dates.some(date => date >= diaryRecentStartIso && date <= diaryTodayIso))
+      .sort((a, b) =>
+        (a.dates[a.dates.length - 1] || '').localeCompare(b.dates[b.dates.length - 1] || '') ||
+        a.patient.nome.localeCompare(b.patient.nome)
+      );
+    document.getElementById('diary-checkins-today').textContent = diaryCheckinsToday;
+    document.getElementById('diary-checkins-today-sub').textContent = `de ${visibleRecords.length} pacientes no diário`;
+    document.getElementById('diary-checkins-week').textContent = diaryCheckinsWeek;
+    document.getElementById('diary-average-consistency').textContent = `${diaryAverage.toFixed(1).replace('.', ',')} / 7`;
+    document.getElementById('diary-no-recent-checkin').textContent = diaryNoRecent.length;
+    document.querySelector('.diary-metric-risk').classList.toggle('diary-metric-followup', diaryNoRecent.length === 0);
+  }
+  renderDiarySummary();
 
   // Próximos contatos date
   const nextTue = new Date();
@@ -294,15 +355,25 @@
   // Protocolos: filtro compartilhado entre cards, gráfico e legenda.
   const protoCards = document.getElementById('proto-cards');
   const protocolFilter = document.getElementById('protocol-filter');
-  document.getElementById('protocol-summary').textContent =
-    `${PROTO_DIST.length} protocolo(s) · ${PROTO_DIST.reduce((total, protocol) => total + protocol.valor, 0)} pacientes por protocolo`;
+  const getVisibleProtocolDistribution = () => {
+    const visiblePatients = getVisiblePatients();
+    return PROTO_DIST.map(protocol => ({
+      ...protocol,
+      valor: visiblePatients.filter(patient => patient.protocolo === protocol.nome).length,
+    })).filter(protocol => protocol.valor > 0);
+  };
   PROTO_DIST.forEach(p => {
     const option = document.createElement('option');
     option.value = p.nome; option.textContent = p.nome; protocolFilter.appendChild(option);
   });
   let selectedProtocol = 'Todos';
   function renderProtocols() {
-    const items = selectedProtocol === 'Todos' ? PROTO_DIST : PROTO_DIST.filter(p => p.nome === selectedProtocol);
+    const visibleProtocols = getVisibleProtocolDistribution();
+    document.getElementById('protocol-summary').textContent =
+      `${visibleProtocols.length} ${visibleProtocols.length === 1 ? 'protocolo' : 'protocolos'} · pacientes por protocolo`;
+    const items = selectedProtocol === 'Todos'
+      ? visibleProtocols
+      : visibleProtocols.filter(protocol => protocol.nome === selectedProtocol);
     protoCards.innerHTML = items.map((p, i) => `
       <button type="button" class="card-stat stagger-${(i % 4)+1} dashboard-protocol-stat" data-protocol="${p.nome}" style="border-left:3px solid ${p.cor};text-align:left;cursor:pointer;">
         <div style="width:8px;height:8px;border-radius:50%;background:${p.cor};"></div>
@@ -365,7 +436,9 @@
     const days = weekdaysFull.map((label, index) => {
       const date = new Date(monday); date.setDate(monday.getDate()+index);
       const dateStr = dateKey(date);
-      const count = CONSULTAS.filter(c => c.data === dateStr).length;
+      const count = CONSULTAS.filter(c =>
+        c.data === dateStr && c.status !== 'cancelada' && isConsultationVisible(c)
+      ).length;
       return { label, shortLabel:weekdaysShort[index], dateLabel:formatShortDate(date), dateStr, value:count, isToday:dateStr === todayKey };
     });
     const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
@@ -417,7 +490,7 @@
   let alertPage = 0;
   const alertsPerPage = 6;
   // Flutter (AuthSession.canSeeAlert): a secretaria só vê o recorte operacional de exames pendentes.
-  const visibleAlerts = Router.getRole() === 'secretary' ? ALERTAS.filter(a => a.tipo === 'Exames pendentes') : ALERTAS;
+  let visibleAlerts = getVisibleAlerts();
   if (Router.getRole() === 'secretary') document.getElementById('alerts-subtitle').textContent = 'Pendências de entrega de exames e contatos da terça-feira';
   const tipos = ['Todos', ...new Set(visibleAlerts.map(a => a.tipo))];
   const alertFilter = document.getElementById('alert-filter');
@@ -546,6 +619,30 @@
     const patientId = Number(button.dataset.followupPatient);
     if (patientId) Router.navigate('patient-detail', { patientId });
   }));
+
+  function applyDoctorToContacts() {
+    contactsList.querySelectorAll('[data-contact-patient]').forEach(button => {
+      const patient = PACIENTES.find(item => Number(item.id) === Number(button.dataset.contactPatient));
+      button.closest('.contact-row').hidden = !isPatientVisible(patient);
+    });
+    followupList.querySelectorAll('[data-followup-patient]').forEach(button => {
+      const patient = PACIENTES.find(item => Number(item.id) === Number(button.dataset.followupPatient));
+      button.closest('.followup-row').hidden = !isPatientVisible(patient);
+    });
+  }
+
+  doctorFilter.addEventListener('change', () => {
+    selectedDoctorId = doctorFilter.value;
+    renderDashboardSummary();
+    renderProtocols();
+    renderWeek();
+    renderDiarySummary();
+    visibleAlerts = getVisibleAlerts();
+    alertPage = 0;
+    renderAlerts();
+    applyDoctorToContacts();
+  });
+  applyDoctorToContacts();
 
   window.addEventListener('resize', () => {
     requestAnimationFrame(() => { renderProtocols(); renderWeek(); });

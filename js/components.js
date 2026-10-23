@@ -20,6 +20,12 @@ const Icons = {
   message:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
   consult:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>`,
   diary:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,
+  events:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 15 2 2 4-4"/></svg>`,
+  contacts:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M17 11h4m-2-2v4M17 19h4"/></svg>`,
+  help:      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 4.2 1.8c-1.1 1-1.8 1.4-1.8 3"/><path d="M12 17h.01"/></svg>`,
+  flag:      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5"/><path d="M5 5c5-4 9 4 14 0v10c-5 4-9-4-14 0"/></svg>`,
+  medical:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M12 10v7M8.5 13.5h7"/></svg>`,
+  forms:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>`,
   home:      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
 };
 
@@ -28,6 +34,7 @@ const ROLE_LABELS = {
   secretary: 'Gabi',
   patient:   'Paciente',
   developer: 'Desenvolvedor',
+  society:   'Assinante Lapidar Society',
 };
 
 // Perfis de demonstração equivalentes ao seletor do Flutter (papel + isAdmin).
@@ -38,7 +45,86 @@ const DEMO_PROFILES = [
   { id:'secretary-admin', label:'Secretária (Admin)', description:'Agenda, contatos, financeiro geral e sistema' },
   { id:'secretary',       label:'Secretária', description:'Agenda, contatos e o próprio financeiro' },
   { id:'patient',         label:'Paciente', description:'Diário, ficha, consultas e conteúdos' },
+  { id:'society',         label:'Assinante', description:'Conteúdos, eventos e diário Lapidar Society' },
 ];
+
+function getDemoAccounts() {
+  const initialsFor = name => name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toLocaleUpperCase('pt-BR');
+  const staff = [
+    { id:'doctor-andressa', profileId:'doctor-admin', group:'Médicas', name:'Dra. Andressa Gomide', description:'Ginecologista endócrina', initials:'DG' },
+    { id:'doctor-helena', profileId:'doctor', group:'Médicas', name:'Dra. Helena Prado', description:'Médica (sem admin)', initials:'DP' },
+    { id:'secretary-carla', profileId:'secretary', group:'Secretárias', name:'Carla Mendes', description:'Secretária', initials:'CM' },
+    { id:'secretary-gabi', profileId:'secretary-admin', group:'Secretárias', name:'Gabi', description:'Secretária (admin)', initials:'G' },
+    { id:'developer', profileId:'developer', group:'Desenvolvimento', name:'Desenvolvedor', description:'Desenvolvedor do sistema', initials:'D' },
+  ];
+  const patients = (Array.isArray(PACIENTES) ? PACIENTES : []).map(patient => ({
+    id:`patient-${patient.id}`,
+    profileId:'patient',
+    group:'Pacientes',
+    name:patient.nome,
+    description:'Paciente',
+    initials:patient.iniciais || initialsFor(patient.nome),
+    patientId:patient.id,
+  }));
+  return [
+    ...staff,
+    ...patients,
+    { id:'society-initial', profileId:'society', group:'Assinantes', name:'Camila Duarte', description:'Assinante — Society Inicial', initials:'CD' },
+    { id:'society-plus', profileId:'society', group:'Assinantes', name:'Renata Albuquerque', description:'Assinante — Society Plus', initials:'RA' },
+  ];
+}
+
+function getCurrentDemoAccount(accounts = getDemoAccounts()) {
+  const state = Router.getState();
+  const saved = accounts.find(account => account.id === state.demoUserId);
+  if (saved) return saved;
+  const defaultIds = {
+    'doctor-admin':'doctor-andressa',
+    doctor:'doctor-helena',
+    'secretary-admin':'secretary-gabi',
+    secretary:'secretary-carla',
+    developer:'developer',
+    patient:`patient-${Router.getSelectedPatient()?.id || 1}`,
+    society:'society-initial',
+  };
+  return accounts.find(account => account.id === defaultIds[Router.getProfileId()]) || accounts[0];
+}
+
+function renderDemoAccountPicker(accounts, selectedAccount) {
+  const groups = [...new Set(accounts.map(account => account.group))];
+  return `
+    <div class="modal-overlay account-picker-overlay" id="account-picker" role="dialog" aria-modal="true" aria-labelledby="account-picker-title">
+      <section class="account-picker-dialog">
+        <header class="account-picker-header">
+          <span class="account-picker-heading-icon" aria-hidden="true">${Icons.portal}</span>
+          <h2 id="account-picker-title">Entrar como</h2>
+          <button class="account-picker-close" type="button" data-account-picker-close aria-label="Fechar">${Icons.close}</button>
+        </header>
+        <div class="account-picker-body">
+          <label class="account-picker-search">
+            ${Icons.search}
+            <input id="account-picker-search" type="search" placeholder="Buscar por nome ou cargo" autocomplete="off">
+          </label>
+          <div class="account-picker-list">
+            ${groups.map(group => `
+              <section class="account-picker-group" data-account-group>
+                <h3>${escapePatientCardText(group)}</h3>
+                ${accounts.filter(account => account.group === group).map(account => `
+                  <button class="demo-account-item ${account.id === selectedAccount.id ? 'selected' : ''}" type="button"
+                    data-demo-account="${escapePatientCardText(account.id)}"
+                    data-search-text="${escapePatientCardText(`${account.name} ${account.description} ${group}`.toLocaleLowerCase('pt-BR'))}"
+                    aria-pressed="${account.id === selectedAccount.id}">
+                    <span class="demo-account-avatar">${escapePatientCardText(account.initials)}</span>
+                    <span class="demo-account-copy"><strong>${escapePatientCardText(account.name)}</strong><small>${escapePatientCardText(account.description)}</small></span>
+                    <span class="demo-account-check" aria-hidden="true">${account.id === selectedAccount.id ? '✓' : ''}</span>
+                  </button>`).join('')}
+              </section>`).join('')}
+          </div>
+        </div>
+        <footer class="account-picker-footer"><button type="button" data-account-picker-close>Fechar</button></footer>
+      </section>
+    </div>`;
+}
 
 function getProfileLabel() {
   const profile = DEMO_PROFILES.find(item => item.id === Router.getProfileId());
@@ -49,7 +135,8 @@ function getUnreadMessagesCount() {
   try {
     const messages = loadMessages();
     if (Router.getRole() === 'patient') {
-      return messages.filter(m => m.patientId === 1 && m.direction === 'enviada' && !m.read).length;
+      const patientId = Router.getSelectedPatient()?.id || 1;
+      return messages.filter(m => m.patientId === patientId && m.direction === 'enviada' && !m.read).length;
     }
     return messages.filter(m => m.direction === 'recebida' && !m.read).length;
   } catch (error) {
@@ -86,7 +173,11 @@ const ROLE_MENU = {
     { page:'consultations', label:'Consultas', icon:'consult' },
     { page:'messages',  label:'Mensagens', icon:'message' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'forms', label:'Formulários', icon:'forms' },
     { page:'contents',  label:'Conteúdos', icon:'contents' },
+    { page:'events', label:'Eventos', icon:'events' },
+    { page:'contacts', label:'Contatos', icon:'contacts' },
+    { page:'notifications', label:'Notificações', icon:'bell' },
     { page:'settings',  label:'Configurações', icon:'settings' },
   ],
   secretary: [
@@ -95,24 +186,47 @@ const ROLE_MENU = {
     { page:'agenda',    label:'Agenda',    icon:'agenda' },
     { page:'messages',  label:'Mensagens', icon:'message' },
     { page:'financial', label:'Financeiro',icon:'financial' },
+    { page:'forms', label:'Formulários', icon:'forms' },
     { page:'contents',  label:'Conteúdos', icon:'contents' },
+    { page:'events', label:'Eventos', icon:'events' },
+    { page:'contacts', label:'Contatos', icon:'contacts' },
+    { page:'notifications', label:'Notificações', icon:'bell' },
     { page:'settings',  label:'Configurações', icon:'settings' },
   ],
   patient: [
-    { page:'habits',    label:'Diário', icon:'diary' },
-    { page:'patient-detail', label:'Minha ficha', icon:'portal' },
+    { page:'habits', label:'Diário', icon:'diary' },
     { page:'consultations', label:'Consultas', icon:'consult' },
-    { page:'contents',  label:'Conteúdos', icon:'contents' },
-    { page:'settings',  label:'Configurações', icon:'settings' },
+    { page:'patient-detail', label:'Minha ficha', icon:'portal' },
+    { page:'forms', label:'Formulários', icon:'forms' },
+    { page:'contents', label:'Conteúdos', icon:'contents' },
+    { page:'events', label:'Eventos', icon:'events' },
+    { page:'contacts', label:'Contatos', icon:'contacts' },
+    { page:'notifications', label:'Notificações', icon:'bell' },
+    { page:'patient-profile', label:'Perfil', icon:'portal' },
+    { page:'settings', label:'Configurações', icon:'settings' },
+  ],
+  society: [
+    { page:'contents', label:'Conteúdos', icon:'contents' },
+    { page:'events', label:'Eventos', icon:'events' },
+    { page:'habits', label:'Diário Lapidar', icon:'diary' },
   ],
   developer: [
     { page:'logs', label:'Logs', icon:'dashboard' },
+    { page:'forms', label:'Formulários', icon:'forms' },
+    { page:'events', label:'Eventos', icon:'events' },
+    { page:'contacts', label:'Contatos', icon:'contacts' },
+    { page:'notifications', label:'Notificações', icon:'bell' },
     { page:'settings', label:'Configurações', icon:'settings' },
   ],
 };
 
 function renderTopbar(activePage) {
   const role = Router.getRole();
+  const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
+  const demoAccounts = getDemoAccounts();
+  const activeDemoAccount = getCurrentDemoAccount(demoAccounts);
+  const canOpenForms = menu.some(item => item.page === 'forms');
+  const canOpenSettings = menu.some(item => item.page === 'settings');
   const patientId = role === 'patient' ? (Router.getSelectedPatient()?.id || 1) : null;
   const notificationKey = role === 'patient'
     ? 'lapidar-notification-feed-' + patientId
@@ -152,13 +266,13 @@ function renderTopbar(activePage) {
     })));
   }
   const notifCount = notifications.filter(notification => notification.unread === true).length;
-  const unreadMessages = getUnreadMessagesCount();
   const formatBadgeCount = count => count > 9 ? '9+' : count;
   const profile = DEMO_PROFILES.find(item => item.id === Router.getProfileId()) || DEMO_PROFILES[0];
-  const displayName = ROLE_LABELS[role] || profile.label;
-  const avatarInitials = role === 'doctor' ? 'DG' : role === 'secretary' ? 'G' : role === 'patient' ? 'P' : 'D';
-  const roleDescription = role === 'doctor' ? 'Ginecologista endócrina' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
-  const mobileRoleLabel = role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretaria' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
+  const savedIdentity = Router.getState();
+  const displayName = savedIdentity.demoUserName || activeDemoAccount?.name || ROLE_LABELS[role] || profile.label;
+  const avatarInitials = savedIdentity.demoUserInitials || activeDemoAccount?.initials || 'L';
+  const roleDescription = savedIdentity.demoUserDescription || activeDemoAccount?.description || profile.label;
+  const mobileRoleLabel = role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretaria' : role === 'patient' ? 'Paciente' : role === 'society' ? 'Assinante' : 'Desenvolvedor';
   const pageTitles = {
     dashboard:'Dashboard', patients:'Pacientes', agenda:'Agenda', consultations:'Consultas',
     'patient-detail':role === 'patient' ? 'Minha ficha' : 'Ficha da paciente',
@@ -166,6 +280,7 @@ function renderTopbar(activePage) {
     'patient-registration':'Cadastro de paciente', consultation:'Consulta', messages:'Mensagens',
     financial:'Financeiro', contents:'Conteúdos', settings:'Configurações', habits:'Diário Lapidar',
     journey:'Jornada operacional', logs:'Logs do sistema', profile:'Perfil',
+    forms:'Formulários', events:'Eventos', contacts:'Contatos', notifications:'Notificações',
   };
   const date = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
   const monday = new Date();
@@ -206,28 +321,15 @@ function renderTopbar(activePage) {
     </div>
     <div class="topbar-right">
       <div class="topbar-role-menu">
-        <button class="topbar-role-trigger" id="role-menu-trigger" type="button" aria-label="Ver como outro perfil" aria-expanded="false" aria-controls="role-menu">
+        <button class="topbar-role-trigger" id="role-menu-trigger" type="button" aria-label="Escolher usuário" aria-expanded="false" aria-controls="account-picker">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M7.5 17c.9-1.7 2.4-2.5 4.5-2.5s3.6.8 4.5 2.5"/>
           </svg>
+          <span class="topbar-role-copy">Demonstração</span>
         </button>
-        <div class="topbar-role-dropdown" id="role-menu" role="menu" aria-label="Trocar tipo de conta" hidden>
-          <div class="topbar-role-menu-heading">
-            <strong>Ver como</strong>
-            <span>Modo teste — será removido com o login real</span>
-          </div>
-          ${DEMO_PROFILES.map(item => `
-            <button class="topbar-role-option" type="button" role="menuitemradio" aria-checked="${item.id === Router.getProfileId()}" data-profile-id="${item.id}">
-              <span class="topbar-role-option-copy"><strong>${escapePatientCardText(item.label)}</strong><small>${escapePatientCardText(item.description)}</small></span>
-              <span class="topbar-role-option-check" aria-hidden="true">${item.id === Router.getProfileId() ? '✓' : ''}</span>
-            </button>`).join('')}
-        </div>
       </div>
       <div class="topbar-actions">
-        <button class="topbar-icon-btn" id="messages-btn" aria-label="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}" title="${role === 'developer' ? 'Logs do sistema' : 'Mensagens'}">
-          ${Icons.message}
-          ${unreadMessages > 0 ? `<span class="notif-badge">${formatBadgeCount(unreadMessages)}</span>` : ''}
-        </button>
+        <button class="topbar-icon-btn" id="help-shortcut" type="button" aria-label="Abrir guia" title="Guia">${Icons.help}</button>
         <div class="topbar-notifications">
           <button class="topbar-icon-btn" id="notif-btn" aria-label="Notificações">
             ${Icons.bell}
@@ -241,7 +343,8 @@ function renderTopbar(activePage) {
           ${notificationMarkup}
           </div>
         </div>
-        <button class="topbar-icon-btn" id="settings-shortcut" aria-label="Configurações" title="Configurações">${Icons.settings}</button>
+        ${canOpenForms ? `<button class="topbar-icon-btn" id="forms-shortcut" type="button" aria-label="Formulários" title="Formulários">${Icons.forms}</button>` : ''}
+        ${canOpenSettings ? `<button class="topbar-icon-btn" id="settings-shortcut" type="button" aria-label="Configurações" title="Configurações">${Icons.settings}</button>` : ''}
         <div class="topbar-user-menu">
           <button class="topbar-user-trigger" id="topbar-user-trigger" type="button" aria-expanded="false" aria-controls="topbar-user-dropdown">
             <span class="avatar">${escapePatientCardText(avatarInitials)}</span><span class="topbar-user-copy"><strong>${escapePatientCardText(displayName)}</strong><small>${escapePatientCardText(roleDescription)}</small></span><span aria-hidden="true">⌄</span>
@@ -254,15 +357,74 @@ function renderTopbar(activePage) {
         </div>
       </div>
     </div>
-  </header>`;
+  </header>
+  ${renderDemoAccountPicker(demoAccounts, activeDemoAccount)}
+  <div class="modal-overlay guide-overlay" id="lapidar-guide-modal" role="dialog" aria-modal="true" aria-labelledby="lapidar-guide-title">
+    <section class="modal guide-modal">
+      <header class="modal-header guide-header">
+        <span class="guide-heading-icon" aria-hidden="true">${Icons.help}</span>
+        <h2 class="modal-title" id="lapidar-guide-title">Guia</h2>
+        <button class="modal-close" id="close-guide" type="button" aria-label="Fechar guia">${Icons.close}</button>
+      </header>
+      <div class="guide-content">
+        <nav class="guide-nav" aria-label="Seções do guia">
+          <button class="guide-nav-item active" type="button" data-guide-page="intro" aria-current="page">${Icons.flag}<span>Primeiros passos</span></button>
+          ${menu.map(item => `<button class="guide-nav-item" type="button" data-guide-page="${escapePatientCardText(item.page)}">${Icons[item.icon] || Icons.dashboard}<span>${escapePatientCardText(item.label)}</span></button>`).join('')}
+        </nav>
+        <div class="guide-panel" aria-live="polite">
+          <p class="guide-callout">${Icons.help}<span>Para rever este guia quando quiser, toque no ponto de interrogação (?) na barra superior.</span></p>
+          <div class="guide-detail">
+            <span class="guide-detail-icon" id="guide-detail-icon" aria-hidden="true">${Icons.flag}</span>
+            <div>
+              <h3 id="guide-section-title">Primeiros passos</h3>
+              <p id="guide-section-description">Como andar pelo sistema: menu, barra superior e atalhos.</p>
+            </div>
+          </div>
+          <div class="guide-preview" id="guide-preview" role="img" aria-label="Prévia do dashboard Lapidar">
+            <div class="guide-preview-topbar">
+              <span class="guide-preview-brand">Lapidar</span>
+              <span class="guide-preview-topbar-actions">${Icons.help}${Icons.bell}${Icons.consult}<i>DG</i></span>
+            </div>
+            <div class="guide-preview-shell">
+              <div class="guide-preview-sidebar">
+                <span>${Icons.dashboard} Dashboard</span>
+                <span>${Icons.agenda} Agenda</span>
+                <span>${Icons.patients} Pacientes</span>
+                <span>${Icons.consult} Consultas</span>
+                <span>${Icons.forms} Formulários</span>
+                <span>${Icons.contacts} Contatos</span>
+              </div>
+              <div class="guide-preview-dashboard">
+                <strong>Dashboard</strong>
+                <small>segunda-feira, 19 de outubro · visão geral da clínica</small>
+                <div class="guide-preview-doctor">${Icons.medical}<span>Todos os médicos</span></div>
+                <b>Resumo geral</b>
+                <div class="guide-preview-stats">
+                  <span><small>TOTAL DE PACIENTES</small><strong>26</strong></span>
+                  <span><small>PACIENTES ATIVAS</small><strong>23</strong></span>
+                  <span><small>CONSULTAS NA SEMANA</small><strong>3</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary guide-open-page" id="guide-open-page" type="button" hidden>Abrir tela</button>
+        </div>
+      </div>
+      <footer class="modal-footer guide-footer">
+        <button class="btn btn-primary" id="dismiss-guide" type="button">Entendi</button>
+      </footer>
+    </section>
+  </div>`;
 }
 
 function renderSidebar(activePage) {
   const role = Router.getRole();
   const menu = ROLE_MENU[role] || ROLE_MENU.doctor;
-  const displayName = ROLE_LABELS[role] || 'Perfil Lapidar';
-  const avatarInitials = role === 'doctor' ? 'DG' : role === 'secretary' ? 'G' : role === 'patient' ? 'P' : 'D';
-  const roleDescription = role === 'doctor' ? 'Médica' : role === 'secretary' ? 'Secretária' : role === 'patient' ? 'Paciente' : 'Desenvolvedor';
+  const activeAccount = getCurrentDemoAccount();
+  const identity = Router.getState();
+  const displayName = identity.demoUserName || activeAccount?.name || ROLE_LABELS[role] || 'Perfil Lapidar';
+  const avatarInitials = identity.demoUserInitials || activeAccount?.initials || 'L';
+  const roleDescription = identity.demoUserDescription || activeAccount?.description || getProfileLabel();
 
   return `
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -324,23 +486,39 @@ function escapePatientCardText(value) {
 }
 
 function renderPatientCard(p, index = 0) {
-  const goals = Array.isArray(p.metas) ? p.metas : [];
   const inactive = p.ativo === false || p.status === 'Inativa';
   const patientAlerts = [...new Set((Array.isArray(ALERTAS) ? ALERTAS : [])
     .filter(alert => alert.paciente === p.nome)
     .map(alert => alert.tipo === 'Bioimpedância pendente' ? 'Bioimpedâncias pendentes' : alert.tipo))];
-  const conditions = Array.isArray(p.riscoCV?.fatores) ? p.riscoCV.fatores : [];
-  const personalizedHabits = Array.isArray(p.metasPersonalizadas) ? p.metasPersonalizadas.map(goal => goal.nome) : [];
-  const habits = [...new Set([
-    ...(p.nutricaoMetas ? ['Fibras', 'Proteínas', 'Água'] : []),
-    ...personalizedHabits.map(name => /caminhada|cardio|corrida/i.test(name) ? 'Cardio' : name),
-  ])];
-  const alertMarkup = patientAlerts.length
-    ? `${patientAlerts.slice(0, 2).map(alert => `<span class="patient-tag patient-alert-tag">${escapePatientCardText(alert)}</span>`).join('')}${patientAlerts.length > 2 ? `<span class="patient-tag patient-alert-tag">+${patientAlerts.length - 2}</span>` : ''}`
+  const ldlAboveTarget = Number.isFinite(Number(p.riscoCV?.ldl)) &&
+    Number.isFinite(Number(p.riscoCV?.metaLdl)) &&
+    Number(p.riscoCV.ldl) > Number(p.riscoCV.metaLdl);
+  const lastBioimpedance = Array.isArray(p.bioimpedancia)
+    ? p.bioimpedancia.map(entry => {
+      const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(entry.data || '');
+      return match ? new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])) : null;
+    }).filter(date => date && !Number.isNaN(date.getTime()))
+      .sort((first, second) => second.getTime() - first.getTime())[0]
+    : null;
+  const bioimpedancePending = !lastBioimpedance ||
+    (Date.now() - lastBioimpedance.getTime()) / 86400000 >= 60;
+  const prioritizedAlerts = ldlAboveTarget && bioimpedancePending
+    ? ['LDL acima da meta', 'Bioimpedâncias pendentes']
+    : patientAlerts;
+  const activeHabits = Array.isArray(p.metasPersonalizadas)
+    ? p.metasPersonalizadas.filter(goal => goal.ativa !== false)
+    : [];
+  const goalTotals = { 'Lapidar SOP':8, 'Lapidar Fertilidade':10 };
+  const goalTotal = Array.isArray(p.metas) && p.metas.length
+    ? p.metas.length
+    : goalTotals[p.protocolo] || 6;
+  const completedGoals = Math.min(Number(p.metasConcluidas) || 0, goalTotal);
+  const alertMarkup = prioritizedAlerts.length
+    ? `${prioritizedAlerts.slice(0, 2).map(alert => `<span class="patient-tag patient-alert-tag">${escapePatientCardText(alert)}</span>`).join('')}${prioritizedAlerts.length > 2 ? `<span class="patient-tag patient-alert-tag">+${prioritizedAlerts.length - 2}</span>` : ''}`
     : '<span class="patient-tag patient-empty-tag">Nenhum alerta</span>';
   const profileButton = Router.getRole() === 'secretary'
     ? `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver contatos de ${escapePatientCardText(p.nome)}">Ver detalhes</button>`
-    : `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver perfil de ${escapePatientCardText(p.nome)}">Ver perfil</button>`;
+    : `<button type="button" class="btn btn-subtle btn-sm" data-patient-profile="${p.id}" aria-label="Ver perfil de ${escapePatientCardText(p.nome)}">Perfil</button>`;
   if (Router.getRole() === 'secretary') {
     return `
     <div class="card-patient stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
@@ -349,89 +527,200 @@ function renderPatientCard(p, index = 0) {
       <div class="patient-card-footer">${profileButton}</div>
     </div>`;
   }
+  const messageButton = `<button type="button" class="patient-message-shortcut" data-patient-message="${p.id}" aria-label="Enviar mensagem para ${escapePatientCardText(p.nome)}" title="Enviar mensagem"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/><path d="M8 11h8M8 14h5"/></svg></button>`;
+  const detailsButton = `<button type="button" class="btn btn-primary btn-sm" data-patient-details="${p.id}" aria-label="Ver detalhes de ${escapePatientCardText(p.nome)}">Ver detalhes</button>`;
   return `
   <div class="card-patient patient-reference-card stagger-${Math.min(index+1, 6)}" data-patient-id="${p.id}" onclick="openPatient(${p.id})">
-    ${renderPatientCardHeader(p, inactive)}
+    ${renderPatientCardHeader(p, inactive, messageButton)}
     <section class="patient-card-section">
       <h3>ALERTAS</h3><div class="patient-tag-list">${alertMarkup}</div>
     </section>
     <section class="patient-card-section">
-      <h3>CONDIÇÕES</h3><div class="patient-tag-list">${conditions.length ? conditions.slice(0, 3).map(item => `<span class="patient-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div>
-    </section>
-    <section class="patient-card-section">
-      <h3>OBJETIVOS</h3><p>${escapePatientCardText(p.objetivo || 'Objetivo não informado')}</p>
+      <p class="patient-card-objective"><strong>Objetivo</strong><span>${escapePatientCardText(p.objetivo || 'Objetivo não informado')}</span></p>
     </section>
     <section class="patient-card-section patient-card-split">
-      <div><h3>METAS</h3><div class="patient-tag-list">${goals.length ? goals.slice(0, 2).map(item => `<span class="patient-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div></div>
-      <div><h3>HÁBITOS</h3><div class="patient-tag-list">${habits.length ? habits.slice(0, 5).map(item => `<span class="patient-tag patient-habit-tag">${escapePatientCardText(item)}</span>`).join('') : '<span class="patient-tag patient-empty-tag">—</span>'}</div></div>
+      <div><h3>METAS EM DIA</h3><strong class="patient-card-progress">${completedGoals} de ${goalTotal}</strong></div>
+      <div><h3>HÁBITOS</h3><strong class="patient-card-progress">0 de ${activeHabits.length}</strong><span class="patient-card-progress-caption">em dia</span></div>
     </section>
-    <div class="patient-card-dates">
-      <span>Última consulta <strong>${escapePatientCardText(p.ultimaConsulta || '—')}</strong></span>
-      <span>Próxima consulta <strong>${escapePatientCardText(p.proximaConsulta || '—')}</strong></span>
-    </div>
-    <div class="patient-card-footer">${profileButton}</div>
+    <div class="patient-card-footer">${profileButton}${detailsButton}</div>
   </div>`;
 }
 
-function renderPatientCardHeader(patient, inactive) {
+function renderPatientCardHeader(patient, inactive, trailing = '') {
+  const staff = Array.isArray(window.LAPIDAR_DEMO_DATA?.equipe_clinica?.funcionarios)
+    ? window.LAPIDAR_DEMO_DATA.equipe_clinica.funcionarios
+    : [];
+  const clinicianNames = (Array.isArray(patient.medicasIds) ? patient.medicasIds : [])
+    .map(id => staff.find(member => member.id === id)?.nome)
+    .filter(Boolean);
   return `
     <div class="patient-reference-header">
       <div class="avatar avatar-lg">${escapePatientCardText(patient.iniciais)}</div>
       <div class="patient-reference-copy">
         <div class="card-patient-name">${escapePatientCardText(patient.nome)}</div>
         <div class="card-patient-meta">${escapePatientCardText(patient.idade)} anos · ${escapePatientCardText(patient.protocolo || 'Sem protocolo')}</div>
+        ${clinicianNames.length ? `<div class="patient-card-clinicians">${Icons.medical}<span>${clinicianNames.map(escapePatientCardText).join(', ')}</span></div>` : ''}
       </div>
-      <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
+      <div class="patient-reference-actions">
+        <span class="badge ${inactive ? 'badge-gray' : 'badge-green'}">${inactive ? 'Inativa' : 'Ativa'}</span>
+        ${trailing}
+      </div>
     </div>`;
 }
 
 /* ── Inicialização global do shell (topbar + sidebar) ── */
 function initShell(activePage) {
+  const menu = ROLE_MENU[Router.getRole()] || ROLE_MENU.doctor;
   document.getElementById('topbar-container').innerHTML = renderTopbar(activePage);
   document.getElementById('sidebar-container').innerHTML = renderSidebar(activePage);
 
-  // Demo role switcher
+  // Demo account switcher
   const roleTrigger = document.getElementById('role-menu-trigger');
-  const roleMenu = document.getElementById('role-menu');
-  if (roleTrigger && roleMenu) {
+  const accountPicker = document.getElementById('account-picker');
+  if (roleTrigger && accountPicker) {
+    const closeAccountPicker = () => {
+      accountPicker.classList.remove('open');
+      roleTrigger.setAttribute('aria-expanded', 'false');
+      roleTrigger.focus();
+    };
     roleTrigger.addEventListener('click', event => {
       event.stopPropagation();
-      const expanded = roleTrigger.getAttribute('aria-expanded') === 'true';
-      roleTrigger.setAttribute('aria-expanded', String(!expanded));
-      roleMenu.hidden = expanded;
+      accountPicker.classList.add('open');
+      roleTrigger.setAttribute('aria-expanded', 'true');
+      accountPicker.querySelector('#account-picker-search').focus();
     });
-    roleMenu.addEventListener('click', event => {
-      const option = event.target.closest('[data-profile-id]');
-      if (!option) return;
-      const profileId = option.dataset.profileId;
-      if (!DEMO_PROFILES.some(profile => profile.id === profileId)) {
-        throw new TypeError(`Perfil de demonstração inválido: ${profileId}`);
+    accountPicker.addEventListener('click', event => {
+      if (event.target === accountPicker || event.target.closest('[data-account-picker-close]')) {
+        closeAccountPicker();
+        return;
       }
-      roleTrigger.setAttribute('aria-expanded', 'false');
-      roleMenu.hidden = true;
-      Router.setProfile(profileId);
+      const option = event.target.closest('[data-demo-account]');
+      if (!option) return;
+      const account = getDemoAccounts().find(item => item.id === option.dataset.demoAccount);
+      if (!account) throw new TypeError(`Conta de demonstração inválida: ${option.dataset.demoAccount}`);
+      Router.setProfile(account.profileId, account);
       Router.navigate(Router.getHomePage());
     });
-    document.addEventListener('click', event => {
-      if (!roleTrigger.contains(event.target) && !roleMenu.contains(event.target)) {
-        roleTrigger.setAttribute('aria-expanded', 'false');
-        roleMenu.hidden = true;
-      }
+    const accountSearch = accountPicker.querySelector('#account-picker-search');
+    accountSearch.addEventListener('input', () => {
+      const query = accountSearch.value.trim().toLocaleLowerCase('pt-BR');
+      accountPicker.querySelectorAll('[data-account-group]').forEach(group => {
+        const options = [...group.querySelectorAll('[data-demo-account]')];
+        let matches = 0;
+        options.forEach(option => {
+          const visible = option.dataset.searchText.includes(query);
+          option.hidden = !visible;
+          if (visible) matches++;
+        });
+        group.hidden = matches === 0;
+      });
     });
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && !roleMenu.hidden) {
-        roleTrigger.setAttribute('aria-expanded', 'false');
-        roleMenu.hidden = true;
-        roleTrigger.focus();
+    accountPicker.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        closeAccountPicker();
       }
     });
   }
 
-  const messagesBtn = document.getElementById('messages-btn');
-  if (messagesBtn) messagesBtn.addEventListener('click', () => Router.navigate(Router.getRole() === 'developer' ? 'logs' : 'messages'));
-
+  const formsShortcut = document.getElementById('forms-shortcut');
+  if (formsShortcut) formsShortcut.addEventListener('click', () => Router.navigate('forms'));
   const settingsShortcut = document.getElementById('settings-shortcut');
   if (settingsShortcut) settingsShortcut.addEventListener('click', () => Router.navigate('settings'));
+
+  const guideModal = document.getElementById('lapidar-guide-modal');
+  const helpShortcut = document.getElementById('help-shortcut');
+  if (guideModal && helpShortcut) {
+    const guideDescriptions = {
+      dashboard:'Acompanhe os indicadores da clínica, consultas da semana e pontos de atenção.',
+      patients:'Encontre pacientes, consulte seus dados e acesse a ficha individual.',
+      agenda:'Visualize a agenda, localize horários e acompanhe os atendimentos.',
+      consultations:'Consulte os atendimentos agendados e abra o workspace de cada consulta.',
+      'patient-detail':'Reúna o histórico clínico, a jornada e as informações compartilhadas da paciente.',
+      messages:'Acompanhe as conversas com pacientes e a equipe.',
+      financial:'Consulte lançamentos e informações financeiras disponíveis para seu perfil.',
+      forms:'Gerencie modelos de formulários, envios e respostas.',
+      contents:'Acesse materiais e conteúdos disponibilizados no sistema.',
+      events:'Consulte eventos e acompanhe as inscrições.',
+      contacts:'Pesquise pessoas e contatos da clínica.',
+      notifications:'Revise avisos recentes e marque notificações como lidas.',
+      settings:'Consulte as preferências e configurações disponíveis para seu perfil.',
+      habits:'Registre o check-in diário e acompanhe suas metas.',
+      'patient-profile':'Revise seus dados pessoais e autorizações de compartilhamento.',
+      logs:'Consulte os registros demonstrativos do sistema.',
+    };
+    const guideTitle = document.getElementById('guide-section-title');
+    const guideDescription = document.getElementById('guide-section-description');
+    const guideDetailIcon = document.getElementById('guide-detail-icon');
+    const guidePreview = document.getElementById('guide-preview');
+    const guideOpenPage = document.getElementById('guide-open-page');
+    const guideNavItems = [...guideModal.querySelectorAll('[data-guide-page]')];
+    let selectedGuidePage = '';
+    const closeGuide = () => {
+      guideModal.classList.remove('open');
+      helpShortcut.focus();
+    };
+    const openGuide = () => {
+      guideModal.classList.add('open');
+      guideNavItems[0].click();
+      document.getElementById('close-guide').focus();
+    };
+    helpShortcut.addEventListener('click', openGuide);
+    guideNavItems.forEach(button => {
+      button.addEventListener('click', () => {
+        selectedGuidePage = button.dataset.guidePage;
+        guideNavItems.forEach(item => {
+          const selected = item === button;
+          item.classList.toggle('active', selected);
+          if (selected) item.setAttribute('aria-current', 'page');
+          else item.removeAttribute('aria-current');
+        });
+        if (selectedGuidePage === 'intro') {
+          guideTitle.textContent = 'Primeiros passos';
+          guideDescription.textContent = 'Como andar pelo sistema: menu, barra superior e atalhos.';
+          guideDetailIcon.innerHTML = Icons.flag;
+          guidePreview.hidden = false;
+          guideOpenPage.hidden = true;
+        } else {
+          const menuItem = menu.find(item => item.page === selectedGuidePage);
+          guideTitle.textContent = menuItem ? menuItem.label : 'Seção';
+          guideDescription.textContent = guideDescriptions[selectedGuidePage] || 'Acesse esta área pelo menu lateral.';
+          guideDetailIcon.innerHTML = menuItem ? (Icons[menuItem.icon] || Icons.dashboard) : Icons.dashboard;
+          guidePreview.hidden = true;
+          guideOpenPage.textContent = `Abrir ${menuItem ? menuItem.label : 'tela'}`;
+          guideOpenPage.hidden = false;
+        }
+      });
+    });
+    guideOpenPage.addEventListener('click', () => {
+      const page = selectedGuidePage;
+      closeGuide();
+      if (page) Router.navigate(page);
+    });
+    document.getElementById('close-guide').addEventListener('click', closeGuide);
+    document.getElementById('dismiss-guide').addEventListener('click', closeGuide);
+    guideModal.addEventListener('click', event => {
+      if (event.target === guideModal) closeGuide();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && guideModal.classList.contains('open')) closeGuide();
+      if (event.key !== 'Tab' || !guideModal.classList.contains('open')) return;
+      const focusable = [...guideModal.querySelectorAll('button:not([hidden]):not(:disabled)')];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+    if (localStorage.getItem('lapidar-show-guide-after-login') === 'true') {
+      localStorage.removeItem('lapidar-show-guide-after-login');
+      openGuide();
+    }
+  }
 
   const userTrigger = document.getElementById('topbar-user-trigger');
   const userDropdown = document.getElementById('topbar-user-dropdown');

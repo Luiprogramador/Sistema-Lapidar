@@ -17,12 +17,15 @@ prototipo/
 │   ├── base.css                Reset global e tipografia
 │   ├── layout.css              Shell: topbar, sidebar e responsividade
 │   ├── components.css          Sistema de componentes (cards, botões, modais, tabs)
-│   └── animations.css          Micro-animações e transições
+│   ├── animations.css          Micro-animações e transições
+│   └── extra-pages.css         Estilos das telas de formulários, eventos, contatos e notificações
 └── js/
-│   ├── data.js                 Mock data: 8 pacientes completos, catálogo com 22 exames, check-in diário
+│   ├── demo-data.js            Bundle dos fixtures de demonstração do Flutter, compatível com file://
+│   ├── data.js                 Adapta os dados de demonstração às telas e mantém estado local
 │   ├── charts.js               Gráficos via Canvas 2D API (barras, donut, radar 11 eixos, sparklines)
 │   ├── router.js               Navegação entre páginas via localStorage
-│   └── components.js           Topbar, sidebar e modal de leitura rápida
+│   ├── components.js           Topbar, sidebar e modal de leitura rápida
+│   └── extra-pages.js          Renderização de formulários, eventos, contatos e notificações
 └── pages/
     ├── login.html              Tela de login (layout split com logo oficial)
     ├── dashboard.html          Dashboard com gráficos e alertas clínicos
@@ -34,6 +37,10 @@ prototipo/
     ├── journey.html            Jornada operacional (visão geral com timeline e checklist com fases pós-ciclo)
     ├── agenda.html             Agenda com calendário interativo, contatos de terça e retorno > 7d
     ├── financial.html          Financeiro com gráfico e tabela de transações
+    ├── forms.html              Modelos e respostas de formulários
+    ├── events.html             Calendário, inscrições e eventos da clínica
+    ├── contacts.html           Diretório de pessoas e contatos
+    ├── notifications.html      Histórico filtrável de notificações
     ├── portal.html             Portal da paciente (score radar, progresso, acesso ao diário, consultas)
     └── settings.html           Configurações da clínica e alertas
 ```

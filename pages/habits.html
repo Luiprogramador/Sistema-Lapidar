@@ -11,10 +11,7 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
-    .habits-container {
-      max-width: none;
-      margin: 0 auto;
-    }
+    .habits-container { max-width: 1050px; margin: 0 auto; }
     .diary-page-heading { margin: 0 0 20px; }
     .diary-page-heading h1 { margin: 0; color: var(--text-primary); font: 700 2.375rem/1.15 var(--font-serif); }
     .diary-page-heading p { margin: .35rem 0 0; color: var(--text-secondary); font-size: 1rem; }
@@ -22,7 +19,7 @@
     .diary-top-tabs .tab-item { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; border: 0; border-radius: 10px; background: transparent; color: var(--text-primary); font-size: .82rem; font-weight: 700; }
     .diary-top-tabs svg { width: 16px; height: 16px; flex: 0 0 auto; }
     .diary-top-tabs .tab-item.active { background: var(--vinho); color: var(--white); }
-    .diary-calendar-card { max-width: 600px; margin: 0 auto 16px; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--white); box-shadow: var(--shadow-sm); }
+    .diary-calendar-card { max-width: 720px; margin: 0 auto 16px; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--white); box-shadow: var(--shadow-sm); }
     .diary-calendar-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
     .diary-calendar-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border: 1px solid #dfd0ce; border-radius: 12px; background: #f0e8e6; color: var(--vinho); font-size: 22px; }
     .diary-calendar-card-head h2 { margin: 0; color: var(--text-primary); font: 700 1.2rem/1.3 var(--font-sans); }
@@ -30,8 +27,11 @@
     .diary-calendar-card .diary-calendar { width: 100%; max-width: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--text-primary); }
     .diary-calendar-card .diary-calendar-head button { border: 0; color: var(--vinho); background: transparent; }
     .diary-calendar-card .diary-calendar-head strong { font-size: 14px; }
-    .diary-calendar-card .diary-calendar-day { height: 46px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
-    .diary-calendar-card .diary-calendar-day.weekday { height: 28px; border: 0; color: var(--text-secondary); }
+    .diary-calendar-card .diary-calendar-day { display:flex; height:46px; flex-direction:column; align-items:center; justify-content:center; gap:1px; border:1px solid var(--border); border-radius:10px; color:var(--text-primary); font-size:13px; font-weight:700; }
+    .diary-calendar-card .diary-calendar-day.weekday { height:28px; border:0; color:var(--text-secondary); }
+    .diary-calendar-card .diary-calendar-day.blank { border:0; background:transparent; }
+    .diary-calendar-date { line-height:1; }
+    .diary-calendar-marker { min-height:10px; font-size:10px; line-height:1; }
     .diary-calendar-card .diary-calendar-day.complete { border-color: #8c9b8d; background: #dfe8df; color: #243e2f; }
     .diary-calendar-card .diary-calendar-day.partial { border-color: #c6a15b; background: #f5e7c5; color: #513f21; }
     .diary-calendar-card .diary-calendar-day.empty:not(.outside) { border-color: #d7b8be; background: #f4e0e3; color: #6d2333; }
@@ -256,6 +256,79 @@
       color: var(--white);
       border-color: var(--vinho);
     }
+    .evolution-period-row { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 22px; }
+    .evolution-period-copy h2 { margin:0; color:var(--vinho); font:700 24px/1.2 var(--font-serif); }
+    .evolution-period-copy p { margin:5px 0 0; color:var(--text-secondary); font-size:13px; }
+    .evolution-periods { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; padding:4px; border-radius:14px; background:#f1e4d1; }
+    .evolution-periods .period-filter-btn { min-height:44px; padding:8px 16px; border:0; border-radius:10px; background:transparent; color:var(--text-primary); font-size:13px; font-weight:750; white-space:nowrap; }
+    .evolution-periods .period-filter-btn.active { background:var(--vinho); color:#fff; }
+    .evolution-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:28px; }
+    .evolution-summary-card { display:grid; min-width:0; min-height:130px; align-content:start; gap:7px; padding:20px; border:1px solid #ddcbbb; border-radius:17px; background:#fffdf8; box-shadow:0 2px 6px rgba(74,39,37,.06),0 8px 24px rgba(74,39,37,.045); }
+    .evolution-summary-label { display:flex; align-items:center; gap:10px; color:#625653; font-size:13px; font-weight:700; }
+    .evolution-summary-label svg { width:19px; height:19px; color:var(--vinho); }
+    .evolution-summary-value { color:var(--vinho); font:700 31px/1.1 var(--font-serif); }
+    .evolution-summary-card:nth-child(3) .evolution-summary-value { color:#78602c; }
+    .evolution-summary-card:nth-child(4) .evolution-summary-value { color:#6f3542; }
+    .evolution-summary-detail { color:var(--text-secondary); font-size:13px; line-height:1.4; }
+    .evolution-section { margin:0 0 30px; }
+    .evolution-section-title { display:flex; align-items:center; gap:14px; margin:0 0 15px; padding-left:15px; border-left:5px solid var(--vinho); color:var(--text-primary); font:700 27px/1.25 var(--font-serif); }
+    .evolution-section-title > span { color:var(--vinho); font:400 27px/1 var(--font-sans); }
+    .evolution-chart-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .evolution-chart-card { min-width:0; padding:26px 28px 20px; border:1px solid #ddcbbb; border-radius:18px; background:#fffdf8; box-shadow:0 2px 6px rgba(74,39,37,.06),0 8px 24px rgba(74,39,37,.045); }
+    .evolution-chart-card h3 { margin:0; color:#292124; font-size:20px; font-weight:800; }
+    .evolution-chart-card > p { min-height:22px; margin:6px 0 10px; color:var(--text-secondary); font-size:14px; }
+    .evolution-chart-canvas { display:block; width:100%; height:220px; }
+    .evolution-chart-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:12px; }
+    .evolution-chart-stats span { display:grid; gap:3px; color:var(--text-secondary); font-size:12px; }
+    .evolution-chart-stats strong { color:var(--vinho); font-size:15px; font-weight:750; }
+    .evolution-metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .evolution-nutrition-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .evolution-metric-card { min-width:0; padding:20px 22px; border:1px solid #ddcbbb; border-radius:17px; background:#fffdf8; box-shadow:0 2px 6px rgba(74,39,37,.05); }
+    .evolution-metric-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .evolution-metric-head h3 { margin:0; color:#30272a; font-size:17px; font-weight:800; }
+    .evolution-metric-percent { color:var(--vinho); font:700 27px/1 var(--font-serif); }
+    .evolution-metric-card p { margin:8px 0 0; color:var(--text-secondary); font-size:13px; line-height:1.5; }
+    .evolution-progress { height:9px; margin-top:13px; overflow:hidden; border-radius:99px; background:#eee5d9; }
+    .evolution-progress span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--vinho),var(--dourado)); }
+    .evolution-metric-empty { display:flex; min-height:84px; align-items:center; padding:20px 24px; border:1px solid #ddcbbb; border-radius:17px; background:#fffdf8; color:var(--text-secondary); font-size:14px; }
+    .evolution-symptom-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .evolution-symptom-card { display:grid; min-width:0; min-height:220px; grid-template-rows:auto 1fr auto; padding:20px 22px; border:1px solid #ddcbbb; border-radius:17px; background:#fffdf8; box-shadow:0 2px 6px rgba(74,39,37,.05); }
+    .evolution-symptom-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .evolution-symptom-head h3 { margin:0; color:#30272a; font-size:17px; font-weight:800; }
+    .evolution-symptom-trend { padding:7px 10px; border:1px solid #aaa09e; border-radius:8px; background:#e8e1df; color:#554b4c; font-size:12px; font-weight:750; white-space:nowrap; }
+    .evolution-symptom-plot { display:grid; min-height:90px; place-items:center; color:var(--text-secondary); font-size:14px; }
+    .evolution-symptom-stats { display:flex; flex-wrap:wrap; gap:22px; color:var(--text-secondary); font-size:12px; }
+    .evolution-symptom-stats span { display:grid; gap:3px; }
+    .evolution-symptom-stats strong { color:var(--vinho); font-size:15px; }
+    .evolution-history-list { display:grid; gap:10px; }
+    .evolution-history-item { padding:14px 16px; border:1px solid var(--border); border-radius:13px; background:#fffdf8; }
+    .habits-container.diary-evolution-mode > .diary-calendar-card,
+    .habits-container.diary-evolution-mode > .hero-diario,
+    .habits-container.diary-evolution-mode > #success-banner { display:none !important; }
+    @media (max-width:1000px) {
+      .evolution-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .evolution-nutrition-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .evolution-chart-card { padding:20px; }
+    }
+    @media (max-width:700px) {
+      .evolution-period-row { align-items:stretch; flex-direction:column; }
+      .evolution-periods { width:100%; }
+      .evolution-periods .period-filter-btn { min-height:40px; padding:7px 6px; font-size:11px; }
+      .evolution-summary-grid { gap:10px; }
+      .evolution-summary-card { min-height:112px; padding:15px; }
+      .evolution-summary-label { gap:7px; font-size:11px; }
+      .evolution-summary-value { font-size:26px; }
+      .evolution-summary-detail { font-size:11px; }
+      .evolution-chart-grid,.evolution-metric-grid,.evolution-nutrition-grid,.evolution-symptom-grid { grid-template-columns:minmax(0,1fr); }
+      .evolution-section-title { gap:10px; font-size:23px; }
+      .evolution-chart-card { padding:18px 16px; }
+      .evolution-chart-card h3 { font-size:18px; }
+      .evolution-chart-canvas { height:190px; }
+      .evolution-chart-stats { gap:4px; }
+      .evolution-chart-stats span { font-size:11px; }
+      .evolution-chart-stats strong { font-size:14px; }
+      .evolution-symptom-card { min-height:190px; padding:17px; }
+    }
     .diary-calendar { margin-top: 12px; width: min(100%, 340px); padding: 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 12px; background: rgba(255,255,255,.08); }
     .diary-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .diary-calendar-head button { width: 30px; height: 30px; border: 1px solid rgba(255,255,255,.25); border-radius: 8px; color: var(--bege); font-size: 20px; line-height: 1; }
@@ -296,7 +369,6 @@
   <div class="habits-container">
     <header class="diary-page-heading">
       <h1>Diário Lapidar</h1>
-      <p>A consulta direciona. O acompanhamento continua. A constância constrói o resultado.</p>
     </header>
 
     <nav class="diary-top-tabs" id="view-mode-tabs" aria-label="Seções do Diário Lapidar">
@@ -308,8 +380,8 @@
 
     <section class="diary-calendar-card" aria-label="Calendário de check-ins">
       <header class="diary-calendar-card-head">
-        <span class="diary-calendar-icon" aria-hidden="true">▦</span>
-        <div><h2>Meu calendário de check-ins</h2><p>Toque em um dia para registrar ou completar</p></div>
+        <span class="diary-calendar-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>
+        <div><h2>Meu calendário de check-ins</h2></div>
       </header>
       <label id="diary-date-field" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
         Data deste diário
@@ -324,8 +396,8 @@
         <div class="diary-calendar-grid" id="diary-calendar-grid"></div>
         <div class="diary-calendar-legend" aria-label="Legenda do calendário">
           <span><i class="diary-status complete">●</i> Completo</span>
-          <span><i class="diary-status partial">◐</i> Parcial</span>
-          <span><i class="diary-status empty">×</i> Sem registro</span>
+          <span><i class="diary-status partial">◐</i> Incompleto</span>
+          <span><i class="diary-status empty">×</i> Não preenchido</span>
         </div>
       </section>
     </section>
@@ -556,58 +628,54 @@
 
     <!-- ================= VIEW 2: MINHA EVOLUÇÃO ================= -->
     <div id="view-evolucao" style="display:none;">
-      
-      <!-- Period selector -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <h2 style="font-family:var(--font-serif);font-size:22px;color:var(--vinho);">Histórico de Constância</h2>
-          <p style="font-size:12px;color:var(--text-muted);">Veja seu progresso consolidado ao longo do tempo</p>
+      <div class="evolution-period-row">
+        <div class="evolution-period-copy">
+          <h2>Minha evolução</h2>
+          <p>Acompanhe seu progresso e sua constância ao longo do tempo.</p>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button class="period-filter-btn active" data-period="7">7 dias</button>
-          <button class="period-filter-btn" data-period="30">30 dias</button>
-          <button class="period-filter-btn" data-period="90">90 dias</button>
-          <button class="period-filter-btn" data-period="all">Todo o período</button>
+        <div class="evolution-periods" role="group" aria-label="Período da evolução">
+          <button class="period-filter-btn" type="button" data-period="7">7 dias</button>
+          <button class="period-filter-btn" type="button" data-period="30">30 dias</button>
+          <button class="period-filter-btn" type="button" data-period="90">90 dias</button>
+          <button class="period-filter-btn active" type="button" data-period="all">Todo o período</button>
         </div>
       </div>
-
-      <!-- Stats Grid -->
-      <div class="grid-responsive-3" style="gap:14px;margin-bottom:24px;">
-        <div class="card-stat">
-          <span class="card-stat-label">Constância de Treinos</span>
-          <span class="card-stat-value" style="color:var(--oliva);" id="evo-treinos-pct">92%</span>
-          <span class="card-stat-sub">Meta semanal atingida</span>
-        </div>
-        <div class="card-stat">
-          <span class="card-stat-label">Média de Sono</span>
-          <span class="card-stat-value" style="color:var(--vinho);" id="evo-sono-avg">7h40</span>
-          <span class="card-stat-sub">Qualidade média: 8.2 / 10</span>
-        </div>
-        <div class="card-stat">
-          <span class="card-stat-label">Adesão Nutricional</span>
-          <span class="card-stat-value" style="color:var(--dourado);" id="evo-nutri-pct">88%</span>
-          <span class="card-stat-sub">Proteína, fibras e água</span>
-        </div>
-      </div>
-
-      <!-- Weekly Habit Tracker Cards -->
-      <div class="section-card">
-        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:4px;">Progresso das Metas na Semana</h3>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Contabilizado automaticamente em relação à meta vigente</p>
-        <div id="weekly-goals-progress"></div>
-      </div>
-
-      <!-- Recent Log table -->
-      <div class="section-card" id="diary-history-section">
-        <h3 style="font-size:15px;font-weight:600;color:var(--vinho);margin-bottom:12px;">Últimos Registros Diários</h3>
-        <div style="display:flex;flex-direction:column;gap:10px;" id="recent-logs-list"></div>
-      </div>
+      <div class="evolution-summary-grid" id="evolution-summary"></div>
+      <section class="evolution-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">☾</span>Sono</h2>
+        <div class="evolution-chart-grid" id="evolution-sleep-charts"></div>
+      </section>
+      <section class="evolution-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">⌁</span>Energia e estresse</h2>
+        <div class="evolution-chart-grid" id="evolution-wellbeing-charts"></div>
+      </section>
+      <section class="evolution-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">♧</span>Movimento</h2>
+        <div class="evolution-metric-grid" id="evolution-movement"></div>
+      </section>
+      <section class="evolution-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">♧</span>Nutrição e hidratação</h2>
+        <div class="evolution-metric-grid evolution-nutrition-grid" id="evolution-nutrition"></div>
+      </section>
+      <section class="evolution-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">⚑</span>Metas personalizadas</h2>
+        <div class="evolution-metric-grid" id="evolution-custom-goals"></div>
+      </section>
+      <section class="evolution-section" id="evolution-symptom-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">♡</span>Sintomas</h2>
+        <div class="evolution-symptom-grid" id="evolution-symptoms"></div>
+      </section>
+      <section class="evolution-section" id="diary-history-section">
+        <h2 class="evolution-section-title"><span aria-hidden="true">◷</span>Últimos registros</h2>
+        <div class="evolution-history-list" id="recent-logs-list"></div>
+      </section>
     </div>
 
   </div>
 </main>
 
 
+<script src="../js/demo-data.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/router.js"></script>
 <script src="../js/components.js"></script>
@@ -800,25 +868,29 @@
     const grid = document.getElementById('diary-calendar-grid');
     const monthLabel = document.getElementById('diary-calendar-month');
     monthLabel.textContent = diaryCalendarMonth.toLocaleDateString('pt-BR', { month:'long', year:'numeric' }).replace(/\s+de\s+/i, ' ');
-    const weekdayNames = ['D','S','T','Q','Q','S','S'];
+    const weekdayNames = ['S','T','Q','Q','S','S','D'];
     const firstDay = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth(), 1);
+    const weekdayOffset = (firstDay.getDay() + 6) % 7;
     const start = new Date(firstDay);
-    start.setDate(start.getDate() - firstDay.getDay());
+    start.setDate(start.getDate() - weekdayOffset);
     const dayCount = new Date(diaryCalendarMonth.getFullYear(), diaryCalendarMonth.getMonth() + 1, 0).getDate();
-    const cellCount = Math.ceil((firstDay.getDay() + dayCount) / 7) * 7;
+    const cellCount = Math.ceil((weekdayOffset + dayCount) / 7) * 7;
     const todayDate = new Date(todayIso + 'T12:00:00');
     const cells = weekdayNames.map(day => `<span class="diary-calendar-day weekday" aria-hidden="true">${day}</span>`);
     for (let i = 0; i < cellCount; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
+      if (date.getMonth() !== diaryCalendarMonth.getMonth()) {
+        cells.push('<span class="diary-calendar-day blank" aria-hidden="true"></span>');
+        continue;
+      }
       const iso = localIsoDate(date);
       const entry = loadDailyData(iso);
       const state = isDiaryComplete(entry) ? 'complete' : entry?.preenchido ? 'partial' : 'empty';
-      const marker = state === 'complete' ? '●' : state === 'partial' ? '◐' : String(date.getDate());
-      const outside = date.getMonth() !== diaryCalendarMonth.getMonth();
-      const disabled = date > todayDate || outside && date > todayDate;
+      const marker = state === 'complete' ? '●' : state === 'partial' ? '◐' : '×';
+      const disabled = date > todayDate;
       const label = date.toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
-      cells.push(`<button type="button" class="diary-calendar-day ${state}${outside?' outside':''}${iso===diaryDateInput.value?' selected':''}" data-diary-date="${iso}" aria-label="${label}: ${state==='complete'?'check-in completo':state==='partial'?'check-in parcial':'sem registro'}" ${disabled?'disabled':''}>${marker}</button>`);
+      cells.push(`<button type="button" class="diary-calendar-day ${state}${iso===diaryDateInput.value?' selected':''}" data-diary-date="${iso}" aria-label="${label}: ${state==='complete'?'check-in completo':state==='partial'?'check-in incompleto':'não preenchido'}" ${disabled?'disabled':''}><span class="diary-calendar-date">${date.getDate()}</span><span class="diary-calendar-marker" aria-hidden="true">${marker}</span></button>`);
     }
     grid.innerHTML = cells.join('');
     grid.querySelectorAll('[data-diary-date]').forEach(button => button.addEventListener('click', () => {
@@ -1304,7 +1376,9 @@
       const v = btn.dataset.view;
       const checkinView = document.getElementById('view-checkin');
       const evolutionView = document.getElementById('view-evolucao');
+      const checkinContext = document.querySelector('.habits-container');
       if (v === 'checkin' || v === 'metas') {
+        checkinContext.classList.remove('diary-evolution-mode');
         checkinView.style.display = 'block';
         evolutionView.style.display = 'none';
         if (v === 'metas') {
@@ -1313,8 +1387,11 @@
           window.scrollTo({ top:0, behavior:'smooth' });
         }
       } else {
+        checkinContext.classList.add('diary-evolution-mode');
         checkinView.style.display = 'none';
         evolutionView.style.display = 'block';
+        activeHistoryPeriod = 'all';
+        document.querySelectorAll('.period-filter-btn').forEach(item => item.classList.toggle('active', item.dataset.period === 'all'));
         renderEvolucaoView();
         if (v === 'historico') {
           requestAnimationFrame(() => document.getElementById('diary-history-section').scrollIntoView({ behavior:'smooth', block:'start' }));
@@ -1327,52 +1404,346 @@
 
   // Render Evolução
   let activeHistoryPeriod = 'all';
-  function renderEvolucaoView() {
-    const goals = p.metasPersonalizadas || [];
-    const container = document.getElementById('weekly-goals-progress');
-    container.innerHTML = goals.map(g => {
-      const pct = Math.min(100, Math.round((g.realizado / g.meta) * 100));
-      return `
-        <div style="margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-            <span style="font-weight:600;color:var(--vinho);">${g.nome}</span>
-            <span style="font-weight:600;color:var(--oliva);">${g.realizado} de ${g.meta} ${g.unidade} (${pct}%)</span>
-          </div>
-          <div class="progress-bar" style="height:8px;">
-            <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--oliva)':'linear-gradient(90deg,var(--vinho),var(--dourado))'};"></div>
-          </div>
-        </div>`;
-    }).join('');
-
-    const list = document.getElementById('recent-logs-list');
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - (activeHistoryPeriod === 'all' ? 100000 : Number(activeHistoryPeriod)));
-    const logs = loadDiaryHistory().events
-      .filter(entry => activeHistoryPeriod === 'all' || new Date(entry.date + 'T23:59:59') >= cutoff)
-      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-
-    list.innerHTML = logs.length ? logs.map(entry => {
+  const evolutionSourceId = p.fichaReferencia?.id || 'p' + p.id;
+  const referenceDiaryRecords = window.LAPIDAR_DEMO_DATA?.diario_pacientes?.checkIns?.[evolutionSourceId] || [];
+  const referenceHabitGoals = window.LAPIDAR_DEMO_DATA?.diario_pacientes?.metasDeHabito?.[evolutionSourceId] || [];
+  const formatEvolutionHours = value => {
+    if (!Number.isFinite(value)) return '—';
+    const totalMinutes = Math.round(value * 60);
+    return Math.floor(totalMinutes / 60) + 'h' + String(totalMinutes % 60).padStart(2, '0');
+  };
+  const formatEvolutionNumber = value => Number.isFinite(value)
+    ? value.toLocaleString('pt-BR', { minimumFractionDigits:1, maximumFractionDigits:1 })
+    : '—';
+  const evolutionEscape = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
+  }[char]));
+  const minuteOfDay = value => {
+    if (value == null || value === '') return null;
+    if (Number.isFinite(Number(value))) return Number(value);
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || ''));
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  };
+  const evolutionNumber = value => value == null || value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
+  const sleepHours = (start, end) => {
+    const startMinutes = minuteOfDay(start);
+    const endMinutes = minuteOfDay(end);
+    if (startMinutes == null || endMinutes == null) return null;
+    let duration = endMinutes - startMinutes;
+    if (duration < 0) duration += 1440;
+    return duration > 0 && duration <= 1440 ? duration / 60 : null;
+  };
+  function getEvolutionRecords() {
+    const recordsByDate = new Map();
+    referenceDiaryRecords.forEach(entry => {
+      const date = String(entry.dia || '').slice(0, 10);
+      if (!date) return;
+      recordsByDate.set(date, {
+        date,
+        sleep: sleepHours(entry.horaDeDormirEmMinutos, entry.horaDeAcordarEmMinutos),
+        sleepQuality:evolutionNumber(entry.qualidadeDoSono),
+        awakenings:evolutionNumber(entry.despertaresNoturnos),
+        energy:evolutionNumber(entry.energia),
+        stress:evolutionNumber(entry.estresse),
+        movement: { musculacao:entry.musculacao, cardio:entry.cardio },
+        nutrition: { proteina:entry.proteina, fibras:entry.fibras, agua:entry.agua },
+        custom: entry.respostasPersonalizadas || {},
+        symptoms: {
+          ondasDeCalor:entry.ondasDeCalor,
+          perdaUrinaria:entry.perdaUrinaria,
+          libido:entry.libido,
+          ressecamentoVaginal:entry.ressecamentoVaginal,
+          irritabilidade:entry.irritabilidade,
+          nevoaMental:entry.nevoaMental,
+          constipacao:entry.constipacao,
+          regularidadeCiclo:entry.regularidadeCiclo,
+          acne:entry.acne,
+          hirsutismo:entry.hirsutismo,
+          inchaco:entry.inchaco,
+          compulsaoDoces:entry.compulsaoDoces,
+          dorPelvica:entry.dorPelvica,
+          mucoCervical:entry.mucoCervical,
+          dorOvulatoria:entry.dorOvulatoria,
+          colica:entry.colica,
+          tpm:entry.tpm,
+          ansiedade:entry.ansiedade,
+        },
+        observation:entry.observacoes || '',
+        time:String(entry.preenchidoEm || '').slice(11, 16),
+        source:entry,
+      });
+    });
+    loadDiaryHistory().events.forEach(entry => {
       const snapshot = entry.snapshot || {};
-      const movement = snapshot.movimento || {};
+      const date = String(entry.date || '').slice(0, 10);
+      if (!date) return;
       const sleep = snapshot.sono || {};
-      const nutrition = snapshot.nutricao || {};
-      const nutritionSummary = ['proteina','fibras','agua']
-        .filter(key => nutrition[key] === 'atingi').length + '/3 metas atingidas';
-      return `
-      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bege);">
-        <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;color:var(--vinho);margin-bottom:4px;">
-          <span>${escapeDiaryHTML(formatDiaryDate(entry.date))} · ${escapeDiaryHTML(entry.time || '')}</span>
-          <span style="color:var(--oliva);font-size:12px;">${movement.musculacao === 'sim' ? 'Musculação ✓' : movement.cardio === 'sim' ? 'Cardio ✓' : 'Diário registrado'}</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px;">
-          <span>🌙 Sono: ${escapeDiaryHTML(sleep.duracao || 'Não informado')}${sleep.qualidade != null ? ' (Nota ' + escapeDiaryHTML(sleep.qualidade) + '/10)' : ''}</span>
-          <span>🥗 Nutrição: ${nutritionSummary}</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Alterações: ${entry.changes && entry.changes.length ? entry.changes.map(change => typeof change === 'string' ? escapeDiaryHTML(change) : escapeDiaryHTML(change.label) + ' — ' + escapeDiaryHTML(change.detail)).join(' · ') : 'Check-in registrado'}</div>
-        ${snapshot.observacoes ? `<div style="font-size:11.5px;color:var(--text-muted);font-style:italic;">"${escapeDiaryHTML(snapshot.observacoes)}"</div>` : ''}
-      </div>
-    `;
-    }).join('') : '<div class="empty-state" style="padding:20px;"><p>Nenhum diário salvo neste período. Os registros aparecerão aqui após o primeiro salvamento.</p></div>';
+      recordsByDate.set(date, {
+        date,
+        sleep: sleepHours(sleep.dormiu, sleep.acordou) ?? (Number(sleep.duracaoHoras) || null),
+        sleepQuality:evolutionNumber(sleep.qualidade),
+        awakenings:evolutionNumber(sleep.despertares),
+        energy:evolutionNumber(snapshot.bemEstar?.energia),
+        stress:evolutionNumber(snapshot.bemEstar?.estresse),
+        movement:snapshot.movimento || {},
+        nutrition:snapshot.nutricao || {},
+        custom:snapshot.metas || {},
+        symptoms:snapshot.sintomas40 || {},
+        observation:snapshot.observacoes || '',
+        time:entry.time || '',
+        source:entry,
+      });
+    });
+    if (!recordsByDate.size && p.diarioHoje?.preenchido) {
+      recordsByDate.set(todayIso, {
+        date:todayIso,
+        sleep:sleepHours(p.diarioHoje.sono?.dormiu, p.diarioHoje.sono?.acordou),
+        sleepQuality:evolutionNumber(p.diarioHoje.sono?.qualidade),
+        awakenings:evolutionNumber(p.diarioHoje.sono?.despertares),
+        energy:evolutionNumber(p.diarioHoje.bemEstar?.energia),
+        stress:evolutionNumber(p.diarioHoje.bemEstar?.estresse),
+        movement:p.diarioHoje.movimento || {},
+        nutrition:p.diarioHoje.nutricao || {},
+        custom:p.diarioHoje.metas || {},
+        symptoms:p.diarioHoje.sintomas40 || {},
+        observation:p.diarioHoje.observacoes || '',
+        time:p.diarioHoje.horario || '',
+        source:p.diarioHoje,
+      });
+    }
+    return [...recordsByDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }
+  function filteredEvolutionRecords() {
+    const records = getEvolutionRecords();
+    if (activeHistoryPeriod === 'all') return records;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - Number(activeHistoryPeriod) + 1);
+    const cutoffIso = localIsoDate(cutoff);
+    return records.filter(entry => entry.date >= cutoffIso && entry.date <= todayIso);
+  }
+  function evolutionStats(values) {
+    const valid = values.filter(Number.isFinite);
+    if (!valid.length) return { min:null, avg:null, max:null, last:null, count:0 };
+    return {
+      min:Math.min(...valid),
+      avg:valid.reduce((sum, value) => sum + value, 0) / valid.length,
+      max:Math.max(...valid),
+      last:valid[valid.length - 1],
+      count:valid.length,
+    };
+  }
+  function evolutionStatMarkup(stats, formatter = formatEvolutionNumber) {
+    return `<div class="evolution-chart-stats"><span>Mínimo<strong>${formatter(stats.min)}</strong></span><span>Média<strong>${formatter(stats.avg)}</strong></span><span>Máximo<strong>${formatter(stats.max)}</strong></span><span>Último<strong>${formatter(stats.last)}</strong></span></div>`;
+  }
+  function evolutionChartCard(title, subtitle, series, values, color, formatter, maxValue) {
+    const stats = evolutionStats(values);
+    const canvasId = 'evolution-chart-' + series;
+    return `<article class="evolution-chart-card"><h3>${evolutionEscape(title)}</h3><p>${evolutionEscape(subtitle(stats))}</p><canvas class="evolution-chart-canvas" id="${canvasId}" role="img" aria-label="Gráfico de ${evolutionEscape(title.toLocaleLowerCase('pt-BR'))}"></canvas>${evolutionStatMarkup(stats, formatter)}</article>`;
+  }
+  function drawEvolutionChart(canvas, values, color, maxValue) {
+    if (!canvas || !values.length) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * ratio);
+    canvas.height = Math.round(rect.height * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    const width = rect.width;
+    const height = rect.height;
+    const pad = { top:24, right:12, bottom:30, left:34 };
+    const chartWidth = width - pad.left - pad.right;
+    const chartHeight = height - pad.top - pad.bottom;
+    ctx.font = '12px var(--font-sans)';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    [0, .5, 1].forEach(fraction => {
+      const y = pad.top + chartHeight * fraction;
+      ctx.beginPath();
+      ctx.strokeStyle = '#e6ddd1';
+      ctx.lineWidth = 1;
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(width - pad.right, y);
+      ctx.stroke();
+      ctx.fillStyle = '#655b56';
+      ctx.fillText(String(Math.round(maxValue * (1 - fraction))), pad.left - 8, y);
+    });
+    const valid = values.filter(item => Number.isFinite(item.value));
+    if (!valid.length) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#716762';
+      ctx.fillText('Dados insuficientes neste período.', width / 2, height / 2);
+      return;
+    }
+    const step = (valid.length - 1) ? chartWidth / (valid.length - 1) : 0;
+    const points = valid.map((item, index) => ({
+      x:pad.left + step * index,
+      y:pad.top + chartHeight - (Math.max(0, Math.min(maxValue, item.value)) / maxValue) * chartHeight,
+      label:item.date,
+    }));
+    const gradient = ctx.createLinearGradient(0, pad.top, 0, height - pad.bottom);
+    gradient.addColorStop(0, color + '38');
+    gradient.addColorStop(1, color + '05');
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      if (!index) ctx.moveTo(point.x, point.y);
+      else {
+        const previous = points[index - 1];
+        const middle = (previous.x + point.x) / 2;
+        ctx.quadraticCurveTo(previous.x, previous.y, middle, (previous.y + point.y) / 2);
+        ctx.quadraticCurveTo(point.x, point.y, point.x, point.y);
+      }
+    });
+    ctx.lineTo(points[points.length - 1].x, height - pad.bottom);
+    ctx.lineTo(points[0].x, height - pad.bottom);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.beginPath();
+    points.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    const last = points[points.length - 1];
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffdf8';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#655b56';
+    const labelIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
+    labelIndexes.forEach(index => {
+      const point = points[index];
+      const label = new Date(point.label + 'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+      const x = index === points.length - 1 ? Math.max(pad.left, point.x - 34) : point.x;
+      ctx.fillText(label, x, height - pad.bottom + 10);
+    });
+  }
+  function drawEvolutionCharts() {
+    const records = filteredEvolutionRecords();
+    drawEvolutionChart(document.getElementById('evolution-chart-sleep'), records.map(item => ({ date:item.date, value:item.sleep })), '#5b2333', 10);
+    drawEvolutionChart(document.getElementById('evolution-chart-sleep-quality'), records.map(item => ({ date:item.date, value:item.sleepQuality })), '#586044', 10);
+    drawEvolutionChart(document.getElementById('evolution-chart-energy'), records.map(item => ({ date:item.date, value:item.energy })), '#b28a3c', 10);
+    drawEvolutionChart(document.getElementById('evolution-chart-stress'), records.map(item => ({ date:item.date, value:item.stress })), '#783747', 10);
+  }
+  function renderEvolutionMetricCard(title, percent, detail, caption = '') {
+    const progress = Number.isFinite(percent) ? `<div class="evolution-progress" aria-label="${Math.round(percent)}%"><span style="width:${Math.max(0, Math.min(100, percent))}%"></span></div>` : '';
+    return `<article class="evolution-metric-card"><div class="evolution-metric-head"><h3>${evolutionEscape(title)}</h3>${Number.isFinite(percent) ? `<strong class="evolution-metric-percent">${Math.round(percent)}%</strong>` : ''}</div>${caption ? `<p>${evolutionEscape(caption)}</p>` : ''}<p>${evolutionEscape(detail)}</p>${progress}</article>`;
+  }
+  function symptomCardMarkup(title, records, key) {
+    const values = records.map(entry => evolutionNumber(entry.symptoms?.[key])).filter(Number.isFinite);
+    const stats = evolutionStats(values);
+    const trend = stats.count > 1
+      ? stats.avg < 3 ? 'baixo no período' : 'acompanhamento'
+      : 'sem tendência';
+    const plot = stats.count ? `<div class="evolution-symptom-plot"><span>Média <strong>${formatEvolutionNumber(stats.avg)}</strong> · Último <strong>${formatEvolutionNumber(stats.last)}</strong></span></div>`
+      : '<div class="evolution-symptom-plot">Dados insuficientes neste período.</div>';
+    return `<article class="evolution-symptom-card"><div class="evolution-symptom-head"><h3>${evolutionEscape(title)}</h3><span class="evolution-symptom-trend">→ ${trend}</span></div>${plot}<div class="evolution-symptom-stats"><span>Média<strong>${formatEvolutionNumber(stats.avg)}</strong></span><span>Último<strong>${formatEvolutionNumber(stats.last)}</strong></span><span>Registros<strong>${stats.count}</strong></span></div></article>`;
+  }
+  function renderEvolucaoView() {
+    const records = filteredEvolutionRecords();
+    const sleepStats = evolutionStats(records.map(entry => entry.sleep));
+    const qualityStats = evolutionStats(records.map(entry => entry.sleepQuality));
+    const energyStats = evolutionStats(records.map(entry => entry.energy));
+    const stressStats = evolutionStats(records.map(entry => entry.stress));
+    const latestDate = records.length ? records[records.length - 1].date : '';
+    const today = new Date(todayIso + 'T12:00:00');
+    const daysSinceLatest = latestDate ? Math.round((today - new Date(latestDate + 'T12:00:00')) / 86400000) : Infinity;
+    let streak = 0;
+    if (daysSinceLatest <= 1) {
+      let expectedDate = new Date(latestDate + 'T12:00:00');
+      for (const entry of records.slice().reverse()) {
+        if (entry.date !== localIsoDate(expectedDate)) break;
+        streak++;
+        expectedDate.setDate(expectedDate.getDate() - 1);
+      }
+    }
+    document.getElementById('evolution-summary').innerHTML = [
+      ['▣','Check-ins no período',String(records.length),`sequência atual: ${streak} ${streak === 1 ? 'dia' : 'dias'}`],
+      ['☾','Sono médio',formatEvolutionHours(sleepStats.avg),`qualidade ${formatEvolutionNumber(qualityStats.avg)}/10`],
+      ['ϟ','Energia média',formatEvolutionNumber(energyStats.avg),'de 0 a 10'],
+      ['♧','Estresse médio',formatEvolutionNumber(stressStats.avg),'de 0 a 10'],
+    ].map(([icon,label,value,detail]) => `<article class="evolution-summary-card"><div class="evolution-summary-label"><span aria-hidden="true">${icon}</span>${label}</div><strong class="evolution-summary-value">${value}</strong><span class="evolution-summary-detail">${detail}</span></article>`).join('');
+    document.getElementById('evolution-sleep-charts').innerHTML =
+      evolutionChartCard('Duração do sono', stats => `Média de ${formatEvolutionHours(stats.avg)} por noite`, 'sleep', records.map(entry => entry.sleep), '#5b2333', formatEvolutionHours, 10) +
+      evolutionChartCard('Qualidade do sono', stats => `${formatEvolutionNumber(evolutionStats(records.map(entry => entry.awakenings)).avg)} despertares por noite em média`, 'sleep-quality', records.map(entry => entry.sleepQuality), '#586044', formatEvolutionNumber, 10);
+    document.getElementById('evolution-wellbeing-charts').innerHTML =
+      evolutionChartCard('Energia', stats => `Média ${formatEvolutionNumber(stats.avg)}`, 'energy', records.map(entry => entry.energy), '#b28a3c', formatEvolutionNumber, 10) +
+      evolutionChartCard('Estresse', stats => `Média ${formatEvolutionNumber(stats.avg)}`, 'stress', records.map(entry => entry.stress), '#783747', formatEvolutionNumber, 10);
+
+    const movementDefinitions = [
+      { key:'musculacao', title:'Musculação', aliases:['musculacao','forca'] },
+      { key:'cardio', title:'Cardio', aliases:['cardio','aerobico'] },
+    ].filter(definition => records.some(entry => entry.movement?.[definition.key] != null));
+    const activeGoals = referenceHabitGoals.filter(goal => goal.ativa && !goal.fim);
+    const movementGoalMeta = category => activeGoals.find(goal => goal.categoria === category);
+    document.getElementById('evolution-movement').innerHTML = movementDefinitions.length ? movementDefinitions.map(definition => {
+      const values = records.map(entry => String(entry.movement?.[definition.key] || '').toLocaleLowerCase('pt-BR'));
+      const done = values.filter(value => value === 'sim').length;
+      const skipped = values.filter(value => value === 'naoprogramado' || value === 'nao_programado' || value === 'não programado').length;
+      const scheduled = values.filter(value => value === 'sim' || value === 'nao' || value === 'não').length;
+      const percent = scheduled ? done / scheduled * 100 : null;
+      const goal = movementGoalMeta(definition.key === 'musculacao' ? 'musculacao' : 'cardio');
+      const extra = goal ? Math.max(0, done - Math.round((goal.frequencia || 0) * records.length / 7)) : 0;
+      const target = goal ? `Meta ${goal.frequencia}x/semana · realizado ${done} de ${scheduled}` : `Realizado ${done} de ${scheduled} dias programados`;
+      return renderEvolutionMetricCard(definition.title, percent, `${target}${extra ? ` · +${extra} além da meta` : ''} · ${skipped} dias não programados`);
+    }).join('') : '<div class="evolution-metric-empty">Sem dados de movimento neste período.</div>';
+
+    const nutritionDefinitions = [
+      { key:'proteina', label:'Proteína' },
+      { key:'fibras', label:'Fibras' },
+      { key:'agua', label:'Água' },
+    ].filter(definition => records.some(entry => entry.nutrition?.[definition.key] != null && entry.nutrition[definition.key] !== ''));
+    document.getElementById('evolution-nutrition').innerHTML = nutritionDefinitions.length ? nutritionDefinitions.map(definition => {
+      const values = records.map(entry => String(entry.nutrition?.[definition.key] || '').toLocaleLowerCase('pt-BR'));
+      const completed = values.filter(value => value === 'atingi' || value === 'sim').length;
+      const partial = values.filter(value => value === 'parcialmente').length;
+      const missed = values.filter(value => value === 'naoatingi' || value === 'nao_atingi' || value === 'não atingi' || value === 'nao').length;
+      const total = completed + partial + missed;
+      return renderEvolutionMetricCard(definition.label, total ? completed / total * 100 : null, `${completed} atingi · ${partial} parcialmente · ${missed} não atingi`);
+    }).join('') : '<div class="evolution-metric-empty">Sem registros de nutrição neste período.</div>';
+
+    const customGoals = activeGoals.filter(goal => goal.categoria === 'personalizada');
+    document.getElementById('evolution-custom-goals').innerHTML = customGoals.length ? customGoals.map(goal => {
+      const seriesId = goal.serieId || goal.id;
+      const yes = records.filter(entry => Object.entries(entry.custom || {}).some(([key,value]) => key.startsWith(seriesId) && value === 'sim')).length;
+      const count = records.filter(entry => Object.keys(entry.custom || {}).some(key => key.startsWith(seriesId))).length;
+      return renderEvolutionMetricCard(goal.nome, count ? yes / count * 100 : null, `${yes} dias realizados${count ? ` de ${count} registros` : ' · sem registros no período'}`, goal.orientacao || '');
+    }).join('') : '<div class="evolution-metric-empty">Nenhuma meta personalizada no período.</div>';
+
+    const symptomDefinitions = p.protocolo === 'Lapidar 40+'
+      ? [
+          { label:'Fogachos', key:'ondasDeCalor' }, { label:'Perda urinária', key:'perdaUrinaria' }, { label:'Libido', key:'libido' },
+          { label:'Ressecamento vaginal', key:'ressecamentoVaginal' }, { label:'Irritabilidade', key:'irritabilidade' }, { label:'Névoa mental', key:'nevoaMental' },
+        ]
+      : p.protocolo === 'Lapidar SOP'
+        ? [
+            { label:'Regularidade do ciclo', key:'regularidadeCiclo' }, { label:'Acne', key:'acne' }, { label:'Hirsutismo', key:'hirsutismo' },
+            { label:'Inchaço', key:'inchaco' }, { label:'Compulsão por doces', key:'compulsaoDoces' }, { label:'Dor pélvica', key:'dorPelvica' },
+          ]
+        : p.protocolo === 'Lapidar Fertilidade'
+          ? [
+              { label:'Muco cervical', key:'mucoCervical' }, { label:'Dor ovulatória', key:'dorOvulatoria' }, { label:'Cólicas', key:'colica' },
+              { label:'TPM', key:'tpm' }, { label:'Libido', key:'libido' }, { label:'Ansiedade', key:'ansiedade' },
+            ]
+          : [];
+    const symptomsSection = document.getElementById('evolution-symptom-section');
+    symptomsSection.hidden = !symptomDefinitions.length;
+    document.getElementById('evolution-symptoms').innerHTML = symptomDefinitions.map(definition => symptomCardMarkup(definition.label, records, definition.key)).join('');
+    const list = document.getElementById('recent-logs-list');
+    list.innerHTML = records.slice().reverse().slice(0, 10).map(entry => `
+      <article class="evolution-history-item">
+        <strong>${evolutionEscape(formatDiaryDate(entry.date))}${entry.time ? ' · ' + evolutionEscape(entry.time) : ''}</strong>
+        <p>Sono ${formatEvolutionHours(entry.sleep)} · Qualidade ${formatEvolutionNumber(entry.sleepQuality)}/10 · Energia ${formatEvolutionNumber(entry.energy)}/10 · Estresse ${formatEvolutionNumber(entry.stress)}/10</p>
+        ${entry.observation ? `<small>“${evolutionEscape(entry.observation)}”</small>` : ''}
+      </article>`).join('') || '<div class="evolution-metric-empty">Nenhum diário salvo neste período. Os registros aparecerão aqui após o primeiro check-in.</div>';
+    requestAnimationFrame(drawEvolutionCharts);
   }
   document.querySelectorAll('.period-filter-btn').forEach(button => {
     button.addEventListener('click', () => {
@@ -1381,6 +1752,9 @@
       activeHistoryPeriod = button.dataset.period;
       renderEvolucaoView();
     });
+  });
+  window.addEventListener('resize', () => {
+    if (document.getElementById('view-evolucao').style.display !== 'none') requestAnimationFrame(drawEvolutionCharts);
   });
 
   // Init
