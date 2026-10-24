@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
-    .contents-page { max-width: 1280px; margin: 0 auto; }
+    .contents-page { max-width: 1280px; margin: -2px auto 0; }
     .contents-hero {
       display: flex;
       align-items: center;
@@ -257,17 +257,17 @@
     .contents-gallery-grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
     .contents-gallery .content-section { border:0; padding:0; background:transparent; }
     .contents-empty { margin:12px 0; }
-    .contents-page-header { margin:0 0 28px; }
+    .contents-page-header { margin:0 0 25px; }
     .contents-page-header h1 { margin:0; color:var(--text-primary); font:700 40px/1.15 var(--font-serif); }
     .contents-page-header p { margin-top:6px; color:var(--text-secondary); font-size:16px; }
-    #contents-context { display:block; }
-    .contents-toolbar { justify-content:flex-start; margin-bottom:24px; }
+    #contents-context { display:none; }
+    .contents-toolbar { justify-content:flex-start; margin:0 0 17px; }
     .content-section,
     .content-section:nth-child(5n + 2),
     .content-section:nth-child(5n + 3),
     .content-section:nth-child(5n + 4),
     .content-section:nth-child(5n + 5) {
-      padding:24px 24px 16px;
+      padding:33px 24px 16px;
       border:1px solid var(--border);
       background:var(--white);
     }
@@ -294,17 +294,45 @@
     .content-art { flex-basis:64px; align-items:center; padding:12px 16px; }
     .content-art-type { font-size:12px; }
     .content-art-type::before { content:"▤"; margin-right:10px; font-size:22px; vertical-align:-2px; }
-    .content-art-duration { position:absolute; z-index:1; top:50%; right:16px; transform:translateY(-50%); color:#fff; font-size:12px; font-weight:700; }
-    .content-card-body { padding:16px; }
+    .content-art-duration { display:none; }
+    .content-art-plus { position:absolute; z-index:1; top:10px; right:12px; padding:4px 9px; border-radius:7px; background:var(--dourado); color:#3b2b1b; font-size:11px; font-weight:800; letter-spacing:.04em; }
+    .content-rail { scrollbar-width:none; }
+    .content-rail::-webkit-scrollbar { display:none; }
+    .content-card-body { padding:13px 16px 19px; }
+    .content-card { box-sizing:border-box; height:263px; }
     .content-card-meta { display:none; }
-    .content-card-title { font-size:16px; line-height:1.35; }
-    .content-card-description { font-size:14px; line-height:1.45; }
+    .content-card-title { font-size:16px; line-height:1.15; }
+    .content-card-description { font-size:14px; line-height:1.25; }
     .content-section--ebooks .content-card-tags span,
     .content-card--ebooks .content-card-tags span { background:#f4e7eb; color:var(--vinho); }
     .content-section--ebooks .content-card-meta span:first-child,
     .content-section--ebooks .content-card-action,
     .content-card--ebooks .content-card-action { color:var(--vinho); }
-    @media(max-width:700px) { .content-section { padding:12px; } .content-rail { grid-auto-columns:minmax(240px,80%); } .contents-toolbar .contents-controls { align-items:stretch; } .contents-view-toggle { width:100%; } .contents-view-toggle button { flex:1; } }
+    .content-section-heading { align-items:center; }
+    .content-type-icon { width:22px; height:22px; flex:0 0 22px; color:var(--vinho); }
+    .content-art-type { display:inline-flex; align-items:center; gap:10px; }
+    .content-art-type::before { content:none; }
+    .content-art-type svg { width:27px; height:27px; flex:0 0 27px; }
+    @media(min-width:701px) {
+      .contents-view-toggle { box-sizing:border-box; width:232px; }
+      .contents-view-toggle button { flex:1; }
+      #add-content-btn { box-sizing:border-box; width:206px; min-height:48px; }
+    }
+    .content-section { padding-bottom:18px; }
+    @media(max-width:700px) {
+      .contents-main { padding:20px 16px 24px; }
+      .contents-page { margin:0 auto; }
+      .contents-page-header { margin:0; }
+      .contents-page-header h1 { font-size:30px; line-height:1.2; }
+      .contents-toolbar { margin:10px 0 17px; }
+      .contents-toolbar .contents-controls { align-items:center; gap:10px; }
+      .contents-view-toggle { box-sizing:border-box; flex:0 0 232px; width:232px; }
+      .contents-view-toggle button { flex:1; }
+      .contents-toolbar #contents-filter-btn { box-sizing:border-box; flex:0 0 92px; width:92px; }
+      .contents-toolbar #add-content-btn { box-sizing:border-box; flex:0 0 193px; width:193px; min-height:48px; }
+      .content-section { padding:28px 18px 18px; }
+      .content-rail { grid-auto-columns:260px; }
+    }
 
   </style>
 </head>
@@ -312,7 +340,7 @@
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
-<main class="main-content page-enter">
+<main class="main-content page-enter contents-main">
   <div class="contents-page">
   <header class="contents-page-header">
     <h1>Conteúdos</h1>
@@ -359,7 +387,7 @@
   const seededSections = [{ name:'Biblioteca', description:'', items:[
     {id:'ct1',title:'Diabetes tipo 2: guia de alimentação',type:'Ebook',summary:'Como montar o prato, contar carboidratos e manter a glicemia estável.',minutes:25,tags:['Diabetes','Nutrição']},
     {id:'ct2',title:'Entendendo a bioimpedância',type:'Ebook',summary:'Massa magra, gordura visceral, água corporal e nota corporal.',minutes:15,tags:['Bioimpedância']},
-    {id:'ct3',title:'Cuidando da memória: Alzheimer e prevenção',type:'Ebook',summary:'Hábitos de sono, treino e alimentação que protegem o cérebro.',minutes:30,tags:['Alzheimer','Prevenção']},
+    {id:'ct3',title:'Cuidando da memória: Alzheimer e prevenção',type:'Ebook',summary:'Hábitos de sono, treino e alimentação que protegem o cérebro.',minutes:30,tags:['Alzheimer','Prevenção'],plus:true},
     {id:'ct4',title:'Parkinson: exercícios e qualidade de vida',type:'Ebook',summary:'Rotina de movimento e orientações para o dia a dia.',minutes:22,tags:['Parkinson','Movimento']},
     {id:'ct5',title:'Como fazer seu check-in no Diário Lapidar',type:'Vídeo',summary:'Movimento, nutrição, sono e bem-estar em cerca de 1 minuto. Constância vale mais que perfeição.',minutes:4,tags:['Diário Lapidar']},
     {id:'ct6',title:'Glicemia na prática: lendo seu exame',type:'Vídeo',summary:'HbA1c, jejum e insulina explicados com exemplos.',minutes:12,tags:['Diabetes','Exames']},
@@ -375,6 +403,16 @@
   const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;',
   }[char]));
+
+  function contentIcon(type, className = '') {
+    const normalized = String(type || '').toLowerCase();
+    const shape = normalized.includes('vídeo') || normalized.includes('video')
+      ? '<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/>'
+      : normalized.includes('site')
+        ? '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'
+        : '<path d="M3 5.5c3.2-.8 6.2-.3 9 1.5v13c-2.8-1.8-5.8-2.3-9-1.5zM21 5.5c-3.2-.8-6.2-.3-9 1.5v13c2.8-1.8 5.8-2.3 9-1.5z"/>';
+    return `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shape}</svg>`;
+  }
 
   function loadAddedContents() {
     try {
@@ -409,8 +447,9 @@
     return `
       <button class="content-card content-card--${toneClass}" type="button" data-content-id="${escapeHTML(item.id)}">
         <span class="content-art" data-tone="${escapeHTML(item.tone || 'gold')}">
-          <span class="content-art-type">${escapeHTML(item.type)}</span>
+          <span class="content-art-type">${contentIcon(item.type)}${escapeHTML(item.type)}</span>
           <span class="content-art-duration">${escapeHTML(item.minutes ? item.minutes + ' min' : 'Conteúdo')}</span>
+          ${item.plus ? '<span class="content-art-plus">PLUS</span>' : ''}
           <span class="content-art-label">${escapeHTML(item.title)}</span>
         </span>
         <span class="content-card-body">
@@ -457,7 +496,7 @@
         const group = items.filter(item => typeFor(item) === type);
         if(!group.length) return '';
         const sectionTone = type === 'Vídeos' ? 'videos' : type === 'Sites' ? 'sites' : 'ebooks';
-        return `<section class="content-section content-section--${sectionTone}"><div class="content-section-heading"><div><h2>${type} <span style="font:500 12px sans-serif;color:var(--text-muted)">(${group.length})</span></h2></div><button class="content-see-all" type="button" data-only-type="${type}">Ver tudo →</button></div><div class="content-rail-wrap"><div class="content-rail">${group.map(item => contentCard({...item,type:type==='Vídeos'?'Vídeo':type==='Sites'?'Site':'Ebook',duration:item.duration || (item.minutes ? item.minutes+' min' : 'Material')})).join('')}</div></div></section>`;
+        return `<section class="content-section content-section--${sectionTone}"><div class="content-section-heading"><div style="display:flex;align-items:center;gap:12px">${contentIcon(type, 'content-type-icon')}<h2>${type} <span style="font:500 12px sans-serif;color:var(--text-muted)">(${group.length})</span></h2></div><button class="content-see-all" type="button" data-only-type="${type}">Ver tudo →</button></div><div class="content-rail-wrap"><div class="content-rail">${group.map(item => contentCard({...item,type:type==='Vídeos'?'Vídeo':type==='Sites'?'Site':'Ebook',duration:item.duration || (item.minutes ? item.minutes+' min' : 'Material')})).join('')}</div></div></section>`;
       }).join('') || '<div class="contents-empty">Nenhum conteúdo encontrado. Ajuste as tags para ver mais materiais.</div>';
       document.querySelectorAll('[data-only-type]').forEach(button => button.addEventListener('click',()=>{onlyType=button.dataset.onlyType;contentsView='all';renderHome();}));
     } else {

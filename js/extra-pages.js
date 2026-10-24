@@ -446,11 +446,18 @@ function renderContactsPage() {
   const roleLabels = { medica: 'Médica', secretaria: 'Secretaria', desenvolvedor: 'Desenvolvedor', adminSistema: 'Admin do sistema', gestorConteudo: 'Gestor de conteúdo', gestorFinanceiro: 'Gestor financeiro' };
   const patientRole = Router.getRole() === 'patient';
   const records = [];
+  if (Router.can('seePatients')) PACIENTES.forEach(patient => records.push({
+    id: patient.id,
+    name: patient.nome,
+    functions: ['Paciente'],
+    email: patient.email || '',
+    phone: patient.telefone || '',
+    kind: 'patient',
+  }));
   staff.filter(member => member.situacao === 'ativo').forEach(member => {
     if (patientRole && !['medica', 'secretaria'].includes(member.cargo)) return;
     records.push({ id: member.id, name: member.nome, functions: (member.funcoes || [member.cargo]).map(value => roleLabels[value] || value), email: member.email || '', phone: member.telefone || '', kind: 'staff' });
   });
-  if (Router.can('seePatients')) PACIENTES.forEach(patient => records.push({ id: patient.id, name: patient.nome, functions: ['Paciente'], email: '', phone: '', kind: 'patient' }));
   let query = '';
   let selectedFunction = '';
   const render = () => {
@@ -462,7 +469,7 @@ function renderContactsPage() {
     }).join('');
     document.getElementById('contacts-results').textContent = `${filtered.length} contato${filtered.length === 1 ? '' : 's'}`;
     document.getElementById('contacts-grid').innerHTML = filtered.length ? filtered.map(record => `
-      <article class="card contact-card"><div class="contact-avatar">${extraText(record.name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase())}</div><div class="contact-copy"><h3>${extraText(record.name)}</h3><p>${record.functions.map(extraText).join(' · ')}</p>${record.kind === 'staff' && record.email ? `<p class="contact-email">${extraText(record.email)}</p>` : ''}<button type="button" class="btn btn-outline btn-sm" data-contact-profile="${extraText(record.id)}" data-contact-kind="${record.kind}">Ver perfil</button></div></article>`).join('') : '<div class="extra-empty">Nenhum contato encontrado.</div>';
+      <article class="card contact-card"><div class="contact-avatar">${extraText(record.name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase())}</div><div class="contact-copy"><h3>${extraText(record.name)}</h3><p>${record.functions.map(extraText).join(' · ')}</p><div class="contact-methods">${record.phone ? `<a class="contact-method phone" href="tel:${extraText(record.phone.replace(/\D/g, ''))}">${extraText(record.phone)}</a>` : ''}${record.email ? `<a class="contact-method email" href="mailto:${encodeURIComponent(record.email)}">${extraText(record.email)}</a>` : ''}</div><button type="button" class="contact-profile-link" data-contact-profile="${extraText(record.id)}" data-contact-kind="${record.kind}">Ver perfil</button></div></article>`).join('') : '<div class="extra-empty">Nenhum contato encontrado.</div>';
   };
   document.getElementById('contacts-search').addEventListener('input', event => { query = event.currentTarget.value.trim().toLowerCase(); render(); });
   document.getElementById('contact-filters').addEventListener('click', event => {

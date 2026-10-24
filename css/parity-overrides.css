@@ -186,6 +186,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
   gap: 14px;
   margin-top: 18px;
   padding: 12px 16px;
@@ -195,9 +196,22 @@
   color: var(--text-secondary);
   font-size: 13px;
 }
-.financial-transactions-pagination-controls { display: flex; align-items: center; gap: 8px; }
+.financial-transactions-pagination > span { flex: 0 0 auto; white-space: nowrap; }
+.financial-transactions-pagination-controls {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: rgba(91,35,51,.35) transparent;
+  scrollbar-width: thin;
+}
 .financial-transactions-pagination button {
   display: grid;
+  flex: 0 0 36px;
   min-width: 36px;
   height: 36px;
   padding: 0 8px;
@@ -258,7 +272,7 @@
   #proto-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .consultations-stat-grid .card-stat { min-height: 150px; }
   .financial-transactions-pagination { align-items: flex-start; flex-direction: column; }
-  .financial-transactions-pagination-controls { width: 100%; justify-content: space-between; }
+  .financial-transactions-pagination-controls { flex: 0 0 auto; width: 100%; justify-content: flex-start; }
 }
 @media (max-width: 1100px) and (min-width: 761px) {
   .dashboard-protocols #proto-cards { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
@@ -1604,13 +1618,13 @@ textarea {
   .topbar-user-trigger > span:last-child { display: none; }
   .main-content { padding: 16px; }
   .page-title { font-size: clamp(36px, 4vw, 40px); }
-  .dashboard-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .dashboard-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .dashboard-summary-grid .dashboard-stat { min-height: 196px; padding: 24px 17px 20px; row-gap: 21px; }
-  .dashboard-summary-grid .dashboard-stat .card-stat-label { max-width: 145px; font-size: 14px; }
+  .dashboard-summary-grid .dashboard-stat .card-stat-label { max-width: 220px; font-size: 14px; }
   .dashboard-summary-grid .dashboard-stat .card-stat-sub { margin-top: -10px; }
   .main-content section[aria-labelledby="dashboard-summary-title"] h2 { font-size: 22px !important; }
   .main-content section[aria-labelledby="dashboard-summary-title"] p { font-size: 16px !important; }
-  .dashboard-page .main-content { padding-top: 12px; }
+  .dashboard-page .main-content { padding-top: 14px; }
   .dashboard-page .page-header { margin-bottom: 27px; }
   .dashboard-page section[aria-labelledby="dashboard-summary-title"] > div:first-child { margin-bottom: 10px !important; }
 }
@@ -1618,6 +1632,7 @@ textarea {
 @media (max-width: 760px) {
   .dashboard-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .dashboard-summary-grid .dashboard-stat { min-height: 178px; padding: 17px 15px; row-gap: 8px; }
+  .dashboard-summary-grid .dashboard-stat .card-stat-label { max-width: 145px; }
   .dashboard-summary-grid .dashboard-stat .card-stat-sub { margin-top: 0; }
 }
 
@@ -1806,14 +1821,72 @@ textarea {
   .patients-page .page-header .btn { align-self: center; min-width: 182px; min-height: 56px; border-radius: 13px; font-size: 17px; transform: translateY(7px); }
 }
 @media (max-width: 600px) {
+  .contacts-page { padding: 18px 16px 24px; }
+  .contacts-page .page-header { margin-bottom: 5px; }
+  .contacts-page .page-subtitle { font-size: 14px; white-space: nowrap; }
+  .contacts-page .contact-filters .btn { padding-right: 20px; padding-left: 20px; }
+  .contacts-page .contact-card { min-height: 192px; }
+  .contacts-page .contact-copy h3 { font-family: var(--font-sans); font-size: 19px; font-weight: 400; }
+  .contacts-page .contact-methods,
+  .contacts-page .contact-profile-link { margin-left: -64px; }
+  .contacts-page .contact-methods { width: calc(100% + 64px); }
+  .contacts-page .contact-profile-link { align-self: flex-start; text-align: left; }
+  .events-page { padding: 18px 16px 24px; }
+  .events-page .event-page-header .extra-actions { width: 100%; margin-top: -21px; }
+  .events-page .event-page-header #new-event-button { width: 100%; min-height: 48px; }
+  .events-page .events-mobile-switch {
+    gap: 0;
+    margin-top: -21px;
+    overflow: hidden;
+    border: 1px solid #d8c8b9;
+    border-radius: 999px;
+    background: #fffdfa;
+  }
+  .events-page .events-mobile-switch .btn {
+    min-height: 38px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .events-page .events-mobile-switch .btn.active {
+    background: var(--vinho);
+    color: var(--bege);
+  }
+  .events-page .event-featured { min-height: 388px; }
+  .events-page .event-date-featured { height: 78px; }
+  .events-page .event-featured-copy { display: flex; flex: 1; flex-direction: column; }
+  .events-page .btn-event-featured { min-height: 48px; margin-top: auto; align-self: flex-start; }
+  .forms-page { padding-right: 16px; padding-left: 16px; }
+  .forms-page .page-header { margin-bottom: 1px; }
+  .forms-page .forms-page-header { flex-wrap: wrap; }
+  .forms-page .forms-page-header #new-template-button {
+    flex: 1 0 100%;
+    width: 100%;
+    transform: translateY(-10px);
+  }
+  .forms-page #forms-received-content > .card { padding: 18px; }
+  .consultations-page .main-content { padding: 18px 16px 24px; }
+  .consultations-page .consultations-overview { margin: 6px 0 32px; }
+  .patients-page .main-content { padding: 18px 16px 24px; }
+  .patients-page .page-header { margin-bottom: 14px; }
+  .patients-page .page-header .btn {
+    flex: 1 0 100%;
+    width: 100%;
+    min-height: 48px;
+    transform: translateY(-5px);
+  }
   .patients-page #patients-grid { grid-template-columns: minmax(0, 1fr); }
   .patient-filter-panel { margin-bottom: 24px; padding: 16px; }
+  .patient-filter-search .search-bar { height: 50px; min-height: 50px; }
   .patient-list-heading h2 { font-size: 22px; }
-  .patient-reference-card { min-height: 0; padding: 17px; }
+  .patient-list-heading { margin-bottom: 7px; }
+  .patient-reference-card { min-height: 0; padding: 12px; }
   .patient-reference-header { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; }
   .patient-reference-header .avatar { width: 44px; height: 44px; font-size: 16px; }
   .patient-reference-header .card-patient-name { font-size: 16px; }
   .patient-reference-header .card-patient-meta { font-size: 13px; }
+  .patient-reference-card > .patient-card-section:first-of-type h3 { display: none; }
   .patient-card-split, .patient-card-dates { grid-template-columns: 1fr; }
   .patients-pagination { align-items: flex-start; flex-direction: column; }
   .patients-pagination-controls { flex-wrap: wrap; }
@@ -1865,6 +1938,10 @@ textarea {
   border-color: transparent;
   color: var(--text-secondary);
   font-size: 11px;
+}
+@media (max-width: 600px) {
+  .financial-panel-heading { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; }
+  .financial-filter-tools { grid-column: 2; flex-wrap: wrap; justify-content: flex-start; min-width: 0; max-width: 100%; margin-left: 0; }
 }
 .financial-transactions-heading { margin-bottom: 16px; }
 .financial-transactions-heading .financial-section-heading { gap: 10px; padding-left: 12px; }
@@ -2143,14 +2220,21 @@ textarea {
 }
 .agenda-overview-heading p { display: none; }
 @media (max-width: 760px) {
+  .consultations-page .consultations-overview > .dashboard-section-heading {
+    height: 32px;
+    min-height: 32px;
+    margin-bottom: 0;
+  }
   .consultations-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .consultations-stat-grid { row-gap: 14px; }
   .consultations-stat-grid .card-stat { min-height: 150px; padding: 16px; row-gap: 8px; }
+  .consultations-stat-grid .card-stat-sub { font-size: 13px; line-height: 1.3; }
   .agenda-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 @media (max-width: 420px) {
   .consultations-stat-grid .card-stat { padding: 13px; }
   .consultations-stat-grid .card-stat-label { font-size: 11px; }
-  .agenda-overview-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .agenda-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 .financial-open-panel {
@@ -2448,4 +2532,15 @@ textarea {
 @media (min-width: 700px) and (max-aspect-ratio: 0.87) {
   .login-page .login-left { width: 100%; padding: 34px 7%; }
   .login-page .login-right { width: 100%; padding: 38px 7%; clip-path: none; }
+}
+
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 400px) {
+  .contacts-page .page-subtitle { white-space: normal; }
+  .forms-page #forms-summary { grid-template-columns: minmax(0, 1fr); }
 }

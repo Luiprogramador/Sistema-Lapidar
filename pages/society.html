@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Society — Lapidar</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/parity-overrides.css">
+  <link rel="stylesheet" href="../css/extra-pages.css">
+</head>
+<body>
+<div id="topbar-container"></div>
+<div id="sidebar-container"></div>
+<main class="main-content page-enter extra-page society-admin-page">
+  <div class="page-header society-admin-header">
+    <div>
+      <h1 class="page-title">Lapidar Society</h1>
+      <p class="page-subtitle">Planos, assinantes, comunidade e o que cada um acessa</p>
+    </div>
+    <button class="btn btn-primary" id="society-new-plan" type="button">＋ Novo plano</button>
+  </div>
+  <section class="society-revenue" aria-label="Resumo do Lapidar Society">
+    <div class="society-revenue-total">
+      <span class="eyebrow">RECEITA MENSAL ESTIMADA</span>
+      <strong>R$ 149,80</strong>
+      <span>Soma dos 2 planos pagos ativos</span>
+    </div>
+    <div class="society-metric">
+      <span class="society-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="m8.5 12-1 9 4.5-2.5 4.5 2.5-1-9M12 5.5v5M9.5 8h5"/></svg></span>
+      <strong>2</strong><span class="society-metric-copy">assinantes ativos</span>
+    </div>
+    <div class="society-metric">
+      <span class="society-metric-icon society-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 13 11 22l-9-9V3h10z"/><circle cx="7" cy="7" r="1.2"/></svg></span>
+      <strong>2</strong><span class="society-metric-copy">de 2 planos à venda</span>
+    </div>
+    <div class="society-metric">
+      <span class="society-metric-icon society-heart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></span>
+      <strong>26</strong><span class="society-metric-copy">pacientes com Plus incluso</span>
+    </div>
+  </section>
+  <nav class="society-tabs" role="tablist" aria-label="Seções do Lapidar Society">
+    <button class="is-active" type="button" role="tab" aria-selected="true" data-society-tab="plans"><span aria-hidden="true">◇</span> Planos <b>2</b></button>
+    <button type="button" role="tab" aria-selected="false" data-society-tab="subscribers"><span aria-hidden="true">♧</span> Assinantes <b>2</b></button>
+    <button type="button" role="tab" aria-selected="false" data-society-tab="community"><span aria-hidden="true">♣</span> Comunidade</button>
+    <button type="button" role="tab" aria-selected="false" data-society-tab="access"><span aria-hidden="true">◎</span> O que cada um vê</button>
+  </nav>
+  <section id="society-plan-grid" class="society-panel society-plan-grid" role="tabpanel" data-society-panel="plans" aria-label="Planos"></section>
+  <section class="society-panel society-subscribers" role="tabpanel" data-society-panel="subscribers" aria-label="Assinantes" hidden>
+    <header><span class="society-panel-icon" aria-hidden="true">♧</span><div><h2>Assinantes</h2><p>2 pessoas · mais recentes primeiro</p></div></header>
+    <div class="society-subscriber-list">
+      <article class="society-subscriber" data-subscriber="0"><span class="society-avatar">CD</span><div><strong>Camila Duarte</strong><span>camila.duarte@exemplo.com</span><small>Society Inicial · desde 20/09</small></div><span class="society-subscriber-status">Ativa</span><button class="society-deactivate" type="button" aria-label="Desativar assinatura de Camila Duarte" title="Desativar assinatura">⊘</button></article>
+      <article class="society-subscriber" data-subscriber="1"><span class="society-avatar">RA</span><div><strong>Renata Albuquerque</strong><span>renata.albuquerque@exemplo.com</span><small>Society Plus · desde 05/08</small></div><span class="society-subscriber-status">Ativa</span><button class="society-deactivate" type="button" aria-label="Desativar assinatura de Renata Albuquerque" title="Desativar assinatura">⊘</button></article>
+    </div>
+  </section>
+  <section class="society-panel society-community" role="tabpanel" data-society-panel="community" aria-label="Comunidade" hidden>
+    <div class="society-community-stats">
+      <article><span class="society-panel-icon" aria-hidden="true">♡</span><h2>Pacientes</h2><b>26</b><p>Já fazem parte da sociedade, com acesso Plus incluso e a área clínica completa.</p></article>
+      <article><span class="society-panel-icon" aria-hidden="true">♙</span><h2>Equipe</h2><b>5</b><p>Médica e funcionários, com acesso Plus conforme a função de cada um.</p></article>
+      <article><span class="society-panel-icon" aria-hidden="true">♙</span><h2>Assinantes</h2><b>2</b><p>Quem entra só pela assinatura: comunidade e cuidado pessoal, sem área clínica.</p></article>
+    </div>
+    <div class="society-community-details">
+      <article><header><span class="society-panel-icon" aria-hidden="true">▤</span><div><h2>Conteúdos</h2><p>15 publicados</p></div><button type="button" data-society-route="contents">Gerenciar</button></header><p>Inicial — abertos a todos os assinantes <strong>9</strong></p><p>Plus — exclusivos do nível completo <strong>6</strong></p></article>
+      <article><header><span class="society-panel-icon" aria-hidden="true">♧</span><div><h2>Eventos</h2><p>3 por vir</p></div><button type="button" data-society-route="events">Gerenciar</button></header><p>Inicial — abertos a todos os assinantes <strong>2</strong></p><p>Plus — exclusivos do nível completo <strong>1</strong></p></article>
+    </div>
+  </section>
+  <section class="society-panel society-access" role="tabpanel" data-society-panel="access" aria-label="Permissões por perfil" hidden>
+    <header><span class="society-panel-icon" aria-hidden="true">◎</span><div><h2>O que cada um vê</h2><p>Assinante: comunidade e cuidado pessoal, sem área clínica</p></div></header>
+    <div class="society-access-table" role="table" aria-label="Acessos por perfil">
+      <div class="society-access-row society-access-heading" role="row"><span role="columnheader"></span><strong role="columnheader">Assinante<br>Inicial</strong><strong role="columnheader">Assinante<br>Plus</strong><strong role="columnheader">Paciente</strong></div>
+      <div class="society-access-row" role="row"><span>▤ &nbsp;Conteúdos abertos</span><b>✓</b><b>✓</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>☆ &nbsp;Conteúdos exclusivos Plus</span><b class="no-access">⊖</b><b>✓</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>♧ &nbsp;Eventos</span><b>✓</b><b>✓</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>▱ &nbsp;Diário pessoal e evolução</span><b>✓</b><b>✓</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>♙ &nbsp;Perfil, contatos e configurações</span><b>✓</b><b>✓</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>▦ &nbsp;Consultas</span><b class="no-access">⊖</b><b class="no-access">⊖</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>⊞ &nbsp;Exames e medicamentos</span><b class="no-access">⊖</b><b class="no-access">⊖</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>▣ &nbsp;Ficha clínica</span><b class="no-access">⊖</b><b class="no-access">⊖</b><b>✓</b></div>
+      <div class="society-access-row" role="row"><span>⚑ &nbsp;Metas definidas pela médica</span><b class="no-access">⊖</b><b class="no-access">⊖</b><b>✓</b></div>
+    </div>
+  </section>
+  <p class="extra-feedback" id="society-feedback" role="status"></p>
+</main>
+<dialog class="extra-modal society-plan-dialog" id="society-plan-dialog"></dialog>
+<script src="../js/demo-data.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/router.js"></script>
+<script src="../js/components.js"></script>
+<script>
+  if (!Router.can('manageSociety')) {
+    Router.navigate('dashboard');
+  } else {
+  initShell('society-admin');
+  const societyTabs = [...document.querySelectorAll('[data-society-tab]')];
+  const societyPanels = [...document.querySelectorAll('[data-society-panel]')];
+  const societyDialog = document.getElementById('society-plan-dialog');
+  const societyFeedback = document.getElementById('society-feedback');
+  const societyPlanStorageKey = 'lapidar-society-plans';
+  const defaultSocietyPlans = [
+    { name: 'Society Inicial', price: '49,90', category: 'PLANO DE ENTRADA', description: 'Conteúdos e eventos do Lapidar, onde você estiver.', benefits: ['Biblioteca de e-books, vídeos, meditações e sites', 'Eventos abertos aos assinantes'], subscribers: 1, theme: 'initial' },
+    { name: 'Society Plus', price: '99,90', category: 'PLANO COMPLETO', description: 'O plano completo, o mesmo das pacientes do Lapidar.', benefits: ['Tudo do Society Inicial', 'Conteúdos exclusivos', 'Eventos exclusivos'], subscribers: 1, theme: 'plus' },
+  ];
+  let societyPlans = defaultSocietyPlans;
+  try {
+    const storedPlans = localStorage.getItem(societyPlanStorageKey);
+    if (storedPlans !== null) {
+      const parsedPlans = JSON.parse(storedPlans);
+      if (!Array.isArray(parsedPlans) || parsedPlans.some(plan => !plan || typeof plan.name !== 'string' || typeof plan.price !== 'string' || !Array.isArray(plan.benefits))) {
+        throw new TypeError('Dados locais de planos Society inválidos.');
+      }
+      societyPlans = parsedPlans;
+    }
+  } catch (error) {
+    console.error('Não foi possível carregar os planos do Society.', error);
+    societyFeedback.textContent = 'Não foi possível carregar os planos salvos. Os planos de demonstração foram restaurados.';
+  }
+  function renderSocietyPlans() {
+    document.getElementById('society-plan-grid').innerHTML = societyPlans.map((plan, index) => `
+      <article class="society-plan-card ${plan.theme === 'plus' ? 'plus-plan' : 'initial-plan'}" data-plan-index="${index}">
+        <div class="society-plan-banner">
+          <div class="society-plan-top"><span>♙ ${escapeSocietyText(plan.category)}</span><span class="society-sale-badge">À venda</span></div>
+          <h2>${escapeSocietyText(plan.name)}</h2>
+          <p><strong>R$ ${escapeSocietyText(plan.price)}</strong> /mês</p>
+        </div>
+        <div class="society-plan-body">
+          <p>${escapeSocietyText(plan.description)}</p>
+          <ul>${plan.benefits.map(benefit => `<li>${escapeSocietyText(benefit)}</li>`).join('')}</ul>
+          <footer><strong>♧ ${Number(plan.subscribers) || 0} assinante${Number(plan.subscribers) === 1 ? '' : 's'} ativo${Number(plan.subscribers) === 1 ? '' : 's'}</strong><button type="button" data-plan-edit="${index}">✎ Editar</button></footer>
+        </div>
+      </article>`).join('');
+    const planCount = societyPlans.length;
+    document.querySelector('[data-society-tab="plans"] b').textContent = String(planCount);
+    const planMetric = document.querySelector('.society-metric:nth-child(3)');
+    planMetric.querySelector('strong').textContent = String(planCount);
+    planMetric.querySelector('.society-metric-copy').textContent = `de ${planCount} planos à venda`;
+  }
+  function saveSocietyPlans(nextPlans) {
+    try {
+      localStorage.setItem(societyPlanStorageKey, JSON.stringify(nextPlans));
+    } catch (error) {
+      console.error('Não foi possível salvar os planos do Society.', error);
+      societyFeedback.textContent = 'Não foi possível salvar as alterações dos planos.';
+      return false;
+    }
+    societyPlans = nextPlans;
+    renderSocietyPlans();
+    return true;
+  }
+  renderSocietyPlans();
+  societyTabs.forEach(tab => tab.addEventListener('click', () => {
+    societyTabs.forEach(item => {
+      const active = item === tab;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-selected', String(active));
+    });
+    societyPanels.forEach(panel => { panel.hidden = panel.dataset.societyPanel !== tab.dataset.societyTab; });
+  }));
+  document.querySelector('.society-admin-page').addEventListener('click', event => {
+    const routeButton = event.target.closest('[data-society-route]');
+    if (routeButton) {
+      Router.navigate(routeButton.dataset.societyRoute);
+      return;
+    }
+    const deactivateButton = event.target.closest('.society-deactivate');
+    if (deactivateButton) {
+      const subscriber = deactivateButton.closest('.society-subscriber');
+      const status = subscriber.querySelector('.society-subscriber-status');
+      const inactive = status.textContent === 'Ativa';
+      status.textContent = inactive ? 'Inativa' : 'Ativa';
+      subscriber.classList.toggle('is-inactive', inactive);
+      deactivateButton.setAttribute('aria-label', `${inactive ? 'Reativar' : 'Desativar'} assinatura de ${subscriber.querySelector('strong').textContent}`);
+      societyFeedback.textContent = `Assinatura ${inactive ? 'desativada' : 'reativada'}.`;
+      return;
+    }
+    const editButton = event.target.closest('[data-plan-edit]');
+    if (editButton) openPlanDialog(Number(editButton.dataset.planEdit));
+  });
+  document.getElementById('society-new-plan').addEventListener('click', () => openPlanDialog(-1));
+  function escapeSocietyText(value) {
+    return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+  }
+  function openPlanDialog(planIndex) {
+    const plan = societyPlans[planIndex] || { name: '', price: '' };
+    societyDialog.innerHTML = `<form method="dialog" class="society-plan-form"><h2>${planIndex < 0 ? 'Novo plano' : 'Editar plano'}</h2><label>Nome do plano<input name="name" required value="${escapeSocietyText(plan.name)}"></label><label>Preço mensal (R$)<input name="price" type="text" inputmode="decimal" required value="${escapeSocietyText(plan.price)}"></label><div class="modal-footer"><button class="btn btn-outline" value="cancel">Cancelar</button><button class="btn btn-primary" value="save">Salvar</button></div></form>`;
+    societyDialog.showModal();
+    const form = societyDialog.querySelector('form');
+    form.addEventListener('submit', event => {
+      if (event.submitter?.value !== 'save') return;
+      event.preventDefault();
+      const data = new FormData(form);
+      const name = String(data.get('name') || '').trim();
+      const price = String(data.get('price') || '').trim();
+      if (!name || !/^\d+(?:,\d{2})?$/.test(price)) {
+        societyFeedback.textContent = 'Informe o nome do plano e um preço válido (ex.: 49,90).';
+        return;
+      }
+      const nextPlans = societyPlans.map(item => ({ ...item }));
+      if (planIndex < 0) {
+        nextPlans.push({ name, price, category: 'PLANO PERSONALIZADO', description: 'Plano criado pela clínica.', benefits: [], subscribers: 0, theme: 'initial' });
+      } else {
+        nextPlans[planIndex] = { ...nextPlans[planIndex], name, price };
+      }
+      if (saveSocietyPlans(nextPlans)) {
+        societyFeedback.textContent = `${name} salvo.`;
+        societyDialog.close();
+      }
+    });
+  }
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-plan-edit]') || event.target.closest('#society-new-plan')) {
+      societyFeedback.textContent = '';
+    }
+  });
+  }
+</script>
+</body>
+</html>

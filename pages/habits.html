@@ -1764,6 +1764,12 @@
   syncUIWithData();
   updateSleepCalc();
   renderDiaryCalendar();
+  const requestedDiaryView = Router.getState().diaryView;
+  if (requestedDiaryView) {
+    Router.setState({ diaryView: null });
+    const requestedViewButton = document.querySelector(`#view-mode-tabs [data-view="${requestedDiaryView}"]`);
+    if (requestedViewButton) requestedViewButton.click();
+  }
 
   if (role !== 'patient') {
     document.getElementById('btn-salvar-checkin').hidden = true;

@@ -37,6 +37,7 @@ prototipo/
     ├── journey.html            Jornada operacional (visão geral com timeline e checklist com fases pós-ciclo)
     ├── agenda.html             Agenda com calendário interativo, contatos de terça e retorno > 7d
     ├── financial.html          Financeiro com gráfico e tabela de transações
+    ├── society.html            Gestão do Lapidar Society (planos, assinantes e acessos)
     ├── forms.html              Modelos e respostas de formulários
     ├── events.html             Calendário, inscrições e eventos da clínica
     ├── contacts.html           Diretório de pessoas e contatos

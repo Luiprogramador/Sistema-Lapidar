@@ -11,6 +11,67 @@
   <link rel="stylesheet" href="../css/animations.css">
   <link rel="stylesheet" href="../css/parity-overrides.css">
   <style>
+    #tabs-nav.tabs {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 720px;
+      gap: 8px;
+      overflow: visible;
+      margin-bottom: 20px;
+      border: 0;
+    }
+    #tabs-nav .tab-item {
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid #ddcbbb;
+      border-radius: 12px;
+      background: #fffdf8;
+      color: #4f4545;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    #tabs-nav .tab-item.active {
+      border-color: var(--vinho);
+      background: var(--vinho);
+      color: var(--white);
+    }
+    @media (max-width: 640px) {
+      #tabs-nav.tabs { gap: 6px; }
+      #tabs-nav .tab-item { padding: 10px; font-size: 12px; }
+    }
+    .top-actions-bar { justify-content: flex-start !important; margin-bottom: 12px !important; }
+    .top-actions-bar > div { display: none !important; }
+    .patient-header {
+      padding: 24px;
+      border: 1px solid #ddcbbb;
+      background: #fffdf8;
+      box-shadow: 0 2px 6px rgba(74,39,37,.06), 0 8px 24px rgba(74,39,37,.045);
+      color: var(--text-primary);
+    }
+    .patient-header::before, .patient-header::after { display: none; }
+    .patient-header-inner { align-items: flex-start; }
+    .patient-header-avatar {
+      width: 82px;
+      height: 82px;
+      border: 2px solid #a95c70;
+      background: #f0dcde;
+      color: var(--vinho);
+    }
+    .patient-header-name { color: #2b2224; }
+    .patient-header-meta { color: var(--text-secondary); }
+    .patient-header-lead { color: var(--text-primary); }
+    .patient-header-objective, .patient-header-objective strong { color: var(--text-primary); }
+    .patient-header-current-weight { position: absolute; top: 0; right: 0; display: grid; gap: 3px; text-align: right; }
+    .patient-header-current-weight span { color: var(--text-secondary); font-size: 11px; font-weight: 800; letter-spacing: .07em; }
+    .patient-header-current-weight strong { color: var(--vinho); font: 700 23px/1.2 var(--font-serif); }
+    .patient-header-stat { text-align: left; }
+    .patient-header-stat-value { color: var(--vinho); }
+    .patient-header-stat-label { color: var(--text-secondary); }
+    @media (max-width: 640px) {
+      .patient-header { padding: 18px; }
+      .patient-header-avatar { width: 64px; height: 64px; }
+      .patient-header-current-weight { position: static; margin: 0 0 10px auto; }
+    }
     .bio-card {
       background: var(--white);
       border: 1px solid var(--border);
@@ -624,7 +685,7 @@
     Router.navigate('journey', { patientId: p.id });
   });
   document.getElementById('btn-diario-link').addEventListener('click', () => {
-    Router.navigate('habits', { patientId: p.id });
+    Router.navigate('habits', { patientId: p.id, diaryView: 'evolucao' });
   });
 
   // ── Patient Header ──
@@ -638,6 +699,7 @@
     <div class="patient-header-inner">
       <div class="patient-header-avatar">${p.iniciais}</div>
       <div style="flex:1;">
+        ${hasCurrentWeight ? `<div class="patient-header-current-weight"><span>PESO ATUAL</span><strong>${Number(p.pesoAtual).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg</strong></div>` : ''}
         <div class="patient-header-name">${p.nome}</div>
         <div class="patient-header-meta">
           <span>${p.idade} anos · ${p.nascimento}</span>
@@ -679,24 +741,31 @@
     </div>`;
 
   // ── TAB 1: PAINEL CLÍNICO ──
+  const formatClinicalMetric = value => {
+    if (value === null || value === undefined || value === '') return '—';
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue)
+      ? numericValue.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      : '—';
+  };
   document.getElementById('tab-painel').innerHTML = `
     <div class="grid-responsive-4" style="gap:12px;margin-bottom:20px;">
       ${[
-        { label:'Peso',               val:`${latestBio.peso} kg`,       delta: prevBio ? latestBio.peso - prevBio.peso : null, inv: true },
-        { label:'IMC',                val:`${latestBio.imc}`,            delta: prevBio ? latestBio.imc - prevBio.imc : null,  inv: true },
-        { label:'Massa Gorda',        val:`${latestBio.gordura} kg`,     delta: prevBio ? latestBio.gordura - prevBio.gordura : null, inv: true },
-        { label:'Massa Magra',        val:`${latestBio.musculo} kg`,     delta: prevBio ? latestBio.musculo - prevBio.musculo : null, inv: false },
-        { label:'Tx. Gordura',        val:`${latestBio.txGordura}%`,     delta: prevBio ? latestBio.txGordura - prevBio.txGordura : null, inv: true },
-        { label:'Gordura Visceral',   val:`${latestBio.gorduraVisceral}`,delta: prevBio ? latestBio.gorduraVisceral - prevBio.gorduraVisceral : null, inv: true },
+        { label:'Peso',               val:`${formatClinicalMetric(latestBio.peso)} kg`,       delta: prevBio ? latestBio.peso - prevBio.peso : null, inv: true },
+        { label:'IMC',                val:formatClinicalMetric(latestBio.imc),                  delta: prevBio ? latestBio.imc - prevBio.imc : null,  inv: true },
+        { label:'Massa Gorda',        val:`${formatClinicalMetric(latestBio.gordura)} kg`,     delta: prevBio ? latestBio.gordura - prevBio.gordura : null, inv: true },
+        { label:'Massa Magra',        val:`${formatClinicalMetric(latestBio.musculo)} kg`,     delta: prevBio ? latestBio.musculo - prevBio.musculo : null, inv: false },
+        { label:'Tx. Gordura',        val:`${formatClinicalMetric(latestBio.txGordura)}%`,     delta: prevBio ? latestBio.txGordura - prevBio.txGordura : null, inv: true },
+        { label:'Gordura Visceral',   val:formatClinicalMetric(latestBio.gorduraVisceral),      delta: prevBio ? latestBio.gorduraVisceral - prevBio.gorduraVisceral : null, inv: true },
         { label:'Circunferência Abdominal', val: p.circunferenciaAbdominal || '84 cm', delta: null },
         { label:'Pressão Arterial',   val: p.pressao || '120/80 mmHg', delta: null },
       ].map(c => {
         let deltaHtml = '';
         if (c.delta !== null) {
           const improved = c.inv ? c.delta < 0 : c.delta > 0;
-          const sign = c.delta > 0 ? '+' : '';
+          const sign = c.delta > 0 ? '+' : c.delta < 0 ? '−' : '';
           const cls  = improved ? 'delta-pos' : 'delta-neg';
-          deltaHtml = `<div class="bio-card-delta ${cls}">${sign}${c.delta.toFixed(1)} vs. anterior</div>`;
+          deltaHtml = `<div class="bio-card-delta ${cls}">${sign}${formatClinicalMetric(Math.abs(c.delta))} vs. anterior</div>`;
         }
         return `<div class="bio-card"><div class="bio-card-label">${c.label}</div><div class="bio-card-value">${c.val}</div>${deltaHtml}</div>`;
       }).join('')}
@@ -1879,11 +1948,11 @@
     <div class="card" style="margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
         <div>
-          <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Diário Lapidar — Monitoramento em Tempo Real</h4>
-          <p style="font-size:12px;color:var(--text-muted);">Registro diário da paciente entre uma consulta e outra · Constância > perfeição</p>
+        <h4 style="font-size:14px;font-weight:600;color:var(--vinho);">Diário Lapidar — Evolução</h4>
+        <p style="font-size:12px;color:var(--text-muted);">Acompanhe os registros e a constância da paciente ao longo do tempo.</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="Router.navigate('habits',{patientId:${p.id}})">
-          Abrir Diário Completo →
+      <button class="btn btn-primary btn-sm" onclick="Router.navigate('habits',{patientId:${p.id},diaryView:'evolucao'})">
+        Abrir evolução completa →
         </button>
       </div>
 

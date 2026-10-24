@@ -80,6 +80,7 @@ const Router = {
       case 'manageTeam':        return (role === 'doctor' || role === 'secretary') && admin;
       case 'manageForms':       return clinical || role === 'developer';
       case 'manageEvents':      return role === 'developer' || ((role === 'doctor' || role === 'secretary') && admin);
+      case 'manageSociety':     return role === 'doctor' && admin;
       case 'seeLogs':           return role === 'developer';
       default: return false;
     }
@@ -103,6 +104,7 @@ const Router = {
   resolveNavigation(page, params = {}) {
     const role = this.getRole();
     if (page === 'portal') page = role === 'patient' ? 'patient-detail' : 'dashboard';
+    if (page === 'society-admin' && !this.can('manageSociety')) page = this.getHomePage();
     if (role === 'society') {
       const allowedPages = ['contents', 'events', 'habits', 'profile'];
       return { page: allowedPages.includes(page) ? page : 'contents', params };
@@ -124,7 +126,7 @@ const Router = {
       const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'messages', 'financial', 'journey', 'contents', 'settings', 'profile', 'forms', 'events', 'contacts', 'notifications'];
       if (!allowedPages.includes(page)) page = 'dashboard';
     }
-    const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'consultations', 'patient-detail', 'patient-profile', 'consultation', 'messages', 'financial', 'contents', 'journey', 'settings', 'habits', 'profile', 'logs', 'forms', 'events', 'contacts', 'notifications'];
+    const allowedPages = ['login', 'dashboard', 'patients', 'patient-registration', 'agenda', 'consultations', 'patient-detail', 'patient-profile', 'consultation', 'messages', 'financial', 'contents', 'journey', 'settings', 'habits', 'profile', 'logs', 'forms', 'events', 'contacts', 'notifications', 'society-admin'];
     if (!allowedPages.includes(page)) page = this.getHomePage();
     return { page, params };
   },
@@ -172,6 +174,7 @@ const Router = {
       events:           '../pages/events.html',
       contacts:         '../pages/contacts.html',
       notifications:    '../pages/notifications.html',
+      'society-admin':  '../pages/society.html',
     };
     const target = pageFiles[page];
     if (target) {

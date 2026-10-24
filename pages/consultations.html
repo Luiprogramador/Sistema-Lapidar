@@ -23,9 +23,33 @@
     .consultation-period-label { color:var(--text-secondary); font-size:13px; font-weight:700; }
     .consultation-period-options { display:flex; flex-wrap:wrap; gap:8px; }
     .consultation-period-options .filter-chip { min-height:42px; padding:9px 16px; }
+    .consultation-filter-heading { display:flex; align-items:center; gap:14px; margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+    .consultation-filter-heading-icon { display:grid; flex:0 0 44px; width:44px; height:44px; place-items:center; border:1px solid var(--border); border-radius:12px; background:#f1e8e8; color:var(--vinho); }
+    .consultation-filter-heading-icon svg { width:22px; height:22px; }
+    .consultation-filter-heading h2 { flex:1; margin:0; color:var(--text-primary); font-family:var(--font-sans); font-size:20px; font-weight:750; }
+    .consultation-filter-heading #open-calendar { display:none; }
+    .consultation-search { position:relative; display:block; width:100%; margin-bottom:18px; }
+    .consultation-search svg { position:absolute; top:50%; left:16px; width:20px; height:20px; color:var(--text-secondary); transform:translateY(-50%); pointer-events:none; }
+    .consultation-search input { box-sizing:border-box; width:100%; min-height:60px; padding-left:52px; border-radius:13px; font-size:16px; }
+    .consultation-filter-card { padding:24px; }
+    .consultation-filter-label { display:block; margin:0 0 8px; color:var(--text-secondary); font-size:13px; font-weight:700; }
+    .consultation-status-options { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .consultation-status-options .filter-chip { min-height:42px; padding:9px 16px; border:1px solid var(--border); border-radius:999px; background:var(--white); color:var(--text-primary); font-weight:600; }
+    .consultation-status-options .filter-chip.active { border-color:var(--vinho); background:var(--vinho); color:var(--white); }
+    .consultation-filter-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .consultation-filter-actions .btn { min-height:48px; }
+    .consultation-extra-filters { display:flex; align-items:end; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    .consultation-extra-filters[hidden] { display:none; }
+    .consultation-extra-filters .form-group { flex:1 1 150px; min-width:140px; margin:0; }
+    .visually-hidden-control { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; clip-path:inset(50%); }
+    @media (max-width: 600px) {
+      .consultation-filter-card { padding:16px; }
+      .consultation-filter-heading { gap:10px; margin-bottom:14px; padding-bottom:14px; }
+      .consultation-search input { min-height:52px; }
+    }
   </style>
 </head>
-<body>
+<body class="consultations-page">
 <div id="topbar-container"></div>
 <div id="sidebar-container"></div>
 
@@ -51,11 +75,18 @@
   </section>
 
   <div class="consultations-layout">
-    <section class="card" aria-labelledby="consultations-list-title">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <h2 id="consultations-list-title" style="font-size:14px;font-weight:600;color:var(--vinho);">Busca e filtros</h2>
+    <section class="card consultation-filter-card" aria-labelledby="consultations-list-title">
+      <div class="consultation-filter-heading">
+        <span class="consultation-filter-heading-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6.5 7.5V19l-3 1v-7.5L4 5Z"/></svg>
+        </span>
+        <h2 id="consultations-list-title">Busca e filtros</h2>
         <button class="btn btn-subtle btn-sm" id="open-calendar" type="button">Abrir calendário</button>
       </div>
+      <label class="consultation-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+        <input type="search" id="consult-search" placeholder="Buscar pelo nome da paciente..." aria-label="Buscar consultas por paciente">
+      </label>
       <div class="consultation-period">
         <span class="consultation-period-label">Período</span>
         <div class="consultation-period-options" role="group" aria-label="Período das consultas">
@@ -64,12 +95,32 @@
           <button class="filter-chip" type="button" data-period="all" aria-pressed="false">Todas</button>
         </div>
       </div>
-      <div class="audit-filter-row" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <label class="form-group" style="flex:1 1 210px;margin:0;"><span class="form-label">Buscar</span><input class="form-input" type="search" id="consult-search" placeholder="Buscar por paciente..." aria-label="Buscar consultas por paciente"></label>
-        <label class="form-group" style="margin:0;"><span class="form-label">Status</span><select class="form-select" id="consult-status"><option value="">Todos</option><option value="agendada">Agendada</option><option value="concluida">Realizada</option><option value="remarcada">Remarcada</option><option value="cancelada">Cancelada</option><option value="nao_compareceu">Não compareceu</option></select></label>
-        <label class="form-group" style="margin:0;"><span class="form-label">De</span><input class="form-input" type="date" id="consult-date-from" aria-label="Filtrar consultas a partir da data"></label>
-        <label class="form-group" style="margin:0;"><span class="form-label">Até</span><input class="form-input" type="date" id="consult-date-to" aria-label="Filtrar consultas até a data"></label>
+      <span class="consultation-filter-label">Status</span>
+      <div class="consultation-status-options" role="group" aria-label="Filtrar consultas por status">
+        <button class="filter-chip active" type="button" data-status-chip="" aria-pressed="true">Todas</button>
+        <button class="filter-chip" type="button" data-status-chip="agendada" aria-pressed="false">Agendada</button>
+        <button class="filter-chip" type="button" data-status-chip="confirmada" aria-pressed="false">Confirmada</button>
+        <button class="filter-chip" type="button" data-status-chip="concluida" aria-pressed="false">Concluída</button>
+        <button class="filter-chip" type="button" data-status-chip="cancelada" aria-pressed="false">Cancelada</button>
+        <button class="filter-chip" type="button" data-status-chip="nao_compareceu" aria-pressed="false">Não compareceu</button>
+        <button class="filter-chip" type="button" data-status-chip="remarcada" aria-pressed="false">Reagendada</button>
+      </div>
+      <select class="form-select visually-hidden-control" id="consult-status" aria-label="Status">
+        <option value="">Todas</option><option value="agendada">Agendada</option><option value="confirmada">Confirmada</option>
+        <option value="concluida">Concluída</option><option value="cancelada">Cancelada</option><option value="nao_compareceu">Não compareceu</option><option value="remarcada">Reagendada</option>
+      </select>
+      <div class="consultation-filter-actions">
+        <button class="btn btn-subtle" id="toggle-date-filters" type="button" aria-expanded="false" aria-controls="consult-date-filters">▦ &nbsp;Filtrar por data</button>
+        <button class="btn btn-subtle" id="toggle-type-filters" type="button" aria-expanded="false" aria-controls="consult-type-filters">☷ &nbsp;Tipo ou protocolo</button>
+      </div>
+      <div class="consultation-extra-filters" id="consult-date-filters" hidden>
+        <label class="form-group"><span class="form-label">De</span><input class="form-input" type="date" id="consult-date-from" aria-label="Filtrar consultas a partir da data"></label>
+        <label class="form-group"><span class="form-label">Até</span><input class="form-input" type="date" id="consult-date-to" aria-label="Filtrar consultas até a data"></label>
         <button class="btn btn-subtle btn-sm" id="clear-consult-dates" type="button">Limpar datas</button>
+      </div>
+      <div class="consultation-extra-filters" id="consult-type-filters" hidden>
+        <label class="form-group"><span class="form-label">Tipo de consulta</span><select class="form-select" id="consult-type"><option value="">Todos os tipos</option></select></label>
+        <label class="form-group"><span class="form-label">Protocolo</span><select class="form-select" id="consult-protocol"><option value="">Todos os protocolos</option></select></label>
       </div>
       <p id="consultation-filter-feedback" role="status" style="font-size:12px;color:var(--red-text);margin-bottom:8px;"></p>
     </section>
@@ -125,11 +176,23 @@
   let consultationPage = 0;
   let consultationPeriod = 'upcoming';
   const consultationsPerPage = 6;
+  const typeFilter = document.getElementById('consult-type');
+  const protocolFilter = document.getElementById('consult-protocol');
+  const populateFilterOptions = (select, values) => values.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  populateFilterOptions(typeFilter, [...new Set(sortedConsultations.map(consultation => consultation.tipo))].sort((a, b) => a.localeCompare(b, 'pt-BR')));
+  populateFilterOptions(protocolFilter, [...new Set(sortedConsultations.map(consultation => consultation.protocolo))].sort((a, b) => a.localeCompare(b, 'pt-BR')));
   function renderConsultations() {
     const from = document.getElementById('consult-date-from').value;
     const to = document.getElementById('consult-date-to').value;
     const search = document.getElementById('consult-search').value.trim().toLocaleLowerCase('pt-BR');
     const status = document.getElementById('consult-status').value;
+    const type = typeFilter.value;
+    const protocol = protocolFilter.value;
     const feedback = document.getElementById('consultation-filter-feedback');
     if (from && to && from > to) {
       feedback.textContent = 'A data inicial deve ser anterior ou igual à data final.';
@@ -145,15 +208,17 @@
         : consultationPeriod === 'history' ? consultation.data <= todayIso : true) &&
       (!from || consultation.data >= from) && (!to || consultation.data <= to) &&
       (!search || consultation.paciente.toLocaleLowerCase('pt-BR').includes(search)) &&
-      (!status || consultation.status === status)
+      (!status || consultation.status === status) &&
+      (!type || consultation.tipo === type) &&
+      (!protocol || consultation.protocolo === protocol)
     );
-    const hasFilters = Boolean(from || to || search || status);
+    const hasFilters = Boolean(from || to || search || status || type || protocol);
     document.getElementById('total-count').textContent = hasFilters ? filtered.length : sortedConsultations.length;
     const periodLabels = { upcoming:'Próximas consultas', history:'Consultas anteriores', all:'Todas as consultas' };
     document.getElementById('consultation-results-title').textContent = periodLabels[consultationPeriod];
     document.getElementById('consultation-results-count').textContent = `${filtered.length} consulta(s) no filtro atual`;
     const statusLabels = {
-      agendada: 'Agendada', concluida: 'Realizada', remarcada: 'Reagendada',
+      agendada: 'Agendada', confirmada: 'Confirmada', concluida: 'Concluída', remarcada: 'Reagendada',
       cancelada: 'Cancelada', nao_compareceu: 'Paciente não compareceu'
     };
     const pageCount = Math.ceil(filtered.length / consultationsPerPage);
@@ -205,9 +270,33 @@
     });
     renderConsultations();
   }));
+  document.querySelectorAll('[data-status-chip]').forEach(button => button.addEventListener('click', () => {
+    document.getElementById('consult-status').value = button.dataset.statusChip;
+    document.querySelectorAll('[data-status-chip]').forEach(option => {
+      const selected = option === button;
+      option.classList.toggle('active', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    });
+    consultationPage = 0;
+    renderConsultations();
+  }));
+  [
+    ['toggle-date-filters', 'consult-date-filters'],
+    ['toggle-type-filters', 'consult-type-filters'],
+  ].forEach(([buttonId, panelId]) => {
+    const button = document.getElementById(buttonId);
+    const panel = document.getElementById(panelId);
+    button.addEventListener('click', () => {
+      const expanded = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(expanded));
+      panel.hidden = !expanded;
+    });
+  });
   document.getElementById('open-calendar').addEventListener('click', () => Router.navigate('agenda'));
   document.getElementById('consult-search').addEventListener('input', () => { consultationPage = 0; renderConsultations(); });
   document.getElementById('consult-status').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
+  typeFilter.addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
+  protocolFilter.addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
   document.getElementById('consult-date-from').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
   document.getElementById('consult-date-to').addEventListener('change', () => { consultationPage = 0; renderConsultations(); });
   document.getElementById('clear-consult-dates').addEventListener('click', () => {
